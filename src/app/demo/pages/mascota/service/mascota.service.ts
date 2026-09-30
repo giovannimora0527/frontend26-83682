@@ -8,10 +8,14 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root'
 })
 export class MascotaService {
-  
+  private api = `mascota`;
 
-  constructor() {
+  constructor(private backendService: BackendService) {
     
+  }
+
+  listarMascotas(): Observable<Mascota[]> {
+    return this.backendService.get(environment.apiUrlAuth, this.api, "listar");
   }
 
   

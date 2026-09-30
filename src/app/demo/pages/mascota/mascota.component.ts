@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { MascotaService } from '../mascota/service/mascota.service'
+import { MascotaService } from '../mascota/service/mascota.service';
 import { Mascota } from 'src/app/models/mascota';
 
 @Component({
@@ -10,13 +10,28 @@ import { Mascota } from 'src/app/models/mascota';
   templateUrl: './mascota.component.html',
   styleUrl: './mascota.component.scss'
 })
-export class MascotaComponent {  
-  titleModule: string = "Componente administrativo para gestionar mascotas en el sistema";
+export class MascotaComponent { 
   
- 
+  mascotaList: Mascota[] = []; 
 
-  constructor() {
-    
+  constructor(private mascotaService: MascotaService) {
+     this.listarMascotas();
+  }
+
+  listarMascotas() {
+     this.mascotaService
+     .listarMascotas()
+     .subscribe(
+      {
+        next: (data) => {
+          this.mascotaList = data;
+          console.log(this.mascotaList);
+        },
+        error: (error) => {
+          console.log(error);
+        }
+      }
+     );
   }
 
   

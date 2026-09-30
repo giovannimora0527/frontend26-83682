@@ -1,16 +1,47 @@
 <div class="container-fluid">
     <div class="row">
-        <h4>{{titleModule}}</h4>
-    </div>
-    <br>
-    <div class="row">
-        <div class="col col-md-6">
+        <div class="col col-md-9">
             <input class="form-control" placeholder="Busque la mascota">
         </div>
-        <div class="col col-md-6 d-flex justify-content-end">
+        <div class="col col-md-3 d-flex justify-content-end">
             <button class="btn btn-outline-primary">Agregar Mascota</button>
         </div>
     </div>
     <br>
-   
+    <div class="row">
+        <div class="col col-md-12">
+            <div class="table table-responsive table-condensed">
+                <table class="table table-bordered table-responsive table-condensed">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Nombre</th>
+                            <th class="text-center">Edad</th>
+                            <th class="text-center">Fecha de registro</th>
+                            <th class="text-center">Raza</th>
+                            <th class="text-center">Nombre del cliente</th>
+                            <th class="text-center">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody *ngIf="mascotaList.length === 0">
+                        <tr>
+                            <td class="text-center" colspan="6">No hay resultados disponibles</td>
+                        </tr>
+                    </tbody>
+                    <tbody *ngIf="mascotaList.length > 0">
+                        <tr *ngFor="let m of mascotaList">
+                            <td class="text-center">{{ m.nombreMascota }}</td>
+                            <td class="text-center">{{ m.edad }}</td>
+                            <td class="text-center">{{ m.fechaRegistro | date:'yyyy-MM-dd HH.mm:ss' }}</td>
+                            <td class="text-center">{{ m.raza.nombre }}</td>
+                            <td class="text-center">{{ m.cliente.nombres }} {{ m.cliente.apellidos }}</td>
+                            <td class="text-center">
+                                <button class="btn btn-outline-primary">Editar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>

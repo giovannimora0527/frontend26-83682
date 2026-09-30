@@ -44,7 +44,6 @@ export class BackendService {
     return this.http.get<T>(`${urlApi}/${endpoint}/${service}`, {
       params: routerParams,
       headers: headers,
-       withCredentials: true,
     });
   }
 
@@ -64,7 +63,6 @@ export class BackendService {
     });
     return this.http.post<T>(`${urlApi}/${endpoint}/${service}`, data, {
       headers: headers,
-      withCredentials: true,
     });
   }
 
@@ -83,7 +81,6 @@ export class BackendService {
     });
     return this.http.put<T>(`${urlApi}/${endpoint}/${service}`, data, {
       headers: headers,
-       withCredentials: true,
     });
   }
 
