@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { FormulaMedica } from 'src/app/models/formula-medica';
 import { BackendService } from 'src/app/services/backend.service';
 import { FormulaMedicaService } from './formula-medica.service';
 
@@ -29,17 +30,7 @@ describe('FormulaMedicaService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('requests the list from the formula-medica endpoint', () => {
-    service.listar().subscribe();
-
-    expect(backendService.get).toHaveBeenCalledWith(
-      jasmine.any(String),
-      'formula-medica',
-      'listar'
-    );
-  });
-
-  it('sends create and update requests through the backend service', () => {
+  it('lists demo formulas and creates and updates them in memory', () => {
     const payload = {
       dosis: '1 tableta',
       indicaciones: 'Tomar con agua',
@@ -50,20 +41,22 @@ describe('FormulaMedicaService', () => {
       medico: 'Médico de prueba'
     };
 
-    service.crear(payload).subscribe();
-    service.actualizar(12, payload).subscribe();
+    let formulas: FormulaMedica[] = [];
+    service.listar().subscribe((resultado) => formulas = resultado);
+    expect(formulas.length).toBe(1);
+    expect(formulas[0].id).toBe(1);
 
-    expect(backendService.post).toHaveBeenCalledWith(
-      jasmine.any(String),
-      'formula-medica',
-      'crear',
-      payload
-    );
-    expect(backendService.put).toHaveBeenCalledWith(
-      jasmine.any(String),
-      'formula-medica',
-      'actualizar/12',
-      payload
-    );
+    let creadaId: number | undefined;
+    service.crear(payload).subscribe((resultado) => creadaId = resultado.id);
+    expect(creadaId).toBe(2);
+
+    const payloadActualizado = { ...payload, dosis: '2 tabletas' };
+    service.actualizar(2, payloadActualizado).subscribe();
+    service.listar().subscribe((resultado) => formulas = resultado);
+    expect(formulas.find((formula) => formula.id === 2)?.dosis).toBe('2 tabletas');
+
+    expect(backendService.get).not.toHaveBeenCalled();
+    expect(backendService.post).not.toHaveBeenCalled();
+    expect(backendService.put).not.toHaveBeenCalled();
   });
 });

@@ -15,6 +15,9 @@
     </div>
 
     <div class="card-body">
+      <div *ngIf="modoDemostracion" class="alert alert-info" role="status">
+        Modo de demostración: los datos son ficticios y se mantienen solo mientras la aplicación está abierta.
+      </div>
       <div *ngIf="errorMensaje" class="alert alert-danger" role="alert">{{ errorMensaje }}</div>
       <div *ngIf="cargando" class="text-center py-4" role="status">Cargando fórmulas médicas...</div>
 

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -10,7 +11,10 @@ import {
 } from '@angular/forms';
 import { Modal } from 'bootstrap';
 import { FormulaMedica, FormulaMedicaPayload } from 'src/app/models/formula-medica';
-import { FormulaMedicaService } from 'src/app/services/formula-medica.service';
+import {
+  FormulaMedicaService,
+  MODO_DEMOSTRACION_FORMULAS
+} from 'src/app/services/formula-medica.service';
 
 type FormulaMedicaForm = FormGroup<{
   dosis: FormControl<string>;
@@ -29,6 +33,7 @@ type FormulaMedicaForm = FormGroup<{
   styleUrl: './formula-medica.component.scss'
 })
 export class FormulaMedicaComponent implements OnInit {
+  readonly modoDemostracion = MODO_DEMOSTRACION_FORMULAS;
   formulas: FormulaMedica[] = [];
   form!: FormulaMedicaForm;
   formulaSeleccionada: FormulaMedica | null = null;
@@ -65,7 +70,9 @@ export class FormulaMedicaComponent implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Error al obtener las fórmulas médicas:', error);
-        this.errorMensaje = 'No fue posible cargar las fórmulas médicas. Intente nuevamente.';
+        this.errorMensaje = error instanceof HttpErrorResponse && error.status === 0
+          ? 'No se pudo conectar con el servidor. Verifique que el backend esté iniciado y disponible.'
+          : 'No fue posible cargar las fórmulas médicas. Intente nuevamente.';
         this.cargando = false;
       }
     });
@@ -119,7 +126,9 @@ export class FormulaMedicaComponent implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Error al guardar la fórmula médica:', error);
-        this.errorMensaje = 'No fue posible guardar la fórmula médica. Verifique los datos e intente nuevamente.';
+        this.errorMensaje = error instanceof HttpErrorResponse && error.status === 0
+          ? 'No se pudo guardar: no hay conexión con el servidor. Inicie el backend y vuelva a intentarlo.'
+          : 'No fue posible guardar la fórmula médica. Verifique los datos e intente nuevamente.';
         this.guardando = false;
       }
     });
