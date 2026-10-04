@@ -3,22 +3,34 @@ import { Routes, RouterModule } from '@angular/router';
 import { AdminComponent } from './theme/layout/admin/admin.component';
 import { UsuarioComponent } from './demo/pages/usuario/usuario.component';
 import { MascotaComponent } from './demo/pages/mascota/mascota.component';
-
+import { MedicoComponent } from './demo/pages/medico/medico.component';
+import { ClienteComponent } from './demo/pages/cliente/cliente.component';
+import { RazaComponent } from './demo/pages/raza/raza.component';
+import { CitaComponent } from './demo/pages/cita/cita.component';
+import { EspecializacionComponent } from './demo/pages/especializacion/especializacion.component';
+import { MedicamentoComponent } from './demo/pages/medicamento/medicamento.component';
+import { FormulaMedicaComponent } from './demo/pages/formula-medica/formula-medica.component';
+import { HistoriaMedicaComponent } from './demo/pages/historia-medica/historia-medica.component';
+import { AnotacionHistoriaComponent } from './demo/pages/anotacion-historia/anotacion-historia.component';
 
 export const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'inicio',
-    pathMatch: 'full'
-  },  
+  { path: '', redirectTo: 'inicio', pathMatch: 'full' },
   {
     path: 'inicio',
     component: AdminComponent,
     data: { title: 'Inicio' },
-    children: [      
-      { path: 'usuarios', component: UsuarioComponent, data: { title: 'Usuarios' }},
-      { path: 'mascotas', component: MascotaComponent, data: { title: 'Mascotas' }} 
-      /* Inserte nuevos menus aqui */    
+    children: [
+      { path: 'usuarios', component: UsuarioComponent, data: { title: 'Usuarios' } },
+      { path: 'clientes', component: ClienteComponent, data: { title: 'Clientes' } },
+      { path: 'mascotas', component: MascotaComponent, data: { title: 'Mascotas' } },
+      { path: 'razas', component: RazaComponent, data: { title: 'Razas' } },
+      { path: 'medicos', component: MedicoComponent, data: { title: 'Médicos' } },
+      { path: 'especializaciones', component: EspecializacionComponent, data: { title: 'Especializaciones' } },
+      { path: 'citas', component: CitaComponent, data: { title: 'Citas' } },
+      { path: 'medicamentos', component: MedicamentoComponent, data: { title: 'Medicamentos' } },
+      { path: 'formulas-medicas', component: FormulaMedicaComponent, data: { title: 'Fórmulas Médicas' } },
+      { path: 'historias-medicas', component: HistoriaMedicaComponent, data: { title: 'Historias Médicas' } },
+      { path: 'anotaciones-historia', component: AnotacionHistoriaComponent, data: { title: 'Anotaciones de Historia' } }
     ]
   },
   { path: '**', redirectTo: 'inicio' }
