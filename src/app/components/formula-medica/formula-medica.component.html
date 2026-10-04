@@ -1,0 +1,131 @@
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <h5 class="mb-1">Gestión de Fórmulas Médicas</h5>
+          <small class="text-muted">Consulte y administre las fórmulas registradas.</small>
+        </div>
+        <button class="btn btn-outline-primary d-inline-flex align-items-center"
+          type="button" (click)="nuevaFormula()">
+          <i class="fa fa-plus me-2" aria-hidden="true"></i>
+          Nuevo
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div *ngIf="errorMensaje" class="alert alert-danger" role="alert">{{ errorMensaje }}</div>
+      <div *ngIf="cargando" class="text-center py-4" role="status">Cargando fórmulas médicas...</div>
+
+      <div class="table-responsive" *ngIf="!cargando">
+        <table class="table table-striped table-hover align-middle">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Medicamento</th>
+              <th scope="col">Dosis</th>
+              <th scope="col">Indicaciones</th>
+              <th scope="col">Fecha de inicio</th>
+              <th scope="col">Fecha de fin</th>
+              <th scope="col">Paciente</th>
+              <th scope="col">Médico</th>
+              <th scope="col" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody *ngIf="formulas.length === 0">
+            <tr>
+              <td colspan="9" class="text-center py-4">No hay fórmulas médicas registradas.</td>
+            </tr>
+          </tbody>
+          <tbody *ngIf="formulas.length > 0">
+            <tr *ngFor="let formula of formulas">
+              <td>{{ formula.id ?? '—' }}</td>
+              <td>{{ formula.medicamento }}</td>
+              <td>{{ formula.dosis }}</td>
+              <td>{{ formula.indicaciones }}</td>
+              <td>{{ formula.fechaInicio | date:'yyyy-MM-dd' }}</td>
+              <td>{{ formula.fechaFin | date:'yyyy-MM-dd' }}</td>
+              <td>{{ formula.paciente }}</td>
+              <td>{{ formula.medico }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-info" type="button"
+                  (click)="editarFormula(formula)" [attr.aria-label]="'Editar fórmula ' + formula.id">
+                  <i class="fa fa-edit me-1" aria-hidden="true"></i>
+                  Editar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalFormulaMedica" tabindex="-1"
+  aria-labelledby="modalFormulaMedicaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalFormulaMedicaLabel">
+            {{ modoEdicion ? 'Editar fórmula médica' : 'Nueva fórmula médica' }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+            aria-label="Cerrar" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div *ngIf="errorMensaje" class="alert alert-danger" role="alert">{{ errorMensaje }}</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="medicamento">Medicamento</label>
+              <input class="form-control" id="medicamento" formControlName="medicamento">
+              <small class="text-danger" *ngIf="controles['medicamento'].touched && controles['medicamento'].invalid">
+                El medicamento es obligatorio.
+              </small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="dosis">Dosis</label>
+              <input class="form-control" id="dosis" formControlName="dosis">
+              <small class="text-danger" *ngIf="controles['dosis'].touched && controles['dosis'].invalid">
+                La dosis es obligatoria.
+              </small>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="indicaciones">Indicaciones</label>
+              <textarea class="form-control" id="indicaciones" rows="3" formControlName="indicaciones"></textarea>
+              <small class="text-danger" *ngIf="controles['indicaciones'].touched && controles['indicaciones'].invalid">
+                Las indicaciones son obligatorias.
+              </small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="fechaInicio">Fecha de inicio</label>
+              <input class="form-control" id="fechaInicio" type="date" formControlName="fechaInicio">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="fechaFin">Fecha de fin</label>
+              <input class="form-control" id="fechaFin" type="date" formControlName="fechaFin">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="paciente">Paciente</label>
+              <input class="form-control" id="paciente" formControlName="paciente">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="medico">Médico</label>
+              <input class="form-control" id="medico" formControlName="medico">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button class="btn btn-primary" type="submit" [disabled]="guardando">
+            {{ guardando ? 'Guardando...' : (modoEdicion ? 'Actualizar' : 'Guardar') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
