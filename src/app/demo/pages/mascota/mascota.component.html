@@ -6,7 +6,11 @@
                     <input class="form-control" placeholder="Buscar mascota" type="text"
                         (input)="actualizarBusqueda($event)" />
                 </div>
-                <div class="col col-md-3 text-end">
+                <div class="col col-md-3 text-end d-flex justify-content-end gap-2">
+                    <button class="btn btn-outline-secondary" type="button" [disabled]="cargando"
+                        (click)="listar()" title="Actualizar lista" aria-label="Actualizar lista de mascotas">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
                     <button
                         class="btn btn-md btn-outline-primary d-inline-flex align-items-center justify-content-center"
                         (click)="nuevaMascota('C')" title="Agregar mascota">
@@ -17,6 +21,11 @@
             </div>
         </div>
         <div class="card-body">
+            <div class="alert alert-danger d-flex justify-content-between align-items-center" role="alert"
+                *ngIf="error">
+                <span>{{ error }}</span>
+                <button class="btn btn-sm btn-danger" type="button" (click)="listar()">Reintentar</button>
+            </div>
             <div class="row">
                 <div class="table table-responsive table-condensed col col-md-12">
                     <table class="table table-stripped table-condensed table-responsive">
@@ -31,17 +40,22 @@
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody *ngIf="listMascotas.length === 0">
+                        <tbody *ngIf="cargando">
+                            <tr>
+                                <td colspan="7" class="text-center">Cargando mascotas...</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="!cargando && !error && listMascotas.length === 0">
                             <tr>
                                 <td colspan="7" class="text-center">No hay mascotas registradas</td>
                             </tr>
                         </tbody>
-                        <tbody *ngIf="listMascotas.length > 0 && mascotasFiltradas.length === 0">
+                        <tbody *ngIf="!cargando && !error && listMascotas.length > 0 && mascotasFiltradas.length === 0">
                             <tr>
                                 <td colspan="7" class="text-center">No se encontraron mascotas</td>
                             </tr>
                         </tbody>
-                        <tbody *ngIf="mascotasFiltradas.length > 0">
+                        <tbody *ngIf="!cargando && !error && mascotasFiltradas.length > 0">
                             <tr *ngFor="let mascota of mascotasPaginadas">
                                 <td class="text-center">{{ mascota.nombreMascota }}</td>
                                 <td class="text-center">{{ mascota.raza.especie }}</td>

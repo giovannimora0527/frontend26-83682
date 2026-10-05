@@ -1,1 +1,52 @@
-<p>medico works!</p>
+<div class="container-fluid">
+  <div class="card shadow-sm border-0">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <div>
+        <h5 class="mb-1">Gestión de Médicos</h5>
+        <small class="text-muted">Personal profesional registrado.</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" [disabled]="cargando"
+        (click)="cargarMedicos()">Actualizar</button>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert" *ngIf="error">
+        <span>{{ error }}</span>
+        <button class="btn btn-danger btn-sm" type="button" (click)="cargarMedicos()">Reintentar</button>
+      </div>
+      <div class="table-responsive border rounded">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Tipo de documento</th>
+              <th>Número de documento</th>
+              <th>Nombres</th>
+              <th>Apellidos</th>
+              <th>Teléfono</th>
+              <th>Registro profesional</th>
+              <th>Especialización (ID)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="8" class="text-center py-4">Cargando médicos...</td>
+            </tr>
+            <tr *ngIf="!cargando && !error && medicos.length === 0">
+              <td colspan="8" class="text-center text-muted py-4">No hay médicos registrados.</td>
+            </tr>
+            <tr *ngFor="let medico of medicos">
+              <td>{{ medico.id }}</td>
+              <td>{{ medico.tipoDocumento }}</td>
+              <td>{{ medico.numeroDocumento }}</td>
+              <td>{{ medico.nombres }}</td>
+              <td>{{ medico.apellidos }}</td>
+              <td>{{ medico.telefono }}</td>
+              <td>{{ medico.registroProfesional }}</td>
+              <td>{{ medico.especializacionId }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -15,7 +15,7 @@ export class MascotaService {
   }
 
   listarMascotas(): Observable<Mascota[]> {
-    return this.backendService.get(environment.apiUrlAuth, this.api, "listar");
+    return this.backendService.get<Mascota[]>(environment.apiUrlAuth, this.api, 'listar-mascotas');
   }
 
   

@@ -6,6 +6,8 @@ export class Cliente {
     fechaNacimiento?: Date;
     nombres?: string;
     apellidos?: string;
+    genero?: string;
     telefono?: string;
     direccion?: string;
+    activo?: boolean;
 }

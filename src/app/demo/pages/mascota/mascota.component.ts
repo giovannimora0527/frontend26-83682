@@ -5,7 +5,6 @@ import { MascotaService } from './service/mascota.service';
 import { Mascota } from 'src/app/models/mascota';
 import { FormBuilder, FormGroup, Validators, AbstractControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import Swal from 'sweetalert2';
 import { Modal } from 'bootstrap';
 
 @Component({
@@ -23,6 +22,8 @@ export class MascotaComponent {
 
   // Variables para la paginación y búsqueda en la datatable.
   listMascotas: Mascota[] = [];
+  cargando = true;
+  error = '';
   terminoBusqueda = '';
   paginaActual = 1;
   readonly registrosPorPagina = 10;
@@ -97,16 +98,20 @@ export class MascotaComponent {
    * Metodo que permite listar las mascotas registradas en la base de datos y mostrarlas en la tabla.
    */
   listar() {
+    this.cargando = true;
+    this.error = '';
     this.mascotaService.listarMascotas()
       .subscribe(
         {
           next: (data) => {
-            console.log(data);
             this.listMascotas = data;
             this.paginaActual = 1;
+            this.cargando = false;
           },
           error: (error) => {
             console.error('Error al obtener las mascotas:', error);
+            this.error = 'No fue posible cargar las mascotas.';
+            this.cargando = false;
           }
         }
       );

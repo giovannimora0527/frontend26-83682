@@ -1,0 +1,127 @@
+<div class="container-fluid">
+  <div class="card shadow-sm border-0 overflow-hidden">
+    <div class="card-header bg-white border-bottom py-3">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <h5 class="mb-1">Gestión de Razas</h5>
+          <small class="text-muted">Administra las razas registradas para las mascotas.</small>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-outline-secondary" type="button" [disabled]="cargando"
+            (click)="cargarRazas()">
+            <i class="feather icon-refresh-cw me-1" aria-hidden="true"></i>
+            Actualizar
+          </button>
+          <button class="btn btn-primary" type="button" (click)="nuevaRaza()">
+            <i class="feather icon-plus me-1" aria-hidden="true"></i>
+            Nueva raza
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body p-4">
+      <div class="alert alert-success" role="status" *ngIf="mensaje">{{ mensaje }}</div>
+      <div class="alert alert-danger d-flex align-items-center justify-content-between gap-3" role="alert" *ngIf="error">
+        <span>{{ error }}</span>
+        <button class="btn btn-danger btn-sm" type="button" *ngIf="!mostrarFormulario"
+          (click)="cargarRazas()">Reintentar</button>
+      </div>
+
+      <section class="card border mb-4" *ngIf="mostrarFormulario" aria-labelledby="razaFormTitle">
+        <div class="card-header bg-light d-flex align-items-center justify-content-between">
+          <h6 class="mb-0" id="razaFormTitle">
+            {{ razaEnEdicion === null ? 'Registrar raza' : 'Cambiar raza' }}
+          </h6>
+          <button class="btn-close" type="button" aria-label="Cerrar formulario"
+            (click)="cancelarEdicion()"></button>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="formulario" (ngSubmit)="guardarRaza()" novalidate>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="razaNombre">Nombre de la raza</label>
+                <input id="razaNombre" class="form-control" type="text" formControlName="nombre"
+                  maxlength="100" placeholder="Ej. Labrador">
+                <div class="text-danger small mt-1"
+                  *ngIf="formulario.controls.nombre.touched && formulario.controls.nombre.invalid">
+                  Ingresa un nombre de hasta 100 caracteres.
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="razaEspecie">Especie</label>
+                <input id="razaEspecie" class="form-control" type="text" formControlName="especie"
+                  maxlength="100" placeholder="Ej. Canino">
+                <div class="text-danger small mt-1"
+                  *ngIf="formulario.controls.especie.touched && formulario.controls.especie.invalid">
+                  Ingresa una especie de hasta 100 caracteres.
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button class="btn btn-light" type="button" (click)="cancelarEdicion()">Cancelar</button>
+              <button class="btn btn-primary" type="submit" [disabled]="guardando">
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" *ngIf="guardando"></span>
+                {{ guardando ? 'Guardando...' : (razaEnEdicion === null ? 'Guardar raza' : 'Guardar cambios') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <div class="row align-items-center g-3 mb-3">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="feather icon-search" aria-hidden="true"></i></span>
+            <input class="form-control" type="search" placeholder="Buscar por nombre, especie o ID"
+              [value]="terminoBusqueda" (input)="actualizarBusqueda($event)">
+          </div>
+        </div>
+        <div class="col-md-6 text-md-end text-muted small">
+          {{ razasFiltradas.length }} {{ razasFiltradas.length === 1 ? 'raza encontrada' : 'razas encontradas' }}
+        </div>
+      </div>
+
+      <div class="table-responsive border rounded">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">ID</th>
+              <th>Nombre</th>
+              <th>Especie</th>
+              <th>Fecha de creación</th>
+              <th>Última modificación</th>
+              <th class="text-end pe-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="6" class="text-center py-5">
+                <span class="spinner-border spinner-border-sm text-primary me-2" aria-hidden="true"></span>
+                Cargando razas...
+              </td>
+            </tr>
+            <tr *ngIf="!cargando && !error && razasFiltradas.length === 0">
+              <td colspan="6" class="text-center text-muted py-5">
+                {{ razas.length ? 'No se encontraron razas con esa búsqueda.' : 'Aún no hay razas registradas.' }}
+              </td>
+            </tr>
+            <tr *ngFor="let raza of razasFiltradas">
+              <td class="ps-3 text-muted">{{ raza.razaId }}</td>
+              <td class="fw-semibold">{{ raza.nombre }}</td>
+              <td><span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{ raza.especie }}</span></td>
+              <td>{{ raza.fechaCreacion | date:'yyyy-MM-dd HH:mm' }}</td>
+              <td>{{ raza.fechaModificacion ? (raza.fechaModificacion | date:'yyyy-MM-dd HH:mm') : '—' }}</td>
+              <td class="text-end pe-3">
+                <button class="btn btn-outline-primary btn-sm" type="button" (click)="cambiarRaza(raza)">
+                  <i class="feather icon-edit-2 me-1" aria-hidden="true"></i>
+                  Cambiar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
