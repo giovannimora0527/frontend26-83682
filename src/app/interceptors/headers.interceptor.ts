@@ -10,15 +10,14 @@ export class HeadersInterceptor implements HttpInterceptor {
     req: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
-    if (req.body === null || req.body instanceof FormData || req.headers.has('Content-Type')) {
-      return next.handle(req);
-    }
-
-    return next.handle(req.clone({
+    const clonedRequest = req.clone({
       setHeaders: {
         'Content-Type': 'application/json',
       },
-    }));
+    });
+    const hasContentType = clonedRequest.headers.has('Content-Type');
+
+    return next.handle(clonedRequest);
   }
 
   addHeaders(request: HttpRequest<unknown>): HttpRequest<any> {
