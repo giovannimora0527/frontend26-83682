@@ -1,1 +1,91 @@
-<p>medico works!</p>
+
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header">
+      <div class="row">
+        <div class="col col-md-9">
+          <input
+            class="form-control"
+            type="text"
+            placeholder="Buscar médico"
+          />
+        </div>
+
+        <div class="col col-md-3 text-end">
+          <button
+            type="button"
+            class="btn btn-md btn-outline-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#modalCrearMedico">
+            <i class="fa fa-plus"></i>
+            &nbsp; Nuevo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+          <tr>
+            <th class="text-center">Nombre</th>
+            <th class="text-center">Especialidad</th>
+            <th class="text-center">Teléfono</th>
+            <th class="text-center">Correo</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr>
+            <td colspan="5" class="text-center">
+              No hay médicos registrados
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ventana modal -->
+<div
+  class="modal fade"
+  id="modalCrearMedico"
+  tabindex="-1"
+  aria-labelledby="modalCrearMedicoLabel"
+  aria-hidden="true">
+
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCrearMedicoLabel">
+          Gestión de Médicos
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar">
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p>Formulario de registro de médicos pendiente.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

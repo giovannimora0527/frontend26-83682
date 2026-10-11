@@ -1,108 +1,651 @@
+
+<!-- ===================================================== -->
+<!-- MÓDULO DE GESTIÓN DE MASCOTAS                         -->
+<!-- Permite listar, buscar, paginar y editar mascotas.    -->
+<!-- ===================================================== -->
+
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-header">
-            <div class="row">
-                <div class="col col-md-9">
-                    <input class="form-control" placeholder="Buscar mascota" type="text"
-                        (input)="actualizarBusqueda($event)" />
-                </div>
-                <div class="col col-md-3 text-end">
-                    <button
-                        class="btn btn-md btn-outline-primary d-inline-flex align-items-center justify-content-center"
-                        (click)="nuevaMascota('C')" title="Agregar mascota">
-                        <i class="fa fa-plus" aria-hidden="true"></i>
-                        &nbsp; Nuevo
-                    </button>
-                </div>
-            </div>
+  <div class="card">
+
+    <!-- ================================================= -->
+    <!-- 1. ENCABEZADO: BUSCADOR Y BOTÓN NUEVO             -->
+    <!-- ================================================= -->
+
+    <div class="card-header">
+      <div class="row g-2 align-items-center">
+
+        <!-- Buscador de mascotas -->
+        <div class="col-md-9">
+
+          <!--
+            El evento input se ejecuta cuando el usuario escribe.
+            actualizarBusqueda() filtra las mascotas por el texto
+            ingresado y reinicia la paginación.
+          -->
+          <input
+            class="form-control"
+            type="text"
+            placeholder="Buscar mascota"
+            (input)="actualizarBusqueda($event)" />
+
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="table table-responsive table-condensed col col-md-12">
-                    <table class="table table-stripped table-condensed table-responsive">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Nombre</th>
-                                <th class="text-center">Especie</th>
-                                <th class="text-center">Raza</th>
-                                <th class="text-center">Edad</th>
-                                <th class="text-center">Cliente</th>
-                                <th class="text-center">Fecha de Registro</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody *ngIf="listMascotas.length === 0">
-                            <tr>
-                                <td colspan="7" class="text-center">No hay mascotas registradas</td>
-                            </tr>
-                        </tbody>
-                        <tbody *ngIf="listMascotas.length > 0 && mascotasFiltradas.length === 0">
-                            <tr>
-                                <td colspan="7" class="text-center">No se encontraron mascotas</td>
-                            </tr>
-                        </tbody>
-                        <tbody *ngIf="mascotasFiltradas.length > 0">
-                            <tr *ngFor="let mascota of mascotasPaginadas">
-                                <td class="text-center">{{ mascota.nombreMascota }}</td>
-                                <td class="text-center">{{ mascota.raza.especie }}</td>
-                                <td class="text-center">{{ mascota.raza.nombre }}</td>
-                                <td class="text-center">{{ mascota.edad }}</td>
-                                <td class="text-center">{{ mascota.cliente.nombres }} {{ mascota.cliente.apellidos }}
-                                </td>
-                                <td class="text-center">{{ mascota.fechaRegistro | date:'yyyy-MM-dd HH:mm' }}</td>
-                                <td class="text-center">
-                                    <button class="btn btn-outline-info d-inline-flex 
-                                    align-items-center justify-content-center" (click)="abrirEdicion(mascota)">
-                                        <i class="fa fa-edit"></i>&nbsp;Editar</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <nav *ngIf="totalPaginas > 1" aria-label="Paginación de mascotas">
-                <ul class="pagination justify-content-end mb-0">
-                    <li class="page-item" [class.disabled]="paginaActual === 1">
-                        <button class="page-link" type="button" [disabled]="paginaActual === 1"
-                            (click)="cambiarPagina(paginaActual - 1)">Anterior</button>
-                    </li>
-                    <li class="page-item" *ngFor="let pagina of paginas" [class.active]="pagina === paginaActual">
-                        <button class="page-link" type="button"
-                            [attr.aria-current]="pagina === paginaActual ? 'page' : null"
-                            (click)="cambiarPagina(pagina)">{{ pagina }}</button>
-                    </li>
-                    <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
-                        <button class="page-link" type="button" [disabled]="paginaActual === totalPaginas"
-                            (click)="cambiarPagina(paginaActual + 1)">Siguiente</button>
-                    </li>
-                </ul>
-            </nav>
+
+        <!-- Botón para registrar una nueva mascota -->
+        <div class="col-md-3 text-md-end">
+
+          <!--
+            'C' significa Crear.
+            nuevaMascota('C') prepara el formulario vacío
+            y abre la ventana modal.
+          -->
+          <button
+            type="button"
+            class="btn btn-outline-primary d-inline-flex align-items-center justify-content-center"
+            (click)="nuevaMascota('C')"
+            title="Agregar mascota">
+
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            &nbsp; Nuevo
+
+          </button>
+
         </div>
+
+      </div>
     </div>
+
+    <!-- ================================================= -->
+    <!-- 2. TABLA DE MASCOTAS                              -->
+    <!-- ================================================= -->
+
+    <div class="card-body">
+
+      <!--
+        table-responsive permite desplazamiento horizontal
+        cuando la pantalla es pequeña.
+      -->
+      <div class="table-responsive">
+
+        <!--
+          table-striped alterna el fondo de las filas.
+          table-hover resalta la fila al pasar el mouse.
+        -->
+        <table class="table table-striped table-hover">
+
+          <!-- Encabezados de la tabla -->
+          <thead>
+          <tr>
+            <th class="text-center">Nombre</th>
+            <th class="text-center">Especie</th>
+            <th class="text-center">Raza</th>
+            <th class="text-center">Edad</th>
+            <th class="text-center">Cliente</th>
+            <th class="text-center">Fecha de Registro</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+          </thead>
+
+          <!-- ================================================= -->
+          <!-- 3. MENSAJE CUANDO NO HAY MASCOTAS                  -->
+          <!-- ================================================= -->
+
+          <!--
+            Si la lista está vacía, Angular muestra este mensaje.
+          -->
+          <tbody *ngIf="listMascotas.length === 0">
+          <tr>
+            <td colspan="7" class="text-center py-3">
+              No hay mascotas registradas
+            </td>
+          </tr>
+          </tbody>
+
+          <!-- ================================================= -->
+          <!-- 4. MENSAJE CUANDO LA BÚSQUEDA NO TIENE RESULTADOS -->
+          <!-- ================================================= -->
+
+          <!--
+            Si existen mascotas pero ninguna coincide
+            con el texto buscado, aparece este mensaje.
+          -->
+          <tbody
+            *ngIf="listMascotas.length > 0 &&
+                   mascotasFiltradas.length === 0">
+
+          <tr>
+            <td colspan="7" class="text-center py-3">
+              No se encontraron mascotas
+            </td>
+          </tr>
+
+          </tbody>
+
+          <!-- ================================================= -->
+          <!-- 5. MOSTRAR LAS MASCOTAS REGISTRADAS               -->
+          <!-- ================================================= -->
+
+          <tbody *ngIf="mascotasFiltradas.length > 0">
+
+          <!--
+            ngFor recorre las mascotas de la página actual.
+
+            mascotasPaginadas contiene únicamente los registros
+            que corresponden a la página seleccionada.
+          -->
+          <tr *ngFor="let mascota of mascotasPaginadas">
+
+            <!-- Nombre de la mascota -->
+            <td class="text-center">
+              {{ mascota.nombreMascota || 'Sin nombre' }}
+            </td>
+
+            <!--
+              Especie de la mascota.
+
+              ?. evita que Angular falle si raza es null
+              o undefined.
+
+              ?? muestra un texto alternativo si el valor
+              es null o undefined.
+            -->
+            <td class="text-center">
+              {{ mascota.raza?.especie ?? 'Sin especie' }}
+            </td>
+
+            <!-- Nombre de la raza -->
+            <td class="text-center">
+              {{ mascota.raza?.nombre ?? 'Sin raza' }}
+            </td>
+
+            <!--
+              Edad de la mascota.
+
+              Se utiliza ?? para permitir que la edad 0
+              se muestre correctamente.
+            -->
+            <td class="text-center">
+              {{ mascota.edad ?? 'Sin edad' }}
+            </td>
+
+            <!-- ================================================= -->
+            <!-- MOSTRAR EL PROPIETARIO DE LA MASCOTA               -->
+            <!-- ================================================= -->
+
+            <td class="text-center">
+
+              <!--
+                Si la mascota tiene un objeto cliente,
+                mostramos sus nombres y apellidos.
+              -->
+              <ng-container
+                *ngIf="mascota.cliente; else sinPropietario">
+
+                {{ mascota.cliente?.nombres || '' }}
+                {{ mascota.cliente?.apellidos || '' }}
+
+              </ng-container>
+
+              <!--
+                Este mensaje aparece cuando la mascota
+                no tiene un cliente disponible.
+              -->
+              <ng-template #sinPropietario>
+                Sin propietario
+              </ng-template>
+
+            </td>
+
+            <!-- ================================================= -->
+            <!-- FECHA DE REGISTRO                                 -->
+            <!-- ================================================= -->
+
+            <td class="text-center">
+
+              <!--
+                El pipe date permite mostrar la fecha
+                en formato año-mes-día hora:minuto.
+              -->
+              {{
+              mascota.fechaRegistro
+              ? (mascota.fechaRegistro |
+              date:'yyyy-MM-dd HH:mm')
+              : 'Sin fecha'
+              }}
+
+            </td>
+
+            <!-- ================================================= -->
+            <!-- BOTÓN EDITAR                                     -->
+            <!-- ================================================= -->
+
+            <td class="text-center">
+
+              <!--
+                abrirEdicion(mascota) recibe la mascota
+                seleccionada y abre el formulario de edición.
+              -->
+              <button
+                type="button"
+                class="btn btn-outline-info d-inline-flex align-items-center justify-content-center"
+                (click)="abrirEdicion(mascota)">
+
+                <i class="fa fa-edit"></i>
+                &nbsp; Editar
+
+              </button>
+
+            </td>
+
+          </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- ================================================= -->
+      <!-- 6. PAGINACIÓN                                    -->
+      <!-- ================================================= -->
+
+      <!--
+        La paginación aparece solamente cuando hay
+        más de una página de resultados.
+      -->
+      <nav
+        *ngIf="totalPaginas > 1"
+        aria-label="Paginación de mascotas">
+
+        <ul class="pagination justify-content-end mb-0">
+
+          <!-- Botón Anterior -->
+          <li
+            class="page-item"
+            [class.disabled]="paginaActual === 1">
+
+            <button
+              type="button"
+              class="page-link"
+              [disabled]="paginaActual === 1"
+              (click)="cambiarPagina(paginaActual - 1)">
+
+              Anterior
+
+            </button>
+
+          </li>
+
+          <!-- Números de las páginas -->
+          <li
+            class="page-item"
+            *ngFor="let pagina of paginas"
+            [class.active]="pagina === paginaActual">
+
+            <button
+              type="button"
+              class="page-link"
+              [attr.aria-current]="
+                pagina === paginaActual ? 'page' : null
+              "
+              (click)="cambiarPagina(pagina)">
+
+              {{ pagina }}
+
+            </button>
+
+          </li>
+
+          <!-- Botón Siguiente -->
+          <li
+            class="page-item"
+            [class.disabled]="paginaActual === totalPaginas">
+
+            <button
+              type="button"
+              class="page-link"
+              [disabled]="paginaActual === totalPaginas"
+              (click)="cambiarPagina(paginaActual + 1)">
+
+              Siguiente
+
+            </button>
+
+          </li>
+
+        </ul>
+
+      </nav>
+
+    </div>
+
+  </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="modalCrearMascota" tabindex="-1" aria-labelledby="modalCrearMascotaLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="modalCrearMascotaLabel">{{ titleModal }}</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                (click)="closeModal()"></button>
-            </div>
-            <div class="modal-body">
-                <div class="card">
-                    <div class="card-body">
-                      
-                    </div>
+
+<!-- ===================================================== -->
+<!-- 7. VENTANA MODAL: CREAR O EDITAR MASCOTA              -->
+<!-- ===================================================== -->
+
+<!--
+  Bootstrap utiliza esta ventana modal para mostrar
+  el formulario sin cambiar de página.
+-->
+<div
+  class="modal fade"
+  id="modalCrearMascota"
+  tabindex="-1"
+  aria-labelledby="modalCrearMascotaLabel"
+  aria-hidden="true">
+
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- ================================================= -->
+      <!-- 8. ENCABEZADO DEL MODAL                           -->
+      <!-- ================================================= -->
+
+      <div class="modal-header">
+
+        <!--
+          titleModal cambia dependiendo del modo:
+
+          Crear Mascota
+          Editar Mascota
+        -->
+        <h1
+          class="modal-title fs-5"
+          id="modalCrearMascotaLabel">
+
+          {{ titleModal }}
+
+        </h1>
+
+        <!-- Botón X para cerrar el modal -->
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+          (click)="closeModal()">
+        </button>
+
+      </div>
+
+      <!-- ================================================= -->
+      <!-- 9. CUERPO DEL MODAL                               -->
+      <!-- ================================================= -->
+
+      <div class="modal-body">
+
+        <div class="card border-0">
+
+          <div class="card-body">
+
+            <!--
+              Formulario reactivo de Angular.
+
+              [formGroup]="form" conecta los campos HTML
+              con el FormGroup definido en
+              mascota.component.ts.
+            -->
+            <form [formGroup]="form">
+
+              <div class="row g-3">
+
+                <!-- ========================================= -->
+                <!-- 10. NOMBRE DE LA MASCOTA                  -->
+                <!-- ========================================= -->
+
+                <div class="col-md-6">
+
+                  <label
+                    for="nombreMascota"
+                    class="form-label">
+
+                    Nombre de la mascota
+
+                  </label>
+
+                  <!--
+                    formControlName conecta este campo
+                    con el control nombreMascota.
+                  -->
+                  <input
+                    type="text"
+                    id="nombreMascota"
+                    class="form-control"
+                    formControlName="nombreMascota"
+                    placeholder="Ej: Luna"
+                    autocomplete="off">
+
+                  <!-- Mensaje de validación -->
+                  <small
+                    class="text-danger"
+                    *ngIf="
+                      form.get('nombreMascota')?.invalid &&
+                      form.get('nombreMascota')?.touched
+                    ">
+
+                    Debe ingresar el nombre de la mascota.
+
+                  </small>
+
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                (click)="closeModal()">Cerrar</button>
-                <button type="button" class="btn btn-primary">{{ titleBoton}}</button>
-            </div>
+
+                <!-- ========================================= -->
+                <!-- 11. EDAD DE LA MASCOTA                    -->
+                <!-- ========================================= -->
+
+                <div class="col-md-6">
+
+                  <label
+                    for="edadMascota"
+                    class="form-label">
+
+                    Edad
+
+                  </label>
+
+                  <input
+                    type="number"
+                    id="edadMascota"
+                    min="0"
+                    class="form-control"
+                    formControlName="edad"
+                    placeholder="Ej: 3">
+
+                  <!-- Mensaje de validación -->
+                  <small
+                    class="text-danger"
+                    *ngIf="
+                      form.get('edad')?.invalid &&
+                      form.get('edad')?.touched
+                    ">
+
+                    Debe ingresar la edad de la mascota.
+
+                  </small>
+
+                </div>
+
+                <!-- ========================================= -->
+                <!-- 12. IDENTIFICADOR DE RAZA                 -->
+                <!-- ========================================= -->
+
+                <div class="col-md-6">
+
+                  <label
+                    for="razaMascota"
+                    class="form-label">
+
+                    ID de raza
+
+                  </label>
+
+                  <!--
+                    Este campo permanece numérico por ahora.
+
+                    Posteriormente se reemplazará por
+                    una lista desplegable de razas.
+                  -->
+                  <input
+                    type="number"
+                    id="razaMascota"
+                    min="1"
+                    class="form-control"
+                    formControlName="raza"
+                    placeholder="Identificador de raza">
+
+                  <!-- Mensaje de validación -->
+                  <small
+                    class="text-danger"
+                    *ngIf="
+                      form.get('raza')?.invalid &&
+                      form.get('raza')?.touched
+                    ">
+
+                    Debe ingresar el ID de la raza.
+
+                  </small>
+
+                </div>
+
+                <!-- ========================================= -->
+                <!-- 13. SELECCIONAR PROPIETARIO              -->
+                <!-- ========================================= -->
+
+                <div class="col-md-6">
+
+                  <label
+                    for="clienteMascota"
+                    class="form-label">
+
+                    Propietario de la mascota
+
+                  </label>
+
+                  <!--
+                    Este select muestra los clientes
+                    obtenidos desde la base de datos.
+
+                    listClientes se carga mediante
+                    clienteService.listarClientes().
+
+                    formControlName="cliente" conecta el
+                    selector con el formulario reactivo.
+                  -->
+                  <select
+                    id="clienteMascota"
+                    class="form-select"
+                    formControlName="cliente"
+                    [compareWith]="compararClientes">
+
+                    <!-- Opción inicial -->
+                    <option [ngValue]="null" disabled>
+                      Seleccione un propietario
+                    </option>
+
+                    <!--
+                      ngFor recorre los clientes disponibles.
+
+                      ngValue almacena el objeto Cliente
+                      completo, no solamente su ID.
+                    -->
+                    <option
+                      *ngFor="let cliente of listClientes"
+                      [ngValue]="cliente">
+
+                      {{ cliente.nombres }}
+                      {{ cliente.apellidos }}
+                      - {{ cliente.numeroDocumento }}
+
+                    </option>
+
+                  </select>
+
+                  <!--
+                    Validación del propietario.
+
+                    Se muestra cuando el usuario toca
+                    el selector sin escoger un cliente.
+                  -->
+                  <small
+                    class="text-danger"
+                    *ngIf="
+                      form.get('cliente')?.invalid &&
+                      form.get('cliente')?.touched
+                    ">
+
+                    Debe seleccionar un propietario.
+
+                  </small>
+
+                  <!--
+                    Mensaje para cuando no hay clientes
+                    disponibles para seleccionar.
+                  -->
+                  <small
+                    class="text-muted d-block mt-1"
+                    *ngIf="listClientes.length === 0">
+
+                    No hay propietarios disponibles.
+
+                  </small>
+
+                </div>
+
+              </div>
+
+            </form>
+
+          </div>
+
         </div>
+
+      </div>
+
+      <!-- ================================================= -->
+      <!-- 14. BOTONES DEL MODAL                             -->
+      <!-- ================================================= -->
+
+      <div class="modal-footer">
+
+        <!--
+          Cierra el modal y reinicia el formulario.
+        -->
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+          (click)="closeModal()">
+
+          Cerrar
+
+        </button>
+
+        <!--
+          El texto del botón cambia dependiendo del modo.
+
+          Guardar Mascota
+          Actualizar Mascota
+
+          La funcionalidad para enviar datos al backend
+          se implementará posteriormente.
+        -->
+        <!-- Guarda una mascota nueva o actualiza una existente -->
+        <!-- Botón que envía el formulario al backend -->
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="form.invalid"
+          (click)="guardarMascota()">
+
+          {{ titleBoton }}
+
+        </button>
+
+      </div>
+
     </div>
+  </div>
 </div>
