@@ -8,13 +8,11 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root'
 })
 export class MedicoService {
-
   private api = `medico`;
 
-  constructor(private readonly backendService: BackendService) { }
+  constructor(private backendService: BackendService) { }
 
-
-  listar(): Observable<Medico[]> {
-    return this.backendService.get(environment.apiUrlAuth, this.api, "listar");
+  listarMedicos(): Observable<Medico[]> {
+    return this.backendService.get(environment.apiUrlAuth, this.api, "listar-todos");
   }
 }

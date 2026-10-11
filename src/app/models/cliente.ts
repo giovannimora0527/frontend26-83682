@@ -1,7 +1,13 @@
 export class Cliente {
-   tipoDocumento?: string;
-   numeroDocumento?: string;
-   nombres?: string;
-   apellidos?: string;
-   direccion?: string;
+    clienteId?: number;
+    usuarioId?: number;
+    tipoDocumento?: string;
+    numeroDocumento?: string;
+    fechaNacimiento?: Date;
+    nombres?: string;
+    apellidos?: string;
+    genero?: string;
+    telefono?: string;
+    direccion?: string;
+    activo?: boolean;
 }

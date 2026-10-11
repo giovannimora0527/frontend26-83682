@@ -8,14 +8,11 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root'
 })
 export class ClienteService {
-
   private api = `cliente`;
 
-  constructor(private backendService: BackendService) {
-
-  }
+  constructor(private backendService: BackendService) { }
 
   listarClientes(): Observable<Cliente[]> {
-    return this.backendService.get(environment.apiUrlAuth, this.api, "listar");
+    return this.backendService.get(environment.apiUrlAuth, this.api, "listar-todos");
   }
 }

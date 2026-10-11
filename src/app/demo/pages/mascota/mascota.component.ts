@@ -1,24 +1,21 @@
 import { Component } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { MascotaService } from './service/mascota.service';
+import { RazaService } from '../raza/service/raza.service';
+import { ClienteService } from '../cliente/service/cliente.service';
 import { Mascota } from 'src/app/models/mascota';
+import { MascotaRq } from 'src/app/models/mascota-rq';
+import { Raza } from 'src/app/models/raza';
+import { Cliente } from 'src/app/models/cliente';
 import { FormBuilder, FormGroup, Validators, AbstractControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import Swal from 'sweetalert2';
-
 import { Modal } from 'bootstrap';
-import { Raza } from 'src/app/models/raza';
-import { RazaService } from './service/raza.service';
-import { ClienteService } from '../cliente/service/cliente.service';
-import { Cliente } from 'src/app/models/cliente';
-
-type ColumnaOrden = 'nombre' | 'especie' | 'raza' | 'edad' | 'cliente' | 'fechaRegistro';
 
 @Component({
   selector: 'app-mascota',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './mascota.component.html',
   styleUrl: './mascota.component.scss'
 })
@@ -29,67 +26,48 @@ export class MascotaComponent {
   modoFormulario: string = "";
   titleBoton: string = "";
 
-  // Variables para la paginación, ordenamiento y búsqueda en la datatable.
+  // Variables para la paginación y búsqueda en la datatable.
   listMascotas: Mascota[] = [];
   terminoBusqueda = '';
   paginaActual = 1;
-  readonly registrosPorPagina = 5;
-  columnaOrden: ColumnaOrden = 'nombre';
-  direccionOrden: 'asc' | 'desc' = 'asc';
-
-  listRazas: Raza[] = [];
-  listClientes: Cliente[] = [];
+  readonly registrosPorPagina = 10;
 
   // Formulario para crear o editar mascota.
   form!: FormGroup;
   mascotaSelected: Mascota | null = null;
-  enviando = false;
-  respuestaError = '';
+
+  // Catalogos para los selects del formulario.
+  listRazas: Raza[] = [];
+  listClientes: Cliente[] = [];
 
   constructor(private readonly mascotaService: MascotaService,
     private readonly razaService: RazaService,
     private readonly clienteService: ClienteService,
     private readonly formBuilder: FormBuilder) {
     this.listar();
-    this.listarRazas();
+    this.cargarCatalogos();
     this.inicializarFormulario();
-    this.listarClientes();
-  }
-
-  listarClientes() {
-    this.clienteService.listarClientes()
-      .subscribe({
-        next: (data) => {
-          this.listClientes = data;
-        },
-        error: (error) => {
-          console.error('Error al obtener los clientes:', error);
-        }
-      });
-  }
-
-  /**
-   * Metodo que lista las razas para el combo.
-   */
-  listarRazas() {
-    this.razaService.listarRazas()
-      .subscribe({
-        next: (data) => {
-          this.listRazas = data;
-        },
-        error: (error) => {
-          console.error('Error al obtener las razas:', error);
-        }
-      });
   }
 
   // Metodo ue permite inicializar el formulario con sus controles y validaciones.
   inicializarFormulario() {
     this.form = this.formBuilder.group({
       nombreMascota: ['', Validators.required],
-      raza: [null, Validators.required],
-      edad: ['', [Validators.required, Validators.min(1)]],
-      cliente: ['', Validators.required]      
+      razaId: [null, Validators.required],
+      edad: [null, [Validators.required, Validators.min(1)]],
+      clienteId: [null, Validators.required]
+    });
+  }
+
+  // Carga las razas y clientes que alimentan los selects del formulario.
+  cargarCatalogos() {
+    this.razaService.listarRazas().subscribe({
+      next: (data) => this.listRazas = data,
+      error: (error) => console.error('Error al obtener las razas:', error)
+    });
+    this.clienteService.listarClientes().subscribe({
+      next: (data) => this.listClientes = data,
+      error: (error) => console.error('Error al obtener los clientes:', error)
     });
   }
 
@@ -104,11 +82,11 @@ export class MascotaComponent {
    */
   get mascotasFiltradas(): Mascota[] {
     const termino = this.normalizarTexto(this.terminoBusqueda.trim());
-    const filtradas = this.listMascotas.filter((mascota) => {
-      if (!termino) {
-        return true;
-      }
+    if (!termino) {
+      return this.listMascotas;
+    }
 
+    return this.listMascotas.filter((mascota) => {
       const valores = [
         mascota.nombreMascota,
         mascota.raza?.especie,
@@ -124,43 +102,6 @@ export class MascotaComponent {
         this.normalizarTexto(String(valor ?? '')).includes(termino)
       );
     });
-
-    return [...filtradas].sort((mascotaA, mascotaB) => {
-      const valorA = this.obtenerValorOrden(mascotaA, this.columnaOrden);
-      const valorB = this.obtenerValorOrden(mascotaB, this.columnaOrden);
-      const comparacion = typeof valorA === 'number' && typeof valorB === 'number'
-        ? valorA - valorB
-        : String(valorA).localeCompare(String(valorB), 'es', { numeric: true, sensitivity: 'base' });
-
-      return this.direccionOrden === 'asc' ? comparacion : -comparacion;
-    });
-  }
-
-  private obtenerValorOrden(mascota: Mascota, columna: ColumnaOrden): string | number {
-    switch (columna) {
-      case 'nombre':
-        return mascota.nombreMascota ?? '';
-      case 'especie':
-        return mascota.raza?.especie ?? '';
-      case 'raza':
-        return mascota.raza?.nombre ?? '';
-      case 'edad':
-        return mascota.edad ?? 0;
-      case 'cliente':
-        return `${mascota.cliente?.nombres ?? ''} ${mascota.cliente?.apellidos ?? ''}`;
-      case 'fechaRegistro':
-        return mascota.fechaRegistro ? new Date(mascota.fechaRegistro).getTime() : 0;
-    }
-  }
-
-  ordenarPor(columna: ColumnaOrden): void {
-    if (this.columnaOrden === columna) {
-      this.direccionOrden = this.direccionOrden === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.columnaOrden = columna;
-      this.direccionOrden = 'asc';
-    }
-    this.paginaActual = 1;
   }
 
   get mascotasPaginadas(): Mascota[] {
@@ -216,22 +157,6 @@ export class MascotaComponent {
       .replace(/[\u0300-\u036f]/g, '');
   }
 
-  compararRazas(razaA: Raza | null, razaB: Raza | null): boolean {
-    return razaA === razaB || (
-      razaA?.nombre === razaB?.nombre && razaA?.especie === razaB?.especie
-    );
-  }
-
-  compararClientes(clienteA: Cliente | null, clienteB: Cliente | null): boolean {
-    return clienteA === clienteB || (
-      clienteA?.tipoDocumento === clienteB?.tipoDocumento && clienteA?.numeroDocumento === clienteB?.numeroDocumento
-    );
-  }
-
-  /**
-   * Metodos para la gestion de mascotas (crear, editar, guardar).
-   */
-
   // Evento para abrir el modal de crear o editar mascota, dependiendo del modo recibido.
   nuevaMascota(modo: string) {
     this.titleModal = modo === 'C' ? 'Crear Mascota' : 'Editar Mascota';
@@ -245,7 +170,6 @@ export class MascotaComponent {
     this.form.reset();
     this.form.markAsPristine();
     this.form.markAsUntouched();
-    this.respuestaError = '';
   }
 
   abrirEdicion(mascota: Mascota) {
@@ -253,66 +177,11 @@ export class MascotaComponent {
     this.modoFormulario = 'E';
     this.form.patchValue({
       nombreMascota: mascota.nombreMascota,
-      raza: mascota.raza ?? null,
+      razaId: mascota.raza?.razaId ?? null,
       edad: mascota.edad,
-      cliente: mascota.cliente ?? null
+      clienteId: mascota.cliente?.clienteId ?? null
     });
     this.openModal(this.modoFormulario);
-  }
-
-  /**
-   * 
-   * @returns Acción realizada sobre la mascota (crear o actualizar).
-   */
-  guardarMascota() {
-    if (this.form.invalid || this.enviando) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    const valores = this.form.getRawValue();    
-    const mascota: Mascota = {
-      mascotaId: this.mascotaSelected?.mascotaId,
-      nombre: valores.nombreMascota,
-      edad: Number(valores.edad),
-      razaId: valores.raza.razaId,
-      clienteId: valores.cliente.id 
-    };
-
-    this.enviando = true;
-    this.respuestaError = ''; 
-    const solicitud = this.modoFormulario === 'C'
-      ? this.mascotaService.crearMascota(mascota)
-      : this.mascotaService.actualizarMascota(mascota);
-
-    solicitud.subscribe({
-      next: (respuesta) => {
-        this.enviando = false;
-        const mensaje = this.obtenerMensajeRespuesta(
-          respuesta,
-          this.modoFormulario === 'C' ? 'La mascota fue creada correctamente.' : 'La mascota fue actualizada correctamente.'
-        );
-        this.closeModal();
-        this.listar();
-        Swal.fire('Operación exitosa', mensaje, 'success');
-      },
-      error: (error) => {
-        this.enviando = false;
-        console.error('Error al guardar la mascota:', error);
-        Swal.fire('Error', error.message, 'error');
-      }
-    });
-  }
-
-  private obtenerMensajeRespuesta(respuesta: unknown, mensajePredeterminado: string): string {
-    if (respuesta && typeof respuesta === 'object') {
-      const cuerpo = respuesta as { mensaje?: unknown; message?: unknown };
-      const mensaje = cuerpo.mensaje ?? cuerpo.message;
-      if (typeof mensaje === 'string') {
-        return mensaje;
-      }
-    }
-    return mensajePredeterminado;
   }
 
   closeModal() {
@@ -334,5 +203,42 @@ export class MascotaComponent {
     }
   }
 
+  /**
+   * Guarda o actualiza la mascota segun el modo del formulario (C = crear, E = editar).
+   */
+  guardar() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
+    const rq: MascotaRq = {
+      nombreMascota: this.form.value.nombreMascota,
+      edad: Number(this.form.value.edad),
+      razaId: Number(this.form.value.razaId),
+      clienteId: Number(this.form.value.clienteId)
+    };
+
+    const esEdicion = this.modoFormulario === 'E' && this.mascotaSelected !== null;
+    if (esEdicion) {
+      rq.mascotaId = this.mascotaSelected!.mascotaId;
+    }
+
+    const peticion = esEdicion
+      ? this.mascotaService.actualizarMascota(rq)
+      : this.mascotaService.guardarMascota(rq);
+
+    peticion.subscribe({
+      next: (respuesta) => {
+        Swal.fire('Exito', respuesta.message ?? 'Operacion exitosa', 'success');
+        this.closeModal();
+        this.listar();
+      },
+      error: (error) => {
+        // El backend devuelve {status, error, message} en los errores controlados.
+        const mensaje = error?.error?.message ?? 'No fue posible completar la operacion';
+        Swal.fire('Error', mensaje, 'error');
+      }
+    });
+  }
 }

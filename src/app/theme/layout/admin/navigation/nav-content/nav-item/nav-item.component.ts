@@ -1,8 +1,7 @@
 // angular import
-import { Component, ElementRef, inject, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Location } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 // project import
 import { NavigationItem } from '../../navigation';
@@ -16,7 +15,6 @@ import { SharedModule } from 'src/app/theme/shared/shared.module';
 })
 export class NavItemComponent {
   private location = inject(Location);
-  private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
   // public props
   item = input<NavigationItem>();
@@ -24,12 +22,6 @@ export class NavItemComponent {
   // constructor
 
   // public method
-  showMenuTooltip(tooltip: NgbTooltip) {
-    if (window.matchMedia('(min-width: 992px)').matches && this.element.nativeElement.closest('.pcoded-navbar.navbar-collapsed')) {
-      tooltip.open();
-    }
-  }
-
   closeOtherMenu(event: MouseEvent) {
     const ele = event.target as HTMLElement;
     if (ele !== null && ele !== undefined) {

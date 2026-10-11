@@ -1,144 +1,43 @@
 import { Component } from '@angular/core';
-import { CommonModule, formatDate } from '@angular/common';
-
-import Swal from 'sweetalert2';
-import { Modal } from 'bootstrap';
 import { Medico } from 'src/app/models/medico';
-import { FormBuilder } from '@angular/forms';
+import { Especializacion } from 'src/app/models/especializacion';
 import { MedicoService } from './service/medico.service';
+import { EspecializacionService } from '../especializacion/service/especializacion.service';
+import { TablaListadoComponent, Columna, fechaHora, soloFecha } from 'src/app/demo/shared/tabla-listado/tabla-listado.component';
 
 @Component({
   selector: 'app-medico',
-  imports: [CommonModule],
+  imports: [TablaListadoComponent],
   templateUrl: './medico.component.html',
   styleUrl: './medico.component.scss'
 })
 export class MedicoComponent {
-  // Variables para el modal.
-  modalInstance: Modal | null = null;
-  titleModal: string = "";
-  modoFormulario: string = "";
-  titleBoton: string = "";
-
-  // Variables para la paginación y búsqueda en la datatable.
-  listMedicos: Medico[] = [];
-  terminoBusqueda = '';
-  paginaActual = 1;
-  readonly registrosPorPagina = 5;
+  titulo = 'Médicos';
+  items: Medico[] = [];
+  especializaciones: Especializacion[] = [];
+  columnas: Columna[] = [
+    { titulo: 'Documento', valor: (m: Medico) => `${m.tipoDocumento ?? ''} ${m.numeroDocumento ?? ''}` },
+    { titulo: 'Nombres', valor: (m: Medico) => m.nombres },
+    { titulo: 'Apellidos', valor: (m: Medico) => m.apellidos },
+    { titulo: 'Teléfono', valor: (m: Medico) => m.telefono },
+    { titulo: 'Registro profesional', valor: (m: Medico) => m.registroProfesional },
+    { titulo: 'Especialización', valor: (m: Medico) => this.nombreEspecializacion(m.especializacionId) }
+  ];
 
   constructor(private readonly medicoService: MedicoService,
-    private readonly formBuilder: FormBuilder) {
-    this.listar();
-  }
-
-  /**
-     * Filtra la lista de médicos según el término de búsqueda ingresado por el usuario.
-     * @returns Un arreglo de médicos filtrados.
-     */
-  get medicoFiltrados(): Medico[] {
-    const termino = this.normalizarTexto(this.terminoBusqueda.trim());
-    if (!termino) {
-      return this.listMedicos;
-    }
-
-    return this.listMedicos.filter((medico) => {
-      const valores = [
-        medico.nombres,
-        medico.apellidos,
-        medico.tipoDocumento,
-        medico.numeroDocumento,
-        medico.especializacion.nombre,
-        medico.registroProfesional,
-        medico.telefono
-      ];
-
-      return valores.some((valor) =>
-        this.normalizarTexto(String(valor ?? '')).includes(termino)
-      );
+    private readonly especializacionService: EspecializacionService) {
+    this.medicoService.listarMedicos().subscribe({
+      next: (data) => this.items = data,
+      error: (error) => console.error('Error al obtener los médicos:', error)
+    });
+    this.especializacionService.listarEspecializaciones().subscribe({
+      next: (data) => this.especializaciones = data,
+      error: (error) => console.error('Error al obtener las especializaciones:', error)
     });
   }
 
-  get medicoPaginados(): Medico[] {
-    const inicio = (this.paginaActual - 1) * this.registrosPorPagina;
-    return this.medicoFiltrados.slice(inicio, inicio + this.registrosPorPagina);
+  // Busca el nombre de la especializacion a partir de su id (el back solo envia el id).
+  private nombreEspecializacion(id?: number): string {
+    return this.especializaciones.find((e) => e.id === id)?.nombre ?? '';
   }
-
-  get totalPaginas(): number {
-    return Math.ceil(this.medicoFiltrados.length / this.registrosPorPagina);
-  }
-
-  get paginas(): number[] {
-    return Array.from({ length: this.totalPaginas }, (_, indice) => indice + 1);
-  }
-
-  /**
-   * Metodo que permite listar los medicos registradas en la base de datos y mostrarlas en la tabla.
-   */
-  listar() {
-    this.medicoService.listar()
-      .subscribe(
-        {
-          next: (data) => {
-            console.log(data);
-            this.listMedicos = data;
-            this.paginaActual = 1;
-          },
-          error: (error) => {
-            console.error('Error al obtener los médicos:', error);
-          }
-        }
-      );
-  }
-
-  // Metodo que actualiza el termino de busqueda y reinicia la pagina actual a 1.
-  actualizarBusqueda(event: Event) {
-    this.terminoBusqueda = (event.target as HTMLInputElement).value;
-    this.paginaActual = 1;
-  }
-
-  // Cambia paginacion.
-  cambiarPagina(pagina: number) {
-    if (pagina >= 1 && pagina <= this.totalPaginas) {
-      this.paginaActual = pagina;
-    }
-  }
-
-  // Metodo privado para normalizar el texto, eliminando acentos y convirtiendo a minúsculas.
-  private normalizarTexto(texto: string): string {
-    return texto
-      .toLocaleLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  }
-
-  // Evento para abrir el modal de crear o editar medicos, dependiendo del modo recibido.
-  nuevoMedico(modo: string) {
-    this.titleModal = modo === 'C' ? 'Crear Médico' : 'Editar Médico';
-    this.modoFormulario = modo;
-    this.openModal(modo);
-  }
-
-  abrirEdicion(medico: Medico) {
-    this.modoFormulario = 'E';
-    this.openModal(this.modoFormulario);
-  }
-
-  closeModal() {
-    if (this.modalInstance) {
-      this.modalInstance.hide();
-    }
-  }
-
-  openModal(modo: string) {
-    this.titleModal = modo === 'C' ? 'Crear Médico' : 'Editar Médico';
-    this.titleBoton = modo === 'C' ? 'Guardar Médico' : 'Actualizar Médico';
-    this.modoFormulario = modo;
-    const modalElement = document.getElementById('modalCrearMedico');
-    if (modalElement) {
-      // Verificar si ya existe una instancia del modal
-      this.modalInstance ??= new Modal(modalElement);
-      this.modalInstance.show();
-    }
-  }
-
 }

@@ -1,0 +1,15 @@
+<app-tabla-listado [titulo]="titulo" [columnas]="columnas" [items]="items">
+    <div filtros class="row g-2 justify-content-md-end">
+        <div class="col-auto">
+            <label class="form-label mb-0">Desde</label>
+            <input type="date" class="form-control" [(ngModel)]="fechaInicial" name="fechaInicial" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label mb-0">Hasta</label>
+            <input type="date" class="form-control" [(ngModel)]="fechaFinal" name="fechaFinal" />
+        </div>
+        <div class="col-auto align-self-end">
+            <button class="btn btn-outline-primary" type="button" (click)="listar()">Filtrar</button>
+        </div>
+    </div>
+</app-tabla-listado>

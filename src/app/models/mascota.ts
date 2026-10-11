@@ -6,9 +6,6 @@ export class Mascota {
     nombreMascota?: string;
     edad?: number;
     fechaRegistro?: Date;
-    cliente?: Cliente;
     raza?: Raza;
-    razaId?: number;
-    clienteId?: number;
-    nombre?: string;
+    cliente?: Cliente;
 }

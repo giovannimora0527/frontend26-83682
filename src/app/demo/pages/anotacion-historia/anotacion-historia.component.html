@@ -1,0 +1,13 @@
+<app-tabla-listado [titulo]="titulo" [columnas]="columnas" [items]="items">
+    <div filtros class="row g-2 justify-content-md-end">
+        <div class="col-md-8">
+            <label class="form-label mb-0">Historia médica</label>
+            <select class="form-select" [(ngModel)]="historiaId" (ngModelChange)="listar()" name="historiaId">
+                <option [ngValue]="null" disabled>Seleccione una historia</option>
+                <option *ngFor="let h of historias" [ngValue]="h.id">
+                    #{{ h.id }} - {{ h.mascota?.nombreMascota }}
+                </option>
+            </select>
+        </div>
+    </div>
+</app-tabla-listado>

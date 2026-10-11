@@ -10,15 +10,9 @@ import { environment } from 'src/environments/environment';
 export class UsuarioService {
   private api = `usuario`;
 
-  constructor(private backendService: BackendService) { 
-    this.testService();
-  }
-
-  testService() {
-    this.backendService.get(environment.apiUrlAuth, this.api, "test");
-  }
+  constructor(private backendService: BackendService) { }
 
   getUsuarios(): Observable<Usuario[]> {
-    return this.backendService.get(environment.apiUrlAuth, this.api, "listar");
+    return this.backendService.get(environment.apiUrlAuth, this.api, "listar-todos");
   }
 }
