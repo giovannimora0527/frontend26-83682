@@ -21,6 +21,8 @@ export const NavigationItems: NavigationItem[] = [
     type: 'group',
     icon: 'icon-navigation',
     children: [
+
+
       {
         id: 'usuario',
         title: 'Gestión de Usuarios',
@@ -37,7 +39,14 @@ export const NavigationItems: NavigationItem[] = [
         url: '/inicio/mascotas',
         icon: 'feather icon-home',
         classes: 'nav-item'
-      }, 
+      },
+          {
+             id: 'medico',
+             title: 'Gestión de Médicos',
+             type: 'item',
+             url: '/inicio/medicos',
+             icon: 'feather icon-activity'
+           }
     ]
-  },  
+  },
 ];
