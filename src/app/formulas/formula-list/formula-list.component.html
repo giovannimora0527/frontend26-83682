@@ -1,0 +1,140 @@
+<section class="modulo-formulas">
+  <div class="encabezado-pagina">
+    <h2>Gestión de Fórmulas Médicas</h2>
+  </div>
+
+  <div class="barra-herramientas">
+    <label class="buscador" for="filtroFormula">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filtroFormula" [(ngModel)]="filtro" (ngModelChange)="cambiarFiltro()" placeholder="Buscar por medicamento, dosis, mascota, veterinario, frecuencia o indicaciones" aria-label="Buscar por medicamento, dosis, mascota, veterinario, frecuencia o indicaciones">
+    </label>
+    <button type="button" class="btn" (click)="nueva()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nuevo</button>
+  </div>
+
+  <p *ngIf="mensajeExito" class="mensaje-exito">{{ mensajeExito }}</p>
+  <p *ngIf="mensajeError" class="mensaje-error">{{ mensajeError }}</p>
+
+  <div class="tarjeta">
+    <p class="estado-carga" *ngIf="cargando">Cargando fórmulas médicas...</p>
+
+    <div class="tabla-contenedor" *ngIf="!cargando && formulasFiltradas.length">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th (click)="ordenar('fechaCreacion')" class="ordenable">Fecha</th>
+            <th class="ordenable" (click)="ordenar('medicamento')">Medicamento</th>
+            <th class="ordenable" (click)="ordenar('nombrePaciente')">Mascota</th>
+            <th class="ordenable" (click)="ordenar('dosis')">Dosis</th>
+            <th class="col-acciones">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let f of formulasPagina">
+            <td>{{ f.id }}</td>
+            <td>{{ f.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ f.medicamento }}</td>
+            <td>{{ f.nombrePaciente }}</td>
+            <td>{{ f.dosis }}</td>
+            <td class="col-acciones">
+              <button type="button" class="btn btn-pequeno btn-neutro" (click)="ver(f)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg> Ver</button>
+              <button type="button" class="btn btn-pequeno" (click)="editar(f)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11a2.1 2.1 0 00-3-3L5 16z"/></svg> Editar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="estado-vacio" *ngIf="!cargando && !formulasFiltradas.length">No hay fórmulas que coincidan con la búsqueda.</p>
+
+    <div class="paginacion" *ngIf="formulasFiltradas.length">
+      <span class="resumen">Página {{ pagina }} de {{ totalPaginas }}</span>
+      <button type="button" (click)="pagina = pagina - 1" [disabled]="pagina <= 1">Anterior</button>
+      <button type="button" *ngFor="let n of numerosPagina" [class.activa]="n === pagina" (click)="pagina = n">{{ n }}</button>
+      <button type="button" (click)="pagina = pagina + 1" [disabled]="pagina >= totalPaginas">Siguiente</button>
+    </div>
+  </div>
+
+  <!-- Ventana modal: crear / editar fórmula -->
+  <div class="modal-fondo" *ngIf="mostrarFormulario">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-encabezado">
+        <h3>{{ editandoId ? 'Editar fórmula' : 'Registrar fórmula' }}</h3>
+        <button type="button" class="modal-cerrar" (click)="mostrarFormulario = false" aria-label="Cerrar">×</button>
+      </div>
+
+      <form #formFormula="ngForm" (ngSubmit)="guardar()">
+        <div class="formulario-grid">
+          <div class="campo">
+            <label for="f-pacienteId">Mascota</label>
+            <select id="f-pacienteId" name="pacienteId" [(ngModel)]="formulario.pacienteId" (ngModelChange)="cambiarMascota()" required><option [ngValue]="0" disabled>Seleccione una mascota</option><option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.nombre }} — {{ p.propietario }}</option></select>
+          </div>
+          <div class="campo">
+            <label for="f-citaId">Cita</label>
+            <select id="f-citaId" name="citaId" [(ngModel)]="formulario.citaId" required><option [ngValue]="0" disabled>Seleccione cita</option><option *ngFor="let cita of citasDeMascota" [ngValue]="cita.id">#{{ cita.id }} — {{ cita.nombrePaciente }} — {{ cita.fecha | date:'short' }}</option></select>
+          </div>
+          <div class="campo">
+            <label for="f-historiaId">Historia clínica</label>
+            <select id="f-historiaId" name="historiaMedicaId" [(ngModel)]="formulario.historiaMedicaId" required><option [ngValue]="0" disabled>Seleccione historia</option><option *ngFor="let historia of historiasDeMascota" [ngValue]="historia.id">#{{ historia.id }} — {{ historia.nombrePaciente }} — {{ historia.diagnostico }}</option></select>
+          </div>
+          <div class="campo">
+            <label for="f-veterinarioId">Veterinario</label>
+            <select id="f-veterinarioId" name="veterinarioId" [(ngModel)]="formulario.veterinarioId" required><option [ngValue]="0" disabled>Seleccione veterinario</option><option *ngFor="let veterinario of veterinarios" [ngValue]="veterinario.id">{{ veterinario.nombre }}</option></select>
+          </div>
+          <div class="campo">
+            <label for="f-medicamento">Medicamento</label>
+            <input id="f-medicamento" name="medicamento" [(ngModel)]="formulario.medicamento" required maxlength="120">
+          </div>
+          <div class="campo">
+            <label for="f-dosis">Dosis</label>
+            <input id="f-dosis" name="dosis" [(ngModel)]="formulario.dosis" required maxlength="120" placeholder="Ej. 1 tableta cada 12 horas">
+          </div>
+          <div class="campo">
+            <label for="f-frecuencia">Frecuencia</label>
+            <input id="f-frecuencia" name="frecuencia" [(ngModel)]="formulario.frecuencia" required placeholder="Ej. cada 8 horas">
+          </div>
+          <div class="campo">
+            <label for="f-cantidad">Duración del tratamiento (días)</label>
+            <input id="f-cantidad" name="cantidad" type="number" min="1" step="1" [(ngModel)]="formulario.cantidad" required>
+          </div>
+          <div class="campo ancho-completo">
+            <label for="f-indicaciones">Indicaciones</label>
+            <textarea id="f-indicaciones" name="indicaciones" [(ngModel)]="formulario.indicaciones" rows="3" maxlength="1000"></textarea>
+          </div>
+        </div>
+
+        <p *ngIf="mensajeError" class="mensaje-error" style="margin-top:1rem">{{ mensajeError }}</p>
+
+        <div class="acciones-formulario">
+          <button type="button" class="btn btn-neutro" (click)="mostrarFormulario = false">Cancelar</button>
+          <button type="submit" class="btn btn-solido" [disabled]="formFormula.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ventana modal: detalle completo de la fórmula -->
+  <div class="modal-fondo" *ngIf="formulaSeleccionada">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-encabezado">
+        <h3>Detalle de fórmula #{{ formulaSeleccionada.id }}</h3>
+        <button type="button" class="modal-cerrar" (click)="formulaSeleccionada = null" aria-label="Cerrar">×</button>
+      </div>
+
+      <dl class="detalle-lista">
+        <div><dt>Fecha de emisión</dt><dd>{{ formulaSeleccionada.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+        <div><dt>Mascota</dt><dd>{{ formulaSeleccionada.nombrePaciente }}</dd></div>
+        <div><dt>Medicamento</dt><dd>{{ formulaSeleccionada.medicamento }}</dd></div>
+        <div><dt>Dosis</dt><dd>{{ formulaSeleccionada.dosis }}</dd></div>
+        <div><dt>Duración</dt><dd>{{ formulaSeleccionada.cantidad }} día(s)</dd></div>
+        <div><dt>Frecuencia</dt><dd>{{ formulaSeleccionada.frecuencia || 'No especificada' }}</dd></div>
+        <div><dt>Veterinario</dt><dd>{{ formulaSeleccionada.nombreVeterinario || 'No especificado' }}</dd></div>
+        <div class="ancho-completo"><dt>Indicaciones</dt><dd>{{ formulaSeleccionada.indicaciones || 'Sin indicaciones adicionales' }}</dd></div>
+      </dl>
+
+      <div class="acciones-formulario">
+        <button type="button" class="btn btn-neutro" (click)="formulaSeleccionada = null">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</section>

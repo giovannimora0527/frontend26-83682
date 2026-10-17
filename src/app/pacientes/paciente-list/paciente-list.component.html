@@ -1,0 +1,41 @@
+<div class="encabezado-pagina">
+  <h2>Gestión de Mascotas</h2>
+</div>
+
+<div class="barra-herramientas">
+  <a class="btn" routerLink="/pacientes/nuevo" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nuevo</a>
+</div>
+
+<p class="mensaje-error" *ngIf="mensajeError">{{ mensajeError }}</p>
+
+<div class="tarjeta">
+  <p class="estado-carga" *ngIf="cargando">Cargando pacientes...</p>
+
+  <div class="tabla-contenedor" *ngIf="!cargando && pacientes.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Nombre</th>
+          <th>Especie</th>
+          <th>Raza</th>
+          <th>Propietario</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- *ngFor recorre la lista de pacientes y crea una fila por cada uno -->
+        <tr *ngFor="let paciente of pacientes">
+          <td>{{ paciente.id }}</td>
+          <td>{{ paciente.nombre }}</td>
+          <td>{{ paciente.especie }}</td>
+          <td>{{ paciente.raza }}</td>
+          <td>{{ paciente.propietario }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="estado-vacio" *ngIf="!cargando && pacientes.length === 0 && !mensajeError">
+    Todavia no hay pacientes registrados.
+  </p>
+</div>

@@ -1,0 +1,2 @@
+/* Estilos propios de fórmulas médicas (los generales estan en src/styles.css). */
+.campo select, .campo input, .campo textarea { width: 100%; }

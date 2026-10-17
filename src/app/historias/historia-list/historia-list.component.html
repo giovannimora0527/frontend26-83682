@@ -1,0 +1,83 @@
+<div class="encabezado-pagina">
+  <h2>Gestión de Historias Médicas</h2>
+</div>
+
+<div class="filtro-fechas">
+  <label>
+    Fecha inicial
+    <input type="datetime-local" [(ngModel)]="fechaInicio" name="fechaInicio" />
+  </label>
+  <label>
+    Fecha final
+    <input type="datetime-local" [(ngModel)]="fechaFin" name="fechaFin" />
+  </label>
+  <button class="btn" (click)="buscar()">Filtrar</button>
+  <button class="btn btn-neutro" (click)="limpiarFiltro()">Ver todas</button>
+  <a class="btn" routerLink="/historias/nueva" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nuevo</a>
+</div>
+
+<p class="mensaje-error" *ngIf="mensajeError">{{ mensajeError }}</p>
+<p class="mensaje-exito" *ngIf="mensajeExito">{{ mensajeExito }}</p>
+
+<div class="tarjeta">
+  <div class="barra-herramientas" *ngIf="!cargando">
+    <label class="buscador"><input [(ngModel)]="filtroTexto" (ngModelChange)="pagina = 1" placeholder="Buscar por mascota, cliente, veterinario, motivo o diagnóstico" /></label>
+  </div>
+  <p class="estado-carga" *ngIf="cargando">Cargando historias médicas...</p>
+
+  <div class="tabla-contenedor" *ngIf="!cargando && historiasFiltradas.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th class="ordenable" (click)="ordenar('fechaCreacion')">Fecha</th>
+          <th class="ordenable" (click)="ordenar('nombreCliente')">Cliente</th>
+          <th class="ordenable" (click)="ordenar('nombrePaciente')">Paciente</th>
+          <th class="ordenable" (click)="ordenar('nombreVeterinario')">Veterinario</th>
+          <th class="ordenable" (click)="ordenar('motivoConsulta')">Motivo</th>
+          <th>Estado</th>
+          <th class="ordenable" (click)="ordenar('diagnostico')">Diagnóstico</th>
+          <th class="col-acciones">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let historia of historiasPagina">
+          <td>{{ historia.id }}</td>
+          <td>{{ historia.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ historia.nombreCliente || '—' }}</td>
+          <td>{{ historia.nombrePaciente }}</td>
+          <td>{{ historia.nombreVeterinario || '—' }}</td>
+          <td>{{ historia.motivoConsulta || '—' }}</td>
+          <td>{{ historia.citaId ? 'Atendida' : 'Sin cita' }}</td>
+          <td>{{ historia.diagnostico }}</td>
+          <td class="col-acciones">
+            <button class="btn btn-pequeno" type="button" (click)="verDetalle(historia)">Ver</button>
+            <a class="btn btn-pequeno" [routerLink]="['/historias/editar', historia.id]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11a2.1 2.1 0 00-3-3L5 16z"/></svg> Editar</a>
+            <a class="btn btn-pequeno" [routerLink]="['/anotaciones']" [queryParams]="{ historiaId: historia.id }"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13h7M9 17h7"/></svg> Anotaciones</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" *ngIf="historiasFiltradas.length > 0">
+    <span class="resumen">Página {{ pagina }} de {{ totalPaginas }}</span>
+    <button type="button" (click)="pagina = pagina - 1" [disabled]="pagina <= 1">Anterior</button>
+    <button type="button" (click)="pagina = pagina + 1" [disabled]="pagina >= totalPaginas">Siguiente</button>
+  </div>
+  <section class="tarjeta" *ngIf="historiaDetalle">
+    <h3>Historia clínica #{{ historiaDetalle.id }}</h3>
+    <p><strong>Fecha:</strong> {{ historiaDetalle.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+    <p><strong>Cliente:</strong> {{ historiaDetalle.nombreCliente || '—' }} | <strong>Mascota:</strong> {{ historiaDetalle.nombrePaciente }}</p>
+    <p><strong>Veterinario:</strong> {{ historiaDetalle.nombreVeterinario || '—' }} | <strong>Motivo:</strong> {{ historiaDetalle.motivoConsulta || '—' }}</p>
+    <p><strong>Diagnóstico:</strong> {{ historiaDetalle.diagnostico }}</p>
+    <p><strong>Observaciones:</strong> {{ historiaDetalle.observaciones }}</p>
+    <h4>Anotaciones recientes</h4>
+    <table *ngIf="historiaDetalle.anotaciones?.length"><thead><tr><th>Fecha</th><th>Descripción</th></tr></thead><tbody><tr *ngFor="let a of historiaDetalle.anotaciones"><td>{{ a.fecha | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ a.descripcion }}</td></tr></tbody></table>
+    <a class="btn btn-pequeno" [routerLink]="['/anotaciones']" [queryParams]="{ historiaId: historiaDetalle.id }">Ver historial de anotaciones</a>
+    <button class="btn btn-neutro" type="button" (click)="historiaDetalle = null">Cerrar</button>
+  </section>
+  <p class="estado-vacio" *ngIf="!cargando && historiasFiltradas.length === 0 && !mensajeError">
+    No hay historias médicas registradas con ese filtro.
+  </p>
+</div>

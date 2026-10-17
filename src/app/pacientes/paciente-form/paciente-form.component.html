@@ -1,0 +1,43 @@
+<div class="encabezado-pagina">
+  <h2>Nuevo paciente</h2>
+</div>
+
+<!--
+  (ngSubmit): se ejecuta cuando el usuario envia el formulario.
+  #form="ngForm": nos da acceso al estado del formulario (valido/invalido).
+-->
+<form class="formulario" #form="ngForm" (ngSubmit)="guardar()">
+  <div class="formulario-grid">
+
+    <div class="campo">
+      <label for="nombre">Nombre de la mascota</label>
+      <input id="nombre" name="nombre" type="text" [(ngModel)]="paciente.nombre" required />
+    </div>
+
+    <div class="campo">
+      <label for="especie">Especie</label>
+      <input id="especie" name="especie" type="text" [(ngModel)]="paciente.especie" required />
+    </div>
+
+    <div class="campo">
+      <label for="raza">Raza</label>
+      <input id="raza" name="raza" type="text" [(ngModel)]="paciente.raza" />
+    </div>
+
+    <div class="campo">
+      <label for="clienteId">Cliente propietario</label>
+      <select id="clienteId" name="clienteId" [(ngModel)]="paciente.clienteId" (ngModelChange)="seleccionarCliente()" required>
+        <option [ngValue]="undefined" disabled>Seleccione un cliente registrado</option>
+        <option *ngFor="let cliente of clientes" [ngValue]="cliente.id">{{ cliente.nombre }} — {{ cliente.telefono }}</option>
+      </select>
+      <small>La mascota quedará asociada al cliente seleccionado.</small>
+    </div>
+
+    <div class="acciones-formulario">
+      <a class="btn btn-neutro" routerLink="/pacientes">Cancelar</a>
+      <button class="btn btn-solido" type="submit" [disabled]="form.invalid || guardando">Guardar</button>
+    </div>
+  </div>
+
+  <p class="mensaje-error" style="margin-top:1rem" *ngIf="mensajeError">{{ mensajeError }}</p>
+</form>

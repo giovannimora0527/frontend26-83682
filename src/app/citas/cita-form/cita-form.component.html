@@ -1,0 +1,56 @@
+<div class="encabezado-pagina">
+  <h2>{{ idEdicion ? 'Editar cita' : 'Nueva cita' }}</h2>
+</div>
+
+<form class="formulario" #form="ngForm" (ngSubmit)="guardar()">
+  <div class="formulario-grid">
+
+    <div class="campo">
+      <label for="clienteId">Cliente</label>
+      <select id="clienteId" name="clienteId" [(ngModel)]="clienteIdSeleccionado" (ngModelChange)="cambiarCliente()" required>
+        <option [ngValue]="0" disabled>Seleccione un cliente</option>
+        <option *ngFor="let cliente of clientes" [ngValue]="cliente.id">{{ cliente.nombre }}</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="pacienteId">Mascota</label>
+      <select id="pacienteId" name="pacienteId" [(ngModel)]="cita.pacienteId" required [disabled]="!clienteIdSeleccionado">
+        <option [ngValue]="0" disabled>Seleccione una mascota</option>
+        <option *ngFor="let mascota of mascotasDelCliente" [ngValue]="mascota.id">{{ mascota.nombre }} ({{ mascota.especie }})</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="veterinarioId">Veterinario</label>
+      <select id="veterinarioId" name="veterinarioId" [(ngModel)]="cita.veterinarioId" required>
+        <option [ngValue]="0" disabled>Seleccione un veterinario</option>
+        <option *ngFor="let veterinario of veterinarios" [ngValue]="veterinario.id">{{ veterinario.nombre }}</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="fecha">Fecha y hora</label>
+      <input id="fecha" name="fecha" type="datetime-local" [(ngModel)]="cita.fecha" required />
+    </div>
+
+    <div class="campo">
+      <label for="motivo">Motivo</label>
+      <input id="motivo" name="motivo" type="text" [(ngModel)]="cita.motivo" required />
+    </div>
+
+    <div class="campo">
+      <label for="estado">Estado</label>
+      <select id="estado" name="estado" [(ngModel)]="cita.estado">
+        <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
+      </select>
+    </div>
+
+    <div class="acciones-formulario">
+      <a class="btn btn-neutro" routerLink="/citas">Cancelar</a>
+      <button class="btn btn-solido" type="submit" [disabled]="form.invalid || guardando">Guardar</button>
+    </div>
+  </div>
+
+  <p class="mensaje-error" style="margin-top:1rem" *ngIf="mensajeError">{{ mensajeError }}</p>
+</form>

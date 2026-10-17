@@ -1,0 +1,70 @@
+<div class="encabezado-pagina">
+  <h2>Gestión de Citas</h2>
+</div>
+
+<!-- Formulario de filtro por rango de fechas (Requerimientos 2 y 3 del backend) -->
+<div class="filtro-fechas">
+  <label>
+    Fecha inicial
+    <input type="datetime-local" [(ngModel)]="fechaInicio" name="fechaInicio" />
+  </label>
+  <label>
+    Fecha final
+    <input type="datetime-local" [(ngModel)]="fechaFin" name="fechaFin" />
+  </label>
+  <button class="btn" (click)="buscar()">Filtrar</button>
+</div>
+
+<div class="barra-herramientas">
+  <label class="buscador">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input [(ngModel)]="filtroTexto" (ngModelChange)="cambiarFiltro()" placeholder="Buscar por cliente, mascota, veterinario, motivo o estado" aria-label="Buscar por cliente, mascota, veterinario, motivo o estado" />
+  </label>
+  <a class="btn" routerLink="/citas/nueva"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nuevo</a>
+</div>
+
+<p class="mensaje-error" *ngIf="mensajeError">{{ mensajeError }}</p>
+
+<div class="tarjeta">
+  <p class="estado-carga" *ngIf="cargando">Cargando citas...</p>
+
+  <div class="tabla-contenedor" *ngIf="!cargando && citasFiltradas.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th (click)="ordenar('fecha')" class="ordenable">Fecha</th>
+          <th class="ordenable" (click)="ordenar('nombreCliente')">Cliente</th>
+          <th class="ordenable" (click)="ordenar('motivo')">Motivo</th>
+          <th class="ordenable" (click)="ordenar('estado')">Estado</th>
+          <th class="ordenable" (click)="ordenar('nombrePaciente')">Mascota</th>
+          <th class="ordenable" (click)="ordenar('nombreVeterinario')">Veterinario</th>
+          <th class="col-acciones">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cita of citasPagina">
+          <td>{{ cita.id }}</td>
+          <td>{{ cita.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ cita.nombreCliente || '—' }}</td>
+          <td>{{ cita.motivo }}</td>
+          <td><span class="etiqueta" [ngClass]="'etiqueta-' + (cita.estado || '').toLowerCase()">{{ cita.estado }}</span></td>
+          <td>{{ cita.nombrePaciente }}</td>
+          <td>{{ cita.nombreVeterinario || '—' }}</td>
+          <td class="col-acciones"><a class="btn btn-pequeno" href="javascript:void(0)" (click)="editar(cita)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11a2.1 2.1 0 00-3-3L5 16z"/></svg> Editar</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="estado-vacio" *ngIf="!cargando && citasFiltradas.length === 0 && !mensajeError">
+    No hay citas en el rango de fechas seleccionado.
+  </p>
+
+  <div class="paginacion" *ngIf="citasFiltradas.length > 0">
+    <span class="resumen">Página {{ pagina }} de {{ totalPaginas }}</span>
+    <button type="button" (click)="pagina = pagina - 1" [disabled]="pagina <= 1">Anterior</button>
+    <button type="button" *ngFor="let n of numerosPagina" [class.activa]="n === pagina" (click)="pagina = n">{{ n }}</button>
+    <button type="button" (click)="pagina = pagina + 1" [disabled]="pagina >= totalPaginas">Siguiente</button>
+  </div>
+</div>

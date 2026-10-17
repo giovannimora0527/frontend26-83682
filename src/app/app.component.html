@@ -1,0 +1,81 @@
+<!--
+  Estructura general: barra lateral de navegacion a la izquierda y, a la
+  derecha, el contenido de la pagina activa.
+  routerLink: indica a que ruta debe llevar cada opcion al hacer click.
+  routerLinkActive: agrega la clase "activo" a la opcion de la pagina en la
+  que el usuario esta actualmente, para resaltarla visualmente.
+-->
+<div class="aplicacion" [class.menu-oculto]="menuOculto">
+
+  <aside class="barra-lateral">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <ellipse cx="6.2" cy="10" rx="2.1" ry="2.8" transform="rotate(-15 6.2 10)"/>
+          <ellipse cx="10.2" cy="5.8" rx="2.1" ry="2.9"/>
+          <ellipse cx="14.4" cy="5.8" rx="2.1" ry="2.9"/>
+          <ellipse cx="18.2" cy="10" rx="2.1" ry="2.8" transform="rotate(15 18.2 10)"/>
+          <path d="M12.3 11c-3.1 0-6 3-6 5.7 0 1.9 1.4 2.8 3 2.8 1 0 1.8-.5 3-.5s2 .5 3 .5c1.6 0 3-.9 3-2.8 0-2.7-2.9-5.7-6-5.7z"/>
+        </svg>
+      </span>
+      <h1 class="titulo-app">{{ titulo }}</h1>
+      <button type="button" class="boton-menu" (click)="alternarMenu()" aria-label="Mostrar u ocultar el menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 7h16M4 12h10M4 17h16"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="menu">
+      <span class="menu-seccion">Inicio</span>
+
+      <a routerLink="/pacientes" routerLinkActive="activo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/>
+        </svg>
+        Gestión de Mascotas
+      </a>
+
+      <a routerLink="/citas" routerLinkActive="activo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>
+        </svg>
+        Gestión de Citas
+      </a>
+
+      <a routerLink="/formulas" routerLinkActive="activo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-35 12 12.5)"/><path d="M9.2 7.2l5.8 8.3"/>
+        </svg>
+        Fórmulas Médicas
+      </a>
+
+      <a routerLink="/historias" routerLinkActive="activo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>
+        </svg>
+        Historias Médicas
+      </a>
+
+      <a routerLink="/anotaciones" routerLinkActive="activo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20l4-1 11-11a2.1 2.1 0 00-3-3L5 16z"/><path d="M14 7l3 3"/>
+        </svg>
+        Anotaciones
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Fondo oscuro para cerrar el menu tocando fuera de el en pantallas pequenas -->
+  <div class="cortina" (click)="alternarMenu()"></div>
+
+  <!-- Aqui Angular dibuja el componente correspondiente a la ruta activa. -->
+  <main class="contenido">
+    <button type="button" class="boton-menu-movil" (click)="alternarMenu()" aria-label="Abrir el menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+    </button>
+    <router-outlet></router-outlet>
+  </main>
+</div>

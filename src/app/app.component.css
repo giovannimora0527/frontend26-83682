@@ -1,0 +1,194 @@
+.aplicacion {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---------- Barra lateral ---------- */
+
+.barra-lateral {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  flex: 0 0 260px;
+  width: 260px;
+  height: 100vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--color-sidebar) 0%, var(--color-sidebar-oscuro) 100%);
+  color: #ffffff;
+  transition: margin-left 0.2s ease;
+}
+
+.menu-oculto .barra-lateral {
+  margin-left: -260px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1rem 1.25rem 1.1rem;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  color: var(--color-sidebar);
+}
+
+.logo svg {
+  width: 26px;
+  height: 26px;
+}
+
+.titulo-app {
+  flex: 1;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.boton-menu {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: #cbd5e1;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.boton-menu:hover {
+  background-color: var(--color-sidebar-hover);
+  color: #ffffff;
+}
+
+.boton-menu svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- Opciones del menu ---------- */
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0 1rem;
+}
+
+.menu-seccion {
+  padding: 1rem 1.4rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e2e8f0;
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1.4rem;
+  color: #b8c4d9;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.menu a svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.menu a:hover {
+  background-color: var(--color-sidebar-hover);
+  color: #ffffff;
+}
+
+.menu a.activo {
+  background-color: var(--color-sidebar-activo);
+  border-left-color: var(--color-acento);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ---------- Contenido ---------- */
+
+.contenido {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 1.75rem 2rem 2.5rem;
+}
+
+.boton-menu-movil,
+.cortina {
+  display: none;
+}
+
+/* Cuando la barra lateral esta oculta en escritorio, se ofrece reabrirla */
+.menu-oculto .boton-menu-movil {
+  display: inline-grid;
+}
+
+.boton-menu-movil {
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 1rem;
+  padding: 0;
+  color: var(--color-sidebar);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.boton-menu-movil svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- Pantallas pequenas: el menu se superpone al contenido ---------- */
+
+@media (max-width: 860px) {
+  .barra-lateral {
+    position: fixed;
+    z-index: 150;
+    left: 0;
+    margin-left: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .menu-oculto .barra-lateral {
+    margin-left: 0;
+    transform: translateX(-100%);
+  }
+
+  /* En movil el menu empieza cerrado: la clase se invierte con la cortina */
+  .aplicacion:not(.menu-oculto) .cortina {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    background-color: rgba(10, 31, 67, 0.5);
+  }
+
+  .boton-menu-movil {
+    display: inline-grid;
+  }
+
+  .contenido {
+    padding: 1.25rem 1rem 2rem;
+  }
+}

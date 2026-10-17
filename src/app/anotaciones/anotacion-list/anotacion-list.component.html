@@ -1,0 +1,66 @@
+<div class="encabezado-pagina">
+  <h2>Anotaciones de Historia Médica</h2>
+</div>
+
+<div class="filtro-fechas">
+  <label>
+    Id de la historia médica
+    <input type="number" min="1" [(ngModel)]="historiaMedicaId" name="historiaMedicaId" />
+  </label>
+  <button class="btn" (click)="buscarPorIdIngresado()">Buscar</button>
+  <a class="btn" style="margin-left:auto" *ngIf="historiaMedicaId" [routerLink]="['/anotaciones/nueva']" [queryParams]="{ historiaId: historiaMedicaId }">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nuevo
+  </a>
+</div>
+
+<p class="mensaje-error" *ngIf="mensajeError">{{ mensajeError }}</p>
+
+<div class="tarjeta">
+  <p class="estado-carga" *ngIf="cargando">Cargando anotaciones...</p>
+
+  <div class="barra-herramientas" *ngIf="!cargando && anotaciones.length > 0">
+    <label class="buscador"><input [(ngModel)]="filtroTexto" (ngModelChange)="pagina = 1" placeholder="Filtrar por descripción, veterinario o diagnóstico" /></label>
+  </div>
+  <div class="tabla-contenedor" *ngIf="!cargando && anotacionesFiltradas.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th class="ordenable" (click)="ordenAscendente = !ordenAscendente">Fecha {{ ordenAscendente ? '↑' : '↓' }}</th>
+          <th>Veterinario</th><th>Descripción</th><th>Diagnóstico / evolución</th>
+          <th class="col-acciones">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let anotacion of anotacionesPagina">
+          <td>{{ anotacion.id }}</td>
+          <td>{{ anotacion.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ anotacion.nombreVeterinario || '—' }}</td><td>{{ anotacion.descripcion }}</td><td>{{ anotacion.diagnosticoEvolucion }}</td>
+          <td class="col-acciones"><button class="btn btn-pequeno" type="button" (click)="verDetalle(anotacion)">Ver</button> <a class="btn btn-pequeno" (click)="editar(anotacion)" href="javascript:void(0)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11a2.1 2.1 0 00-3-3L5 16z"/></svg> Editar</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" *ngIf="anotacionesFiltradas.length > 0">
+    <span class="resumen">Página {{ pagina }} de {{ totalPaginas }}</span>
+    <button type="button" (click)="pagina = pagina - 1" [disabled]="pagina <= 1">Anterior</button>
+    <button type="button" (click)="pagina = pagina + 1" [disabled]="pagina >= totalPaginas">Siguiente</button>
+  </div>
+  <section class="tarjeta" *ngIf="anotacionDetalle">
+    <h3>Detalle de anotación #{{ anotacionDetalle.id }}</h3>
+    <p><strong>Fecha:</strong> {{ anotacionDetalle.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+    <p><strong>Veterinario:</strong> {{ anotacionDetalle.nombreVeterinario || '—' }}</p>
+    <p><strong>Descripción:</strong> {{ anotacionDetalle.descripcion }}</p>
+    <p><strong>Observación:</strong> {{ anotacionDetalle.observacion }}</p>
+    <p><strong>Diagnóstico / evolución:</strong> {{ anotacionDetalle.diagnosticoEvolucion }}</p>
+    <button class="btn btn-neutro" type="button" (click)="anotacionDetalle = null">Cerrar detalle</button>
+  </section>
+  <p class="estado-vacio" *ngIf="!cargando && historiaMedicaId && anotacionesFiltradas.length === 0 && !mensajeError">
+    Esta historia médica todavía no tiene anotaciones.
+  </p>
+
+  <p class="estado-vacio" *ngIf="!historiaMedicaId && !cargando">
+    Ingrese el id de una historia médica para ver sus anotaciones, o entre desde la lista de Historias Médicas.
+  </p>
+</div>

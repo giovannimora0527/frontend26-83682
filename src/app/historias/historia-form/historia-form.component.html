@@ -1,0 +1,55 @@
+<div class="encabezado-pagina">
+  <h2>{{ idEdicion ? 'Editar historia médica' : 'Nueva historia médica' }}</h2>
+</div>
+
+<p class="estado-carga" *ngIf="cargando">Cargando datos...</p>
+
+<form class="formulario" *ngIf="!cargando" #form="ngForm" (ngSubmit)="guardar()">
+  <div class="formulario-grid">
+
+    <div class="campo">
+      <label for="clienteId">Cliente</label>
+      <select id="clienteId" name="clienteId" [(ngModel)]="clienteIdSeleccionado" (ngModelChange)="cambiarCliente()" required><option [ngValue]="0" disabled>Seleccione cliente</option><option *ngFor="let cliente of clientes" [ngValue]="cliente.id">{{ cliente.nombre }}</option></select>
+    </div>
+
+    <div class="campo">
+      <label for="pacienteId">Mascota</label>
+      <select id="pacienteId" name="pacienteId" [(ngModel)]="historia.pacienteId" required [disabled]="!clienteIdSeleccionado"><option [ngValue]="0" disabled>Seleccione mascota</option><option *ngFor="let mascota of mascotasDelCliente" [ngValue]="mascota.id">{{ mascota.nombre }} — {{ mascota.especie }}</option></select>
+    </div>
+
+    <div class="campo ancho-completo">
+      <label for="fechaCreacion">Fecha y hora de consulta</label>
+      <input id="fechaCreacion" name="fechaCreacion" type="datetime-local" [(ngModel)]="historia.fechaCreacion" required />
+    </div>
+    <div class="campo">
+      <label for="citaId">Cita asociada</label>
+      <select id="citaId" name="citaId" [(ngModel)]="historia.citaId" required><option [ngValue]="undefined" disabled>Seleccione cita</option><option *ngFor="let cita of citasAtendidas" [ngValue]="cita.id">#{{ cita.id }} — {{ cita.nombrePaciente }} — {{ cita.fecha | date:'short' }}</option></select>
+    </div>
+
+    <div class="campo">
+      <label for="motivoConsulta">Motivo de consulta</label>
+      <input id="motivoConsulta" name="motivoConsulta" [ngModel]="motivoConsultaSeleccionado" readonly />
+    </div>
+    <div class="campo">
+      <label for="veterinarioId">Veterinario</label>
+      <select id="veterinarioId" name="veterinarioId" [(ngModel)]="historia.veterinarioId" required><option [ngValue]="undefined" disabled>Seleccione veterinario</option><option *ngFor="let vet of veterinarios" [ngValue]="vet.id">{{ vet.nombre }}</option></select>
+    </div>
+
+    <div class="campo ancho-completo">
+      <label for="diagnostico">Diagnóstico</label>
+      <textarea id="diagnostico" name="diagnostico" rows="3" [(ngModel)]="historia.diagnostico" required></textarea>
+    </div>
+
+    <div class="campo ancho-completo">
+      <label for="observaciones">Observaciones</label>
+      <textarea id="observaciones" name="observaciones" rows="3" [(ngModel)]="historia.observaciones"></textarea>
+    </div>
+
+    <div class="acciones-formulario">
+      <a class="btn btn-neutro" routerLink="/historias">Cancelar</a>
+      <button class="btn btn-solido" type="submit" [disabled]="form.invalid || guardando">Guardar</button>
+    </div>
+  </div>
+
+  <p class="mensaje-error" style="margin-top:1rem" *ngIf="mensajeError">{{ mensajeError }}</p>
+</form>

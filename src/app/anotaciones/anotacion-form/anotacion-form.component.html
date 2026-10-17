@@ -1,0 +1,45 @@
+<div class="encabezado-pagina">
+  <h2>{{ idEdicion ? 'Editar anotación' : 'Nueva anotación' }}</h2>
+</div>
+
+<form class="formulario" #form="ngForm" (ngSubmit)="guardar()">
+  <div class="formulario-grid">
+
+    <div class="campo ancho-completo">
+      <label for="historiaMedicaId">Id de la historia médica</label>
+      <input id="historiaMedicaId" name="historiaMedicaId" type="number" min="1"
+             [(ngModel)]="anotacion.historiaMedicaId" required [disabled]="!!idEdicion" />
+    </div>
+
+    <div class="campo">
+      <label for="fecha">Fecha y hora</label>
+      <input id="fecha" name="fecha" type="datetime-local" [(ngModel)]="anotacion.fecha" required />
+    </div>
+    <div class="campo">
+      <label for="veterinarioId">Veterinario</label>
+      <select id="veterinarioId" name="veterinarioId" [(ngModel)]="anotacion.veterinarioId" required>
+        <option [ngValue]="0" disabled>Seleccione un veterinario</option>
+        <option *ngFor="let veterinario of veterinarios" [ngValue]="veterinario.id">{{ veterinario.nombre }}</option>
+      </select>
+    </div>
+    <div class="campo ancho-completo">
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" name="descripcion" rows="4" [(ngModel)]="anotacion.descripcion" required></textarea>
+    </div>
+    <div class="campo ancho-completo">
+      <label for="observacion">Observación clínica</label>
+      <textarea id="observacion" name="observacion" rows="3" [(ngModel)]="anotacion.observacion" required></textarea>
+    </div>
+    <div class="campo ancho-completo">
+      <label for="diagnosticoEvolucion">Diagnóstico o evolución</label>
+      <textarea id="diagnosticoEvolucion" name="diagnosticoEvolucion" rows="3" [(ngModel)]="anotacion.diagnosticoEvolucion" required></textarea>
+    </div>
+
+    <div class="acciones-formulario">
+      <a class="btn btn-neutro" routerLink="/anotaciones">Cancelar</a>
+      <button class="btn btn-solido" type="submit" [disabled]="form.invalid || guardando">Guardar</button>
+    </div>
+  </div>
+
+  <p class="mensaje-error" style="margin-top:1rem" *ngIf="mensajeError">{{ mensajeError }}</p>
+</form>
