@@ -1,31 +1,45 @@
-import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpContext, HttpContextToken, HttpHeaders } from '@angular/common/http';
+import {
+  HttpEvent,
+  HttpHandler,
+  HttpInterceptor,
+  HttpRequest
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
-
+/**
+ * Agrega el token de sesión a las solicitudes enviadas a la API.
+ */
 @Injectable()
 export class HeadersInterceptor implements HttpInterceptor {
+  /**
+   * Reenvía la solicitud y agrega autorización cuando hay un token disponible.
+   * @param request Solicitud HTTP original.
+   * @param next Siguiente manejador de la cadena de interceptores.
+   * @returns Evento HTTP de la solicitud procesada.
+   */
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    const apiPath = environment.apiUrlAuth;
+    const isApiRequest = request.url.startsWith(apiPath);
+    const token = typeof localStorage === 'undefined' ? null : localStorage.getItem('token');
 
-  intercept(
-    req: HttpRequest<any>,
-    next: HttpHandler
-  ): Observable<HttpEvent<any>> {
-    if (req.body === null || req.body instanceof FormData || req.headers.has('Content-Type')) {
-      return next.handle(req);
+    if (!isApiRequest) {
+      return next.handle(request);
     }
 
-    return next.handle(req.clone({
-      setHeaders: {
-        'Content-Type': 'application/json',
-      },
-    }));
-  }
+    const headers: Record<string, string> = {};
 
-  addHeaders(request: HttpRequest<unknown>): HttpRequest<any> {
-    return (request = request.clone({
-      setHeaders: {
-        'Content-Type': 'application/json',
-      },
-    }));
+    if (!(request.body instanceof FormData) && !request.headers.has('Content-Type')) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (token && !request.headers.has('Authorization')) {
+      headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+    }
+
+    return Object.keys(headers).length
+      ? next.handle(request.clone({ setHeaders: headers }))
+      : next.handle(request);
   }
 }

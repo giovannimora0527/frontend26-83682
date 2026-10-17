@@ -61,6 +61,31 @@ yarn
 yarn start
 ```
 
+## Integración con el backend
+
+El frontend consume la API bajo `/clinica/v1`. Durante `ng serve`, `proxy.conf.js`
+reenvía esas solicitudes al host indicado por `API_HOST`; si no se configura,
+usa `http://localhost:8080`.
+
+En PowerShell, inicia el backend Spring Boot y luego ejecuta el frontend:
+
+```powershell
+$env:API_HOST = 'http://localhost:8080'
+npm start
+```
+
+La URL de conexión MySQL debe configurarse en el backend; `API_HOST` debe apuntar
+al servidor HTTP de Spring Boot, no al puerto de MySQL. Las pantallas consumen
+los listados de usuarios, clientes, mascotas, médicos y razas. El formulario de
+mascotas también consulta clientes y razas para mantener sus relaciones al crear
+o actualizar un registro.
+
+Cada módulo permite desactivar usuarios y clientes para conservar su historial,
+y eliminar mascotas, médicos o razas cuando no estén protegidos por relaciones
+existentes. Las acciones piden confirmación y muestran el resultado que devuelve
+la API; el backend responde con un conflicto cuando una relación impide eliminar
+el registro.
+
 ## Documentation
 
 [Datta Able Angular Documentation](https://codedthemes.gitbook.io/datta-angular/) helps you with installation, deployment, and troubleshooting.

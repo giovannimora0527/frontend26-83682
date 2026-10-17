@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Raza } from 'src/app/models/raza';
 import { RazaService } from './service/raza.service';
+import { getApiErrorMessage } from 'src/app/services/backend.service';
 
 @Component({
   selector: 'app-raza',
@@ -14,6 +15,7 @@ export class RazaComponent {
   razas: Raza[] = [];
   cargando = true;
   guardando = false;
+  eliminandoId: number | null = null;
   error = '';
   mensaje = '';
   terminoBusqueda = '';
@@ -111,6 +113,33 @@ export class RazaComponent {
       },
       complete: () => {
         this.guardando = false;
+      }
+    });
+  }
+
+  eliminarRaza(raza: Raza): void {
+    if (raza.razaId === undefined || this.eliminandoId !== null) {
+      return;
+    }
+    if (!window.confirm(`¿Eliminar la raza "${raza.nombre ?? raza.razaId}"?`)) {
+      return;
+    }
+
+    this.eliminandoId = raza.razaId;
+    this.error = '';
+    this.mensaje = '';
+    this.razaService.eliminarRaza(raza.razaId).subscribe({
+      next: () => {
+        this.mensaje = 'La raza se eliminó correctamente.';
+        this.cargarRazas();
+      },
+      error: (error: unknown) => {
+        console.error('Error al eliminar la raza:', error);
+        this.error = getApiErrorMessage(error, 'No fue posible eliminar la raza.');
+        this.eliminandoId = null;
+      },
+      complete: () => {
+        this.eliminandoId = null;
       }
     });
   }

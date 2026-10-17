@@ -23,4 +23,8 @@ export class RazaService {
   actualizarRaza(raza: Raza): Observable<Raza> {
     return this.backendService.post<Raza>(environment.apiUrlAuth, this.api, 'actualizar', raza);
   }
+
+  eliminarRaza(id: number): Observable<void> {
+    return this.backendService.delete<void>(environment.apiUrlAuth, this.api, id);
+  }
 }

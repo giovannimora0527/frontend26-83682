@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, provideHttpClient } from "@angular/common/http";
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from "@angular/common/http";
 import { ApplicationConfig } from "@angular/core";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { provideRouter, withEnabledBlockingInitialNavigation, withHashLocation, withInMemoryScrolling, withRouterConfig, withViewTransitions } from "@angular/router";
@@ -19,7 +19,7 @@ export const appConfig: ApplicationConfig = {
         withViewTransitions(),
         withHashLocation()
       ),
-      provideHttpClient(),     
+      provideHttpClient(withInterceptorsFromDi()),
       provideAnimations(),
       {
         provide: HTTP_INTERCEPTORS,

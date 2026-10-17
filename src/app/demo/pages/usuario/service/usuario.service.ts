@@ -15,4 +15,8 @@ export class UsuarioService {
   getUsuarios(): Observable<Usuario[]> {
     return this.backendService.get<Usuario[]>(environment.apiUrlAuth, this.api, 'listar');
   }
+
+  desactivarUsuario(id: number): Observable<void> {
+    return this.backendService.delete<void>(environment.apiUrlAuth, this.api, id);
+  }
 }

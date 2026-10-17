@@ -15,4 +15,8 @@ export class MedicoService {
   listarMedicos(): Observable<Medico[]> {
     return this.backendService.get<Medico[]>(environment.apiUrlAuth, this.api, 'listar');
   }
+
+  eliminarMedico(id: number): Observable<void> {
+    return this.backendService.delete<void>(environment.apiUrlAuth, this.api, id);
+  }
 }

@@ -15,4 +15,8 @@ export class ClienteService {
   listarClientes(): Observable<Cliente[]> {
     return this.backendService.get<Cliente[]>(environment.apiUrlAuth, this.api, 'listar-todos');
   }
+
+  desactivarCliente(id: number): Observable<void> {
+    return this.backendService.delete<void>(environment.apiUrlAuth, this.api, id);
+  }
 }

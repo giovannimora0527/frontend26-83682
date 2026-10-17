@@ -117,6 +117,13 @@
                   <i class="feather icon-edit-2 me-1" aria-hidden="true"></i>
                   Cambiar
                 </button>
+                <button class="btn btn-outline-danger btn-sm ms-1" type="button"
+                  [disabled]="eliminandoId !== null" (click)="eliminarRaza(raza)"
+                  [attr.aria-label]="'Eliminar raza ' + (raza.nombre ?? raza.razaId)">
+                  <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"
+                    *ngIf="eliminandoId === raza.razaId"></span>
+                  {{ eliminandoId === raza.razaId ? 'Eliminando...' : 'Eliminar' }}
+                </button>
               </td>
             </tr>
           </tbody>

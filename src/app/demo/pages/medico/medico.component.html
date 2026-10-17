@@ -1,17 +1,37 @@
 <div class="container-fluid">
   <div class="card shadow-sm border-0">
-    <div class="card-header d-flex align-items-center justify-content-between">
-      <div>
-        <h5 class="mb-1">Gestión de Médicos</h5>
-        <small class="text-muted">Personal profesional registrado.</small>
+    <div class="card-header bg-white py-3">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <h5 class="mb-1">Gestión de Médicos</h5>
+          <small class="text-muted">Consulta el personal profesional registrado.</small>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" [disabled]="cargando"
+          (click)="cargarMedicos()">
+          <i class="feather icon-refresh-cw me-1" aria-hidden="true"></i>
+          {{ cargando ? 'Cargando...' : 'Actualizar' }}
+        </button>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" [disabled]="cargando"
-        (click)="cargarMedicos()">Actualizar</button>
     </div>
     <div class="card-body">
       <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert" *ngIf="error">
         <span>{{ error }}</span>
         <button class="btn btn-danger btn-sm" type="button" (click)="cargarMedicos()">Reintentar</button>
+      </div>
+      <div class="alert alert-success" role="status" *ngIf="mensaje">{{ mensaje }}</div>
+      <div class="row align-items-center g-3 mb-3">
+        <div class="col-md-7">
+          <label class="visually-hidden" for="buscarMedicos">Buscar médicos</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="feather icon-search" aria-hidden="true"></i></span>
+            <input id="buscarMedicos" class="form-control" type="search"
+              placeholder="Buscar por nombre, documento, registro o ID"
+              [value]="terminoBusqueda" (input)="actualizarBusqueda($event)">
+          </div>
+        </div>
+        <div class="col-md-5 text-md-end text-muted small" aria-live="polite">
+          {{ medicosFiltrados.length }} {{ medicosFiltrados.length === 1 ? 'médico encontrado' : 'médicos encontrados' }}
+        </div>
       </div>
       <div class="table-responsive border rounded">
         <table class="table table-hover align-middle mb-0">
@@ -25,16 +45,20 @@
               <th>Teléfono</th>
               <th>Registro profesional</th>
               <th>Especialización (ID)</th>
+              <th class="text-end">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngIf="cargando">
-              <td colspan="8" class="text-center py-4">Cargando médicos...</td>
+              <td colspan="9" class="text-center py-4">Cargando médicos...</td>
             </tr>
             <tr *ngIf="!cargando && !error && medicos.length === 0">
-              <td colspan="8" class="text-center text-muted py-4">No hay médicos registrados.</td>
+              <td colspan="9" class="text-center text-muted py-4">No hay médicos registrados.</td>
             </tr>
-            <tr *ngFor="let medico of medicos">
+            <tr *ngIf="!cargando && !error && medicos.length > 0 && medicosFiltrados.length === 0">
+              <td colspan="9" class="text-center text-muted py-4">No se encontraron médicos con esa búsqueda.</td>
+            </tr>
+            <tr *ngFor="let medico of medicosFiltrados">
               <td>{{ medico.id }}</td>
               <td>{{ medico.tipoDocumento }}</td>
               <td>{{ medico.numeroDocumento }}</td>
@@ -43,6 +67,15 @@
               <td>{{ medico.telefono }}</td>
               <td>{{ medico.registroProfesional }}</td>
               <td>{{ medico.especializacionId }}</td>
+              <td class="text-end">
+                <button class="btn btn-outline-danger btn-sm" type="button"
+                  [disabled]="eliminandoId !== null" (click)="eliminarMedico(medico)"
+                  [attr.aria-label]="'Eliminar médico ' + (medico.nombres ?? medico.id)">
+                  <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"
+                    *ngIf="eliminandoId === medico.id"></span>
+                  {{ eliminandoId === medico.id ? 'Eliminando...' : 'Eliminar' }}
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
