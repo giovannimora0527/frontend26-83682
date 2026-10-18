@@ -1,0 +1,215 @@
+
+<!--
+==========================================================
+CLÍNICA VETERINARIA - UNIMINUTO
+GESTIÓN DE MEDICAMENTOS
+==========================================================
+
+Esta pantalla permite:
+
+1. Consultar medicamentos registrados.
+2. Buscar medicamentos.
+3. Mostrar sus fechas.
+4. Consultar información almacenada en MySQL.
+-->
+
+<div class="row">
+
+  <div class="col-12">
+
+    <div class="card">
+
+      <!-- =============================================== -->
+      <!-- 1. TÍTULO -->
+      <!-- =============================================== -->
+
+      <div class="card-header">
+
+        <h5>
+          Listado de medicamentos registrados
+        </h5>
+
+      </div>
+
+      <div class="card-body">
+
+        <p class="text-muted">
+
+          Consulta los medicamentos registrados en
+          la base de datos de la clínica veterinaria.
+
+        </p>
+
+        <!-- ============================================= -->
+        <!-- 2. BUSCADOR -->
+        <!-- ============================================= -->
+
+        <div class="row mb-4">
+
+          <div class="col-md-8 mb-2">
+
+            <label class="form-label">
+              Buscar medicamento
+            </label>
+
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Buscar por ID, nombre, descripción o presentación"
+              [value]="textoBusqueda"
+              (input)="buscarMedicamento($event)"
+            />
+
+          </div>
+
+          <div class="col-md-4 mb-2">
+
+            <label class="form-label">
+              &nbsp;
+            </label>
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100 d-block"
+              (click)="limpiarBusqueda()"
+            >
+              Limpiar
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 3. INDICADOR DE CARGA -->
+        <!-- ============================================= -->
+
+        <div
+          *ngIf="cargando"
+          class="alert alert-info"
+        >
+          Consultando medicamentos...
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 4. MENSAJE DE ERROR -->
+        <!-- ============================================= -->
+
+        <div
+          *ngIf="mensajeError"
+          class="alert alert-danger"
+        >
+          {{ mensajeError }}
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 5. TABLA DE MEDICAMENTOS -->
+        <!-- ============================================= -->
+
+        <div class="table-responsive">
+
+          <table
+            class="table table-bordered table-hover"
+          >
+
+            <!-- ENCABEZADOS -->
+
+            <thead class="table-light">
+
+            <tr>
+
+              <th>ID</th>
+
+              <th>Nombre</th>
+
+              <th>Descripción</th>
+
+              <th>Presentación</th>
+
+              <th>Fecha de compra</th>
+
+              <th>Fecha de vencimiento</th>
+
+            </tr>
+
+            </thead>
+
+            <!-- REGISTROS -->
+
+            <tbody>
+
+            <tr
+              *ngFor="let medicamento of medicamentosFiltrados"
+            >
+
+              <td>
+                {{ medicamento.id }}
+              </td>
+
+              <td>
+                {{ medicamento.nombre }}
+              </td>
+
+              <td>
+                {{ medicamento.descripcion || 'Sin descripción' }}
+              </td>
+
+              <td>
+                {{ medicamento.presentacion || 'Sin presentación' }}
+              </td>
+
+              <td>
+                {{ formatearFecha(medicamento.fechaCompra) }}
+              </td>
+
+              <td>
+                {{ formatearFecha(medicamento.fechaVence) }}
+              </td>
+
+            </tr>
+
+            <!-- SIN RESULTADOS -->
+
+            <tr
+              *ngIf="
+                  !cargando &&
+                  !mensajeError &&
+                  medicamentosFiltrados.length === 0
+                "
+            >
+
+              <td
+                colspan="6"
+                class="text-center text-muted"
+              >
+
+                No se encontraron medicamentos.
+
+              </td>
+
+            </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 6. CONTADOR DE REGISTROS -->
+        <!-- ============================================= -->
+
+        <div class="mt-3 text-muted">
+
+          Registros encontrados:
+          {{ medicamentosFiltrados.length }}
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

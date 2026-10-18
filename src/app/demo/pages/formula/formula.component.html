@@ -1,0 +1,278 @@
+
+<!-- ========================================================
+     CLÍNICA VETERINARIA - UNIMINUTO
+     GESTIÓN DE FÓRMULAS MÉDICAS
+     ========================================================
+
+     Este componente permite:
+
+     1. Visualizar las fórmulas médicas registradas.
+     2. Buscar por ID de fórmula, cita o medicamento.
+     3. Buscar por dosis e indicaciones.
+     4. Mostrar las fechas de creación y actualización.
+     5. Consultar datos desde el backend Spring Boot.
+======================================================== -->
+
+<div class="row">
+
+  <div class="col-12">
+
+    <!-- ====================================================
+         1. TARJETA PRINCIPAL
+         ==================================================== -->
+
+    <div class="card">
+
+      <!-- Encabezado -->
+
+      <div class="card-header">
+
+        <h5 class="mb-0">
+          Listado de fórmulas médicas
+        </h5>
+
+      </div>
+
+      <!-- Contenido -->
+
+      <div class="card-body">
+
+        <!-- ==================================================
+             2. DESCRIPCIÓN DEL MÓDULO
+             ================================================== -->
+
+        <p class="text-muted mb-4">
+          Consulta las fórmulas médicas registradas
+          en la base de datos de la clínica veterinaria.
+        </p>
+
+        <!-- ==================================================
+             3. BUSCADOR
+             ================================================== -->
+
+        <div class="row mb-4">
+
+          <!-- Campo de búsqueda -->
+
+          <div class="col-md-8 mb-3">
+
+            <label
+              for="buscarFormula"
+              class="form-label"
+            >
+              Buscar fórmula médica
+            </label>
+
+            <input
+              id="buscarFormula"
+              type="text"
+              class="form-control"
+              placeholder="Buscar por ID, cita, medicamento, dosis o indicaciones"
+              [(ngModel)]="textoBusqueda"
+            />
+
+          </div>
+
+          <!-- Botón limpiar -->
+
+          <div class="col-md-4 mb-3 d-flex align-items-end">
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              (click)="limpiarBusqueda()"
+            >
+              Limpiar
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- ==================================================
+             4. MENSAJE DE CARGA
+             ================================================== -->
+
+        <div
+          *ngIf="cargando"
+          class="alert alert-info"
+          role="status"
+        >
+
+          Consultando fórmulas médicas...
+
+        </div>
+
+        <!-- ==================================================
+             5. MENSAJE DE ERROR
+             ================================================== -->
+
+        <div
+          *ngIf="mensajeError"
+          class="alert alert-danger"
+          role="alert"
+        >
+
+          {{ mensajeError }}
+
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger ms-3"
+            (click)="cargarFormulasMedicas()"
+          >
+            Reintentar
+          </button>
+
+        </div>
+
+        <!-- ==================================================
+             6. TABLA DE FÓRMULAS MÉDICAS
+             ================================================== -->
+
+        <div
+          *ngIf="!cargando && !mensajeError"
+          class="table-responsive"
+        >
+
+          <table
+            class="table table-bordered table-hover align-middle"
+          >
+
+            <!-- Encabezados -->
+
+            <thead class="table-light">
+
+            <tr>
+
+              <th>ID</th>
+
+              <th>ID Cita</th>
+
+              <th>ID Medicamento</th>
+
+              <th>Dosis</th>
+
+              <th>Indicaciones</th>
+
+              <th>Fecha de creación</th>
+
+              <th>Última actualización</th>
+
+            </tr>
+
+            </thead>
+
+            <!-- Registros -->
+
+            <tbody>
+
+            <tr
+              *ngFor="let formula of formulasFiltradas"
+            >
+
+              <!-- ID fórmula -->
+
+              <td>
+                {{ formula.id }}
+              </td>
+
+              <!-- ID cita -->
+
+              <td>
+                {{ formula.citaId }}
+              </td>
+
+              <!-- ID medicamento -->
+
+              <td>
+                {{ formula.medicamentoId }}
+              </td>
+
+              <!-- Dosis -->
+
+              <td>
+                {{ formula.dosis }}
+              </td>
+
+              <!-- Indicaciones -->
+
+              <td>
+                {{ formula.indicaciones || 'Sin indicaciones' }}
+              </td>
+
+              <!-- Fecha de creación -->
+
+              <td>
+                {{
+                formula.fechaCreacionRegistro
+                | date:'dd/MM/yyyy HH:mm'
+                }}
+              </td>
+
+              <!-- Fecha de modificación -->
+
+              <td>
+
+                {{
+                formula.fechaActualizacionRegistro
+                ? (
+                formula.fechaActualizacionRegistro
+                | date:'dd/MM/yyyy HH:mm'
+                )
+                : 'Sin modificaciones'
+                }}
+
+              </td>
+
+            </tr>
+
+            <!-- ============================================
+                 7. SIN RESULTADOS
+                 ============================================ -->
+
+            <tr
+              *ngIf="formulasFiltradas.length === 0"
+            >
+
+              <td
+                colspan="7"
+                class="text-center text-muted py-4"
+              >
+
+                No se encontraron fórmulas médicas.
+
+              </td>
+
+            </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- ==================================================
+             8. CANTIDAD DE REGISTROS
+             ================================================== -->
+
+        <div
+          *ngIf="!cargando && !mensajeError"
+          class="mt-3"
+        >
+
+          <span class="text-muted">
+
+            Registros encontrados:
+            {{ formulasFiltradas.length }}
+
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

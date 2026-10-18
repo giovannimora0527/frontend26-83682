@@ -1,0 +1,149 @@
+
+<!-- ======================================================
+     CLÍNICA VETERINARIA - GESTIÓN DE CLIENTES
+     ====================================================== -->
+
+<div class="row">
+  <div class="col-12">
+
+    <div class="card">
+
+      <!-- Título de la tabla -->
+      <div class="card-header">
+        <h5>Listado de clientes registrados</h5>
+      </div>
+
+      <div class="card-body">
+
+        <p class="text-muted">
+          Consulta los clientes registrados
+          en la base de datos de la clínica.
+        </p>
+
+        <!-- Buscar y limpiar -->
+        <div class="row mb-4">
+
+          <div class="col-md-8 mb-2">
+            <label class="form-label">
+              Buscar cliente
+            </label>
+
+            <input
+              type="search"
+              class="form-control"
+              placeholder="Buscar por nombre, ID o documento"
+              [(ngModel)]="textoBusqueda"
+            />
+          </div>
+
+          <div class="col-md-4 mb-2 d-flex align-items-end">
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              (click)="limpiarBusqueda()"
+            >
+              Limpiar
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Mensaje mientras se consultan los datos -->
+        <div
+          *ngIf="cargando"
+          class="alert alert-info"
+        >
+          Cargando clientes...
+        </div>
+
+        <!-- Mensaje si falla la consulta -->
+        <div
+          *ngIf="errorCarga"
+          class="alert alert-danger"
+        >
+          {{ errorCarga }}
+        </div>
+
+        <!-- Tabla de clientes -->
+        <div
+          class="table-responsive"
+          *ngIf="!cargando && !errorCarga"
+        >
+
+          <table class="table table-bordered table-hover">
+
+            <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Nombres</th>
+              <th>Apellidos</th>
+              <th>Tipo documento</th>
+              <th>Número documento</th>
+              <th>Teléfono</th>
+              <th>Dirección</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <tr *ngFor="let cliente of clientesFiltrados">
+
+              <td>
+                {{ cliente.clienteId }}
+              </td>
+
+              <td>
+                {{ cliente.nombres || '-' }}
+              </td>
+
+              <td>
+                {{ cliente.apellidos || '-' }}
+              </td>
+
+              <td>
+                {{ cliente.tipoDocumento || '-' }}
+              </td>
+
+              <td>
+                {{ cliente.numeroDocumento || '-' }}
+              </td>
+
+              <td>
+                {{ cliente.telefono || '-' }}
+              </td>
+
+              <td>
+                {{ cliente.direccion || '-' }}
+              </td>
+
+            </tr>
+
+            <!-- Sin resultados -->
+            <tr *ngIf="clientesFiltrados.length === 0">
+              <td
+                colspan="7"
+                class="text-center text-muted py-4"
+              >
+                No se encontraron clientes.
+              </td>
+            </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- Resumen de registros -->
+        <div
+          class="mt-3 text-muted"
+          *ngIf="!cargando && !errorCarga"
+        >
+          Registros encontrados:
+          {{ clientesFiltrados.length }}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

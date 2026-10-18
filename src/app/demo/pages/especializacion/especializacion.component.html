@@ -1,0 +1,155 @@
+
+<!-- ======================================================
+     CLÍNICA VETERINARIA - UNIMINUTO
+     GESTIÓN DE ESPECIALIZACIONES
+     ====================================================== -->
+
+<div class="row">
+  <div class="col-12">
+
+    <div class="card">
+
+      <!-- ENCABEZADO -->
+      <div class="card-header">
+        <h5>Listado de especializaciones médicas</h5>
+      </div>
+
+      <div class="card-body">
+
+        <!-- DESCRIPCIÓN -->
+        <p class="text-muted">
+          Consulta las especializaciones registradas
+          en la base de datos de la clínica.
+        </p>
+
+        <!-- BUSCADOR -->
+        <div class="row mb-4">
+
+          <div class="col-md-8 mb-2">
+
+            <label class="form-label">
+              Buscar especialización
+            </label>
+
+            <input
+              type="search"
+              class="form-control"
+              placeholder="Buscar por ID, nombre, código o descripción"
+              [(ngModel)]="textoBusqueda"
+            />
+
+          </div>
+
+          <div class="col-md-4 mb-2 d-flex align-items-end">
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              (click)="limpiarBusqueda()"
+            >
+              Limpiar
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- MENSAJE DE CARGA -->
+        <div
+          *ngIf="cargando"
+          class="alert alert-info"
+        >
+          Cargando especializaciones...
+        </div>
+
+        <!-- MENSAJE DE ERROR -->
+        <div
+          *ngIf="errorCarga"
+          class="alert alert-danger"
+        >
+          {{ errorCarga }}
+        </div>
+
+        <!-- TABLA PRINCIPAL -->
+        <div
+          class="table-responsive"
+          *ngIf="!cargando && !errorCarga"
+        >
+
+          <table class="table table-bordered table-hover">
+
+            <thead class="table-light">
+
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Código</th>
+              <th>Descripción</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            <!-- RECORRER LOS REGISTROS DE MYSQL -->
+            <tr
+              *ngFor="let item of especializacionesFiltradas"
+            >
+
+              <!-- IDENTIFICADOR -->
+              <td>
+                {{ item.id }}
+              </td>
+
+              <!-- NOMBRE -->
+              <td>
+                {{ item.nombre }}
+              </td>
+
+              <!-- CÓDIGO -->
+              <td>
+                {{ item.codigoEspecializacion }}
+              </td>
+
+              <!-- DESCRIPCIÓN -->
+              <td>
+                {{ item.descripcion || 'Sin descripción' }}
+              </td>
+
+            </tr>
+
+            <!-- SIN RESULTADOS -->
+            <tr
+              *ngIf="especializacionesFiltradas.length === 0"
+            >
+
+              <td
+                colspan="4"
+                class="text-center text-muted py-4"
+              >
+                No se encontraron especializaciones.
+              </td>
+
+            </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- CONTADOR -->
+        <div
+          class="mt-3 text-muted"
+          *ngIf="!cargando && !errorCarga"
+        >
+          Registros encontrados:
+          {{ especializacionesFiltradas.length }}
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

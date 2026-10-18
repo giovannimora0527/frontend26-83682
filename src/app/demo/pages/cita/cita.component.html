@@ -1,0 +1,920 @@
+
+<!-- ===================================================== -->
+<!-- CLÍNICA VETERINARIA - UNIMINUTO                      -->
+<!-- GESTIÓN DE CITAS                                    -->
+<!-- ===================================================== -->
+
+<div class="row">
+  <div class="col-12">
+
+    <!-- ================================================= -->
+    <!-- 1. TÍTULO DEL MÓDULO                             -->
+    <!-- ================================================= -->
+
+    <div class="page-header">
+      <div class="page-block">
+        <h3 class="mb-2">Gestión de Citas</h3>
+
+        <p class="text-muted">
+          Consulta, registra y administra las citas
+          médicas de la clínica veterinaria.
+        </p>
+      </div>
+    </div>
+
+    <!-- ================================================= -->
+    <!-- 2. TARJETA PRINCIPAL                             -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+      <div class="card-header">
+        <h5>Listado de citas médicas</h5>
+      </div>
+
+      <div class="card-body">
+
+        <!-- ============================================= -->
+        <!-- 3. BÚSQUEDA Y FILTROS                         -->
+        <!-- ============================================= -->
+
+        <div class="row g-3 align-items-end mb-4">
+
+          <!-- Buscar citas -->
+
+          <div class="col-md-5">
+            <label
+              for="buscarCita"
+              class="form-label"
+            >
+              Buscar cita
+            </label>
+
+            <input
+              id="buscarCita"
+              type="text"
+              class="form-control"
+              placeholder="ID, cliente, mascota, médico o motivo"
+              [(ngModel)]="busqueda"
+              (ngModelChange)="actualizarFiltros()"
+            />
+          </div>
+
+          <!-- Filtrar por estado -->
+
+          <div class="col-md-3">
+            <label
+              for="filtroEstado"
+              class="form-label"
+            >
+              Estado de la cita
+            </label>
+
+            <select
+              id="filtroEstado"
+              class="form-select"
+              [(ngModel)]="filtroEstado"
+              (ngModelChange)="actualizarFiltros()"
+            >
+              <option value="">
+                Todos los estados
+              </option>
+
+              <option
+                *ngFor="let estado of estados"
+                [value]="estado"
+              >
+                {{ estado | titlecase }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Limpiar filtros -->
+
+          <div class="col-md-2">
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              (click)="limpiarFiltros()"
+            >
+              Limpiar
+            </button>
+          </div>
+
+          <!-- Abrir nueva cita -->
+
+          <div class="col-md-2">
+            <button
+              type="button"
+              class="btn btn-primary w-100"
+              (click)="nuevaCita()"
+            >
+              <i class="feather icon-plus me-1"></i>
+              Nueva cita
+            </button>
+          </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 4. INDICADOR DE CARGA                         -->
+        <!-- ============================================= -->
+
+        <div
+          *ngIf="cargando"
+          class="text-center py-4"
+        >
+          <div
+            class="spinner-border text-primary"
+            role="status"
+          ></div>
+
+          <p class="mt-2">
+            Cargando citas...
+          </p>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 5. ERROR AL CONSULTAR CITAS                   -->
+        <!-- ============================================= -->
+
+        <div
+          *ngIf="errorCarga && !cargando"
+          class="alert alert-danger"
+        >
+          {{ errorCarga }}
+
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger ms-2"
+            (click)="cargarCitas()"
+          >
+            Reintentar
+          </button>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 6. TABLA DE CITAS                             -->
+        <!-- ============================================= -->
+
+        <div
+          *ngIf="!cargando && !errorCarga"
+          class="table-responsive"
+        >
+
+          <table
+            class="table table-bordered table-hover align-middle"
+          >
+
+            <thead class="table-light">
+            <tr class="text-center">
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Mascota</th>
+              <th>Médico</th>
+              <th>Fecha y hora</th>
+              <th>Estado</th>
+              <th>Motivo</th>
+              <th>Acciones</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <!-- Mostrar citas registradas -->
+
+            <tr *ngFor="let cita of citasPaginadas">
+
+              <!-- ID de la cita -->
+
+              <td class="text-center">
+                {{ cita.id }}
+              </td>
+
+              <!-- Nombre completo del cliente -->
+
+              <td>
+                <ng-container
+                  *ngIf="
+                      obtenerClientePorId(cita.clienteId)
+                        as cliente;
+                      else clienteNoDisponible
+                    "
+                >
+                  {{ cliente.nombres }}
+                  {{ cliente.apellidos }}
+                </ng-container>
+
+                <ng-template #clienteNoDisponible>
+                  Cliente ID: {{ cita.clienteId }}
+                </ng-template>
+              </td>
+
+              <!--
+                Por ahora conservamos el ID
+                de la mascota en la tabla.
+                La selección por nombre se hará
+                desde el formulario.
+              -->
+
+              <td class="text-center">
+                {{ cita.mascotaId }}
+              </td>
+
+              <!-- Médico -->
+
+              <!-- ================================================== -->
+              <!-- MOSTRAR NOMBRE DEL MÉDICO EN LUGAR DE SU ID -->
+              <!-- ================================================== -->
+
+              <td class="text-center">
+                {{ obtenerNombreMedico(cita.medicoId) }}
+              </td>
+
+
+              <!-- Fecha y hora -->
+
+              <td>
+                {{
+                cita.fechaHora
+                | date:'dd/MM/yyyy HH:mm'
+                }}
+              </td>
+
+              <!-- Estado -->
+
+              <td class="text-center">
+
+                  <span
+                    class="badge"
+                    [ngClass]="{
+                      'bg-warning text-dark':
+                        cita.estado === 'pendiente',
+
+                      'bg-primary':
+                        cita.estado === 'programada',
+
+                      'bg-info text-dark':
+                        cita.estado === 'confirmada',
+
+                      'bg-success':
+                        cita.estado === 'atendida',
+
+                      'bg-danger':
+                        cita.estado === 'cancelada'
+                    }"
+                  >
+                    {{ cita.estado | titlecase }}
+                  </span>
+
+              </td>
+
+              <!-- Motivo -->
+
+              <td>
+                {{
+                cita.motivo ||
+                'Sin motivo registrado'
+                }}
+              </td>
+
+              <!-- Acciones -->
+
+              <td class="text-center">
+
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm"
+                  [disabled]="
+                      cita.estado === 'cancelada' ||
+                      cita.estado === 'atendida'
+                    "
+                  (click)="editarCita(cita)"
+                >
+                  <i class="feather icon-edit me-1"></i>
+                  Editar
+                </button>
+
+              </td>
+
+            </tr>
+
+            <!-- Mensaje cuando no hay citas -->
+
+            <tr *ngIf="citasFiltradas.length === 0">
+              <td
+                colspan="8"
+                class="text-center text-muted py-4"
+              >
+                No se encontraron citas.
+              </td>
+            </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 7. PAGINACIÓN                                 -->
+        <!-- ============================================= -->
+
+        <div
+          *ngIf="
+            !cargando &&
+            !errorCarga &&
+            citasFiltradas.length > 0
+          "
+          class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-2"
+        >
+
+          <div class="text-muted">
+            Registros encontrados:
+            <strong>{{ citasFiltradas.length }}</strong>
+          </div>
+
+          <nav aria-label="Paginación de citas">
+
+            <ul class="pagination mb-0">
+
+              <!-- Anterior -->
+
+              <li
+                class="page-item"
+                [class.disabled]="paginaActual === 1"
+              >
+                <button
+                  type="button"
+                  class="page-link"
+                  [disabled]="paginaActual === 1"
+                  (click)="cambiarPagina(paginaActual - 1)"
+                >
+                  Anterior
+                </button>
+              </li>
+
+              <!-- Números de página -->
+
+              <li
+                *ngFor="let pagina of paginas"
+                class="page-item"
+                [class.active]="paginaActual === pagina"
+              >
+                <button
+                  type="button"
+                  class="page-link"
+                  (click)="cambiarPagina(pagina)"
+                >
+                  {{ pagina }}
+                </button>
+              </li>
+
+              <!-- Siguiente -->
+
+              <li
+                class="page-item"
+                [class.disabled]="
+                  paginaActual === totalPaginas
+                "
+              >
+                <button
+                  type="button"
+                  class="page-link"
+                  [disabled]="
+                    paginaActual === totalPaginas
+                  "
+                  (click)="cambiarPagina(paginaActual + 1)"
+                >
+                  Siguiente
+                </button>
+              </li>
+
+            </ul>
+
+          </nav>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- 8. FORMULARIO MODAL                                  -->
+<!-- ===================================================== -->
+
+<div
+  *ngIf="mostrarFormulario"
+  class="modal d-block"
+  tabindex="-1"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="tituloModalCita"
+  style="background-color: rgba(0,0,0,0.50);"
+>
+
+  <div
+    class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"
+    role="document"
+  >
+
+    <div class="modal-content">
+
+      <!-- ============================================= -->
+      <!-- 9. ENCABEZADO DEL MODAL                       -->
+      <!-- ============================================= -->
+
+      <div class="modal-header">
+
+        <h5
+          id="tituloModalCita"
+          class="modal-title"
+        >
+          {{
+          modoFormulario === 'crear'
+          ? 'Registrar nueva cita'
+          : 'Actualizar cita'
+          }}
+        </h5>
+
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Cerrar"
+          [disabled]="guardando"
+          (click)="cerrarFormulario()"
+        ></button>
+
+      </div>
+
+      <!-- ============================================= -->
+      <!-- 10. FORMULARIO REACTIVO                       -->
+      <!-- ============================================= -->
+
+      <form
+        [formGroup]="formulario"
+        (ngSubmit)="guardarCita()"
+      >
+
+        <div class="modal-body">
+
+          <div class="row g-3">
+
+            <!-- ======================================= -->
+            <!-- 11. SELECCIONAR CLIENTE                 -->
+            <!-- ======================================= -->
+
+            <div class="col-md-6">
+
+              <label
+                for="clienteId"
+                class="form-label"
+              >
+                Cliente *
+              </label>
+
+              <!--
+                El usuario selecciona un nombre,
+                pero Angular guarda el clienteId.
+
+                IMPORTANTE:
+                Al cambiar cliente, llamamos
+                a alCambiarCliente() para limpiar
+                la mascota seleccionada.
+              -->
+
+              <select
+                id="clienteId"
+                class="form-select"
+                formControlName="clienteId"
+                [attr.disabled]="
+                  cargandoClientes ? '' : null
+                "
+                (change)="alCambiarCliente()"
+              >
+
+                <option [ngValue]="null">
+                  Seleccionar cliente
+                </option>
+
+                <option
+                  *ngFor="let cliente of clientes"
+                  [ngValue]="cliente.clienteId"
+                >
+                  {{ obtenerNombreCliente(cliente) }}
+                </option>
+
+              </select>
+
+              <!-- Cargando clientes -->
+
+              <small
+                *ngIf="cargandoClientes"
+                class="text-muted d-block mt-2"
+              >
+                Cargando clientes...
+              </small>
+
+              <!-- Clientes disponibles -->
+
+              <small
+                *ngIf="
+                  !cargandoClientes &&
+                  !errorClientes &&
+                  clientes.length > 0
+                "
+                class="text-muted d-block mt-2"
+              >
+                Clientes disponibles:
+                {{ clientes.length }}
+              </small>
+
+              <!-- Error de clientes -->
+
+              <div
+                *ngIf="errorClientes"
+                class="text-danger mt-2"
+              >
+                {{ errorClientes }}
+
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger ms-2"
+                  (click)="cargarClientes()"
+                >
+                  Reintentar
+                </button>
+              </div>
+
+              <!-- Validación -->
+
+              <small
+                *ngIf="
+                  formulario.get('clienteId')?.invalid &&
+                  formulario.get('clienteId')?.touched
+                "
+                class="text-danger d-block mt-2"
+              >
+                Debes seleccionar un cliente.
+              </small>
+
+            </div>
+
+            <!-- ======================================= -->
+            <!-- 12. SELECCIONAR MASCOTA - NUEVO         -->
+            <!-- ======================================= -->
+
+            <div class="col-md-6">
+
+              <label
+                for="mascotaId"
+                class="form-label"
+              >
+                Mascota *
+              </label>
+
+              <!--
+                La lista se obtiene desde
+                MascotaService.
+
+                mascotasDelCliente contiene
+                únicamente las mascotas que
+                pertenecen al cliente seleccionado.
+
+                [ngValue] almacena el mascotaId
+                numérico esperado por Spring Boot.
+              -->
+
+              <select
+                id="mascotaId"
+                class="form-select"
+                formControlName="mascotaId"
+                [attr.disabled]="
+                  cargandoMascotas ||
+                  !formulario.get('clienteId')?.value
+                    ? ''
+                    : null
+                "
+              >
+
+                <option [ngValue]="null">
+
+                  {{
+                  !formulario.get('clienteId')?.value
+                  ? 'Primero selecciona un cliente'
+                  : cargandoMascotas
+                  ? 'Cargando mascotas...'
+                  : 'Seleccionar mascota'
+                  }}
+
+                </option>
+
+                <!--
+                  Mostrar únicamente las mascotas
+                  del propietario seleccionado.
+                -->
+
+                <option
+                  *ngFor="
+                    let mascota of mascotasDelCliente
+                  "
+                  [ngValue]="mascota.mascotaId"
+                >
+                  {{ obtenerNombreMascota(mascota) }}
+                </option>
+
+              </select>
+
+              <!-- Indicador de carga -->
+
+              <small
+                *ngIf="cargandoMascotas"
+                class="text-muted d-block mt-2"
+              >
+                Cargando mascotas...
+              </small>
+
+              <!--
+                Mostrar la cantidad de mascotas
+                asociadas al cliente seleccionado.
+              -->
+
+              <small
+                *ngIf="
+                  !cargandoMascotas &&
+                  !errorMascotas &&
+                  formulario.get('clienteId')?.value &&
+                  mascotasDelCliente.length > 0
+                "
+                class="text-muted d-block mt-2"
+              >
+                Mascotas de este cliente:
+                {{ mascotasDelCliente.length }}
+              </small>
+
+              <!--
+                Mostrar aviso si el cliente
+                todavía no tiene mascotas.
+              -->
+
+              <small
+                *ngIf="
+                  !cargandoMascotas &&
+                  !errorMascotas &&
+                  formulario.get('clienteId')?.value &&
+                  mascotasDelCliente.length === 0
+                "
+                class="text-warning d-block mt-2"
+              >
+                Este cliente no tiene mascotas
+                registradas.
+              </small>
+
+              <!-- Error al consultar mascotas -->
+
+              <div
+                *ngIf="errorMascotas"
+                class="text-danger mt-2"
+              >
+
+                {{ errorMascotas }}
+
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger ms-2"
+                  (click)="cargarMascotas()"
+                >
+                  Reintentar
+                </button>
+
+              </div>
+
+              <!-- Validación de mascota -->
+
+              <small
+                *ngIf="
+                  formulario.get('mascotaId')?.invalid &&
+                  formulario.get('mascotaId')?.touched
+                "
+                class="text-danger d-block mt-2"
+              >
+                Debes seleccionar una mascota.
+              </small>
+
+            </div>
+
+            <!-- ======================================= -->
+            <!-- 13. MÉDICO VETERINARIO                  -->
+            <!-- ======================================= -->
+
+            <div class="col-md-6">
+
+              <label
+                for="medicoId"
+                class="form-label"
+              >
+                Médico veterinario *
+              </label>
+
+              <!--
+
+
+                Lo convertiremos en lista desplegable
+                cuando integremos los médicos.
+              -->
+
+
+              <!-- ================================================== -->
+              <!-- SELECCIONAR MÉDICO VETERINARIO -->
+              <!-- ================================================== -->
+
+              <select
+                id="medicoId"
+                class="form-select"
+                formControlName="medicoId"
+              >
+                <!-- Opción inicial -->
+                <option [ngValue]="null">
+                  Seleccionar médico veterinario
+                </option>
+
+                <!-- Mostrar los médicos obtenidos desde MySQL -->
+                <option
+                  *ngFor="let medico of medicos"
+                  [ngValue]="medico.id"
+                >
+                  {{ medico.nombres }} {{ medico.apellidos }}
+                  - {{ medico.registroProfesional }}
+                </option>
+              </select>
+
+              <!-- Mostrar cuántos médicos se cargaron -->
+              <small class="text-muted">
+                Médicos disponibles: {{ medicos.length }}
+              </small>
+
+              />
+
+            </div>
+
+            <!-- ======================================= -->
+            <!-- 14. FECHA Y HORA                        -->
+            <!-- ======================================= -->
+
+            <div class="col-md-6">
+
+              <label
+                for="fechaHora"
+                class="form-label"
+              >
+                Fecha y hora *
+              </label>
+
+              <input
+                id="fechaHora"
+                type="datetime-local"
+                class="form-control"
+                formControlName="fechaHora"
+              />
+
+            </div>
+
+            <!-- ======================================= -->
+            <!-- 15. ESTADO DE LA CITA                   -->
+            <!-- ======================================= -->
+
+            <div class="col-md-6">
+
+              <label
+                for="estado"
+                class="form-label"
+              >
+                Estado de la cita *
+              </label>
+
+              <select
+                id="estado"
+                class="form-select"
+                formControlName="estado"
+              >
+
+                <option
+                  *ngFor="let estado of estados"
+                  [value]="estado"
+                  [disabled]="
+                    modoFormulario === 'crear' &&
+                    (
+                      estado === 'atendida' ||
+                      estado === 'cancelada'
+                    )
+                  "
+                >
+                  {{ estado | titlecase }}
+                </option>
+
+              </select>
+
+            </div>
+
+            <!-- ======================================= -->
+            <!-- 16. MOTIVO DE CONSULTA                  -->
+            <!-- ======================================= -->
+
+            <div class="col-12">
+
+              <label
+                for="motivo"
+                class="form-label"
+              >
+                Motivo de la consulta
+              </label>
+
+              <textarea
+                id="motivo"
+                class="form-control"
+                rows="3"
+                formControlName="motivo"
+                placeholder="Describe el motivo de la cita"
+              ></textarea>
+
+            </div>
+
+          </div>
+
+          <!-- ========================================= -->
+          <!-- 17. MENSAJE INFORMATIVO                   -->
+          <!-- ========================================= -->
+
+          <div class="alert alert-info mt-4 mb-0">
+
+            Selecciona primero el cliente y luego
+            una de sus mascotas registradas.
+
+            El veterinario debe tener un
+            identificador válido.
+
+            El backend verificará los datos
+            y la disponibilidad de la cita.
+
+          </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 18. BOTONES DEL FORMULARIO                    -->
+        <!-- ============================================= -->
+
+        <div class="modal-footer">
+
+          <!-- Cerrar -->
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            [disabled]="guardando"
+            (click)="cerrarFormulario()"
+          >
+            Cerrar
+          </button>
+
+          <!-- Guardar o actualizar -->
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="
+              guardando ||
+              formulario.invalid ||
+              cargandoMascotas ||
+              !!errorMascotas
+            "
+          >
+
+            <span
+              *ngIf="guardando"
+              class="spinner-border spinner-border-sm me-2"
+            ></span>
+
+            {{
+            guardando
+            ? 'Guardando...'
+            : modoFormulario === 'crear'
+            ? 'Guardar cita'
+            : 'Actualizar cita'
+            }}
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
