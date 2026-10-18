@@ -1,0 +1,14 @@
+/* El tema fuerza white-space: nowrap en las celdas; las columnas de texto largo se ajustan
+   para que la tabla no desborde y la columna de acciones quede visible. */
+.tabla-legible th,
+.tabla-legible td {
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+}
+
+.tabla-legible td.celda-texto {
+  white-space: normal;
+  min-width: 9rem;
+  max-width: 18rem;
+  overflow-wrap: anywhere;
+}

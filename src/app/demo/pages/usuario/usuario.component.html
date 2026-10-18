@@ -1,0 +1,152 @@
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col col-md-9">
+                    <input class="form-control" placeholder="Buscar usuario" type="text"
+                        (input)="actualizarBusqueda($event)" />
+                </div>
+                <div class="col col-md-3 text-end">
+                    <button
+                        class="btn btn-md btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                        (click)="nuevoUsuario()" title="Agregar usuario">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                        &nbsp; Nuevo
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div *ngIf="cargandoUsuarios" class="alert alert-info" role="status">Cargando usuarios…</div>
+            <div *ngIf="errorUsuarios" class="alert alert-danger" role="alert">
+                {{ errorUsuarios }}
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2" (click)="listar()">Reintentar</button>
+            </div>
+            <div class="row">
+                <div class="table table-responsive table-condensed col col-md-12">
+                    <table class="table table-stripped table-condensed table-responsive">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Usuario</th>
+                                <th class="text-center">Correo</th>
+                                <th class="text-center">Rol</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Fecha de creación</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody *ngIf="!cargandoUsuarios && !errorUsuarios && listUsuarios.length === 0">
+                            <tr>
+                                <td colspan="6" class="text-center">No hay usuarios registrados</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="!cargandoUsuarios && !errorUsuarios && listUsuarios.length > 0 && usuariosFiltrados.length === 0">
+                            <tr>
+                                <td colspan="6" class="text-center">No se encontraron usuarios</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="!cargandoUsuarios && !errorUsuarios && usuariosFiltrados.length > 0">
+                            <tr *ngFor="let usuario of usuariosPaginados">
+                                <td class="text-center">{{ usuario.username }}</td>
+                                <td class="text-center">{{ usuario.email }}</td>
+                                <td class="text-center">{{ usuario.rol }}</td>
+                                <td class="text-center">
+                                    <span class="badge" [ngClass]="usuario.activo ? 'bg-success' : 'bg-secondary'">
+                                        {{ usuario.activo ? 'Activo' : 'Inactivo' }}</span>
+                                </td>
+                                <td class="text-center">{{ usuario.fechaCreacion | date:'yyyy-MM-dd HH:mm' }}</td>
+                                <td class="text-center">
+                                    <button class="btn btn-outline-info d-inline-flex align-items-center justify-content-center"
+                                        type="button" (click)="abrirEdicion(usuario)" title="Editar">
+                                        <i class="fa fa-edit"></i>&nbsp;Editar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <nav *ngIf="totalPaginas > 1" aria-label="Paginación de usuarios">
+                <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item" [class.disabled]="paginaActual === 1">
+                        <button class="page-link" type="button" [disabled]="paginaActual === 1"
+                            (click)="cambiarPagina(paginaActual - 1)">Anterior</button>
+                    </li>
+                    <li class="page-item" *ngFor="let pagina of paginas" [class.active]="pagina === paginaActual">
+                        <button class="page-link" type="button"
+                            [attr.aria-current]="pagina === paginaActual ? 'page' : null"
+                            (click)="cambiarPagina(pagina)">{{ pagina }}</button>
+                    </li>
+                    <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+                        <button class="page-link" type="button" [disabled]="paginaActual === totalPaginas"
+                            (click)="cambiarPagina(paginaActual + 1)">Siguiente</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalCrearUsuario" tabindex="-1" aria-labelledby="modalCrearUsuarioLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modalCrearUsuarioLabel">{{ titleModal }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="closeModal()"></button>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="guardarUsuario()">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Nombre de usuario</label>
+                            <input id="username" class="form-control" formControlName="username" maxlength="50"
+                                autocomplete="off">
+                            <div class="text-danger" *ngIf="f['username'].touched && f['username'].invalid">
+                                Ingresa el nombre de usuario (máximo 50 caracteres).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Correo electrónico</label>
+                            <input id="email" class="form-control" type="email" formControlName="email" autocomplete="off">
+                            <div class="text-danger" *ngIf="f['email'].touched && f['email'].invalid">
+                                Ingresa un correo electrónico válido.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rol" class="form-label">Rol</label>
+                            <input id="rol" class="form-control" formControlName="rol" list="rolesUsuario" maxlength="30">
+                            <datalist id="rolesUsuario">
+                                <option *ngFor="let rol of rolesSugeridos" [value]="rol"></option>
+                            </datalist>
+                            <div class="text-danger" *ngIf="f['rol'].touched && f['rol'].invalid">Ingresa el rol.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">
+                                Contraseña <span *ngIf="modoFormulario === 'E'" class="text-muted">(déjala vacía para conservar la actual)</span>
+                            </label>
+                            <input id="password" class="form-control" type="password" formControlName="password"
+                                autocomplete="new-password">
+                            <div class="text-danger" *ngIf="f['password'].touched && f['password'].invalid">
+                                Ingresa una contraseña.</div>
+                        </div>
+                        <div class="col-md-6" *ngIf="modoFormulario === 'E'">
+                            <div class="form-check form-switch mt-2">
+                                <input id="activo" class="form-check-input" type="checkbox" formControlName="activo">
+                                <label for="activo" class="form-check-label">Usuario activo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger mt-3 mb-0" *ngIf="respuestaError" role="alert">{{ respuestaError }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        (click)="closeModal()">Cerrar</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="enviando">
+                        {{ enviando ? 'Enviando...' : titleBoton }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

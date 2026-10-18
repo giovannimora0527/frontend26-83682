@@ -1,0 +1,69 @@
+.formula-tools {
+  display: flex;
+  gap: 0.75rem;
+  width: min(100%, 700px);
+}
+
+.formula-tools .form-control { flex: 1; }
+
+.formula-table th { white-space: nowrap; }
+
+.sort-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sort-button:hover { color: var(--bs-primary); }
+.dose-cell { max-width: 180px; }
+
+/* El tema fuerza white-space: nowrap en las celdas; las columnas de texto largo se ajustan
+   para que la tabla no desborde y la columna de acciones quede visible. */
+.tabla-legible th,
+.tabla-legible td {
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+}
+
+.tabla-legible td.celda-texto {
+  white-space: normal;
+  min-width: 8rem;
+  max-width: 14rem;
+  overflow-wrap: anywhere;
+}
+
+.formula-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1055;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(20 28 40 / 55%);
+}
+
+.formula-detail { width: min(100%, 720px); max-height: 90vh; overflow: auto; }
+
+.formula-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) 2fr;
+  gap: 0.7rem 1rem;
+  margin: 0;
+}
+
+.formula-detail-grid dt { color: #667085; font-weight: 600; }
+.formula-detail-grid dd { margin: 0; overflow-wrap: anywhere; }
+.prescription-text { white-space: pre-wrap; }
+
+.clinic-backdrop { position: fixed; inset: 0; z-index: 1055; display: grid; place-items: center; padding: 1rem; background: rgb(20 28 40 / 55%); }
+.clinic-dialog { width: min(100%, 820px); max-height: 92vh; overflow: auto; }
+.clinic-dialog .card-header h5 { margin: 0; }
+
+@media (max-width: 575px) {
+  .formula-tools { flex-direction: column; }
+  .formula-detail-grid { grid-template-columns: 1fr; gap: 0.2rem; }
+  .formula-detail-grid dd { margin-bottom: 0.6rem; }
+}

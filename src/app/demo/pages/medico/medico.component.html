@@ -1,0 +1,204 @@
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col col-md-9">
+                    <input class="form-control" placeholder="Buscar medico" type="text"
+                        (input)="actualizarBusqueda($event)" />
+                </div>
+                <div class="col col-md-3 text-end">
+                    <button
+                        class="btn btn-md btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                        (click)="nuevoMedico('C')" title="Agregar medico">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                        &nbsp; Nuevo
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="table table-responsive table-condensed col col-md-12">
+                    <table class="table table-stripped table-condensed table-responsive">
+                        <thead>
+                            <tr>
+                                <th class="text-center"
+                                    [attr.aria-sort]="columnaOrden === 'nombres' ? (direccionOrden === 'asc' ? 'ascending' : 'descending') : 'none'">
+                                    <button type="button" class="btn btn-link p-0 text-dark text-decoration-none"
+                                        (click)="ordenarPor('nombres')">
+                                        Nombres <i class="fa"
+                                            [ngClass]="columnaOrden === 'nombres' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"
+                                            aria-hidden="true"></i>
+                                    </button>
+                                </th>
+                                <th class="text-center"
+                                    [attr.aria-sort]="columnaOrden === 'apellidos' ? (direccionOrden === 'asc' ? 'ascending' : 'descending') : 'none'">
+                                    <button type="button" class="btn btn-link p-0 text-dark text-decoration-none"
+                                        (click)="ordenarPor('apellidos')">
+                                        Apellidos <i class="fa"
+                                            [ngClass]="columnaOrden === 'apellidos' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"
+                                            aria-hidden="true"></i>
+                                    </button>
+                                </th>
+                                <th class="text-center"
+                                    [attr.aria-sort]="columnaOrden === 'especializacion' ? (direccionOrden === 'asc' ? 'ascending' : 'descending') : 'none'">
+                                    <button type="button" class="btn btn-link p-0 text-dark text-decoration-none"
+                                        (click)="ordenarPor('especializacion')">
+                                        Especialización <i class="fa"
+                                            [ngClass]="columnaOrden === 'especializacion' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"
+                                            aria-hidden="true"></i>
+                                    </button>
+                                </th>
+                                <th class="text-center"
+                                    [attr.aria-sort]="columnaOrden === 'registroProfesional' ? (direccionOrden === 'asc' ? 'ascending' : 'descending') : 'none'">
+                                    <button type="button" class="btn btn-link p-0 text-dark text-decoration-none"
+                                        (click)="ordenarPor('registroProfesional')">
+                                        Registro Profesional <i class="fa"
+                                            [ngClass]="columnaOrden === 'registroProfesional' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"
+                                            aria-hidden="true"></i>
+                                    </button>
+                                </th>
+                                <th class="text-center"
+                                    [attr.aria-sort]="columnaOrden === 'tipoDocumento' ? (direccionOrden === 'asc' ? 'ascending' : 'descending') : 'none'">
+                                    <button type="button" class="btn btn-link p-0 text-dark text-decoration-none"
+                                        (click)="ordenarPor('tipoDocumento')">
+                                        Tipo de doc <i class="fa"
+                                            [ngClass]="columnaOrden === 'tipoDocumento' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"
+                                            aria-hidden="true"></i>
+                                    </button>
+                                </th>
+                                <th class="text-center"
+                                    [attr.aria-sort]="columnaOrden === 'numeroDocumento' ? (direccionOrden === 'asc' ? 'ascending' : 'descending') : 'none'">
+                                    <button type="button" class="btn btn-link p-0 text-dark text-decoration-none"
+                                        (click)="ordenarPor('numeroDocumento')">
+                                        Número de doc. <i class="fa"
+                                            [ngClass]="columnaOrden === 'numeroDocumento' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"
+                                            aria-hidden="true"></i>
+                                    </button>
+                                </th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody *ngIf="listMedicos.length === 0">
+                            <tr>
+                                <td colspan="7" class="text-center">No hay médicos registrados</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="listMedicos.length > 0 && medicoFiltrados.length === 0">
+                            <tr>
+                                <td colspan="7" class="text-center">No se encontraron médicos</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="medicoFiltrados.length > 0">
+                            <tr *ngFor="let medico of medicoPaginados">
+                                <td class="text-center">{{ medico.nombres }}</td>
+                                <td class="text-center">{{ medico.apellidos }}</td>
+                                <td class="text-center">{{ medico.especializacion.nombre }}</td>
+                                <td class="text-center">{{ medico.registroProfesional }}</td>
+                                <td class="text-center">{{ medico.tipoDocumento }}</td>
+                                <td class="text-center">{{ medico.numeroDocumento }}</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-outline-info d-inline-flex
+                                align-items-center justify-content-center" (click)="abrirEdicion(medico)">
+                                        <i class="fa fa-edit"></i>&nbsp;Editar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <nav *ngIf="totalPaginas > 1" aria-label="Paginación de médicos">
+                <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item" [class.disabled]="paginaActual === 1">
+                        <button class="page-link" type="button" [disabled]="paginaActual === 1"
+                            (click)="cambiarPagina(paginaActual - 1)">Anterior</button>
+                    </li>
+                    <li class="page-item" *ngFor="let pagina of paginas" [class.active]="pagina === paginaActual">
+                        <button class="page-link" type="button"
+                            [attr.aria-current]="pagina === paginaActual ? 'page' : null"
+                            (click)="cambiarPagina(pagina)">{{ pagina }}</button>
+                    </li>
+                    <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+                        <button class="page-link" type="button" [disabled]="paginaActual === totalPaginas"
+                            (click)="cambiarPagina(paginaActual + 1)">Siguiente</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalCrearMedico" tabindex="-1" aria-labelledby="modalCrearMedicoLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modalCrearMedicoLabel">{{ titleModal }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                (click)="closeModal()"></button>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="guardarMedico()">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="tipoDocumento" class="form-label">Tipo de documento</label>
+                            <select id="tipoDocumento" class="form-select" formControlName="tipoDocumento">
+                                <option *ngFor="let tipo of tiposDocumento" [ngValue]="tipo.valor">{{ tipo.etiqueta }}</option>
+                            </select>
+                            <div class="text-danger" *ngIf="f['tipoDocumento'].touched && f['tipoDocumento'].invalid">
+                                Selecciona el tipo de documento.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="numeroDocumento" class="form-label">Número de documento</label>
+                            <input id="numeroDocumento" class="form-control" formControlName="numeroDocumento" maxlength="20"
+                                autocomplete="off">
+                            <div class="text-danger" *ngIf="f['numeroDocumento'].touched && f['numeroDocumento'].invalid">
+                                Ingresa el número de documento (solo letras, números o guiones; máximo 20).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombres" class="form-label">Nombres</label>
+                            <input id="nombres" class="form-control" formControlName="nombres" maxlength="100">
+                            <div class="text-danger" *ngIf="f['nombres'].touched && f['nombres'].invalid">
+                                Ingresa los nombres (máximo 100 caracteres).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="apellidos" class="form-label">Apellidos</label>
+                            <input id="apellidos" class="form-control" formControlName="apellidos" maxlength="100">
+                            <div class="text-danger" *ngIf="f['apellidos'].touched && f['apellidos'].invalid">
+                                Ingresa los apellidos (máximo 100 caracteres).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="telefono" class="form-label">Teléfono <span class="text-muted">(opcional)</span></label>
+                            <input id="telefono" class="form-control" type="tel" formControlName="telefono" maxlength="20">
+                            <div class="text-danger" *ngIf="f['telefono'].touched && f['telefono'].invalid">
+                                Ingresa un teléfono válido (7 a 20 caracteres: números, espacios, +, -, paréntesis).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="registroProfesional" class="form-label">Registro profesional</label>
+                            <input id="registroProfesional" class="form-control" formControlName="registroProfesional" maxlength="50">
+                            <div class="text-danger" *ngIf="f['registroProfesional'].touched && f['registroProfesional'].invalid">
+                                Ingresa el registro profesional (máximo 50 caracteres).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="especializacionId" class="form-label">Especialización</label>
+                            <select id="especializacionId" class="form-select" formControlName="especializacionId">
+                                <option [ngValue]="null" disabled>Selecciona una especialización</option>
+                                <option *ngFor="let esp of listEspecializaciones" [ngValue]="esp.id">{{ esp.nombre }}</option>
+                            </select>
+                            <div class="text-danger" *ngIf="f['especializacionId'].touched && f['especializacionId'].invalid">
+                                Selecciona la especialización.</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger mt-3 mb-0" *ngIf="respuestaError" role="alert">{{ respuestaError }}</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                    (click)="closeModal()">Cerrar</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="enviando">
+                        {{ enviando ? 'Guardando...' : titleBoton }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
