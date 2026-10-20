@@ -1,0 +1,224 @@
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col col-md-9">
+                    <input class="form-control" placeholder="Buscar por cliente, mascota o motivo..." type="text"
+                        (input)="actualizarBusqueda($event)" />
+                </div>
+                <div class="col col-md-3 text-end">
+                    <button
+                        class="btn btn-md btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                        (click)="nuevaCita()" title="Agregar nueva cita">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                        &nbsp; Nuevo
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="table table-responsive table-condensed col col-md-12">
+                    <table class="table table-stripped table-condensed table-responsive">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('fechaHora')">
+                                    Fecha y Hora 
+                                    <i class="fa" [ngClass]="columnaOrden === 'fechaHora' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('cliente')">
+                                    Cliente 
+                                    <i class="fa" [ngClass]="columnaOrden === 'cliente' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('mascota')">
+                                    Mascota 
+                                    <i class="fa" [ngClass]="columnaOrden === 'mascota' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('medico')">
+                                    Médico 
+                                    <i class="fa" [ngClass]="columnaOrden === 'medico' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('motivo')">
+                                    Motivo 
+                                    <i class="fa" [ngClass]="columnaOrden === 'motivo' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('estado')">
+                                    Estado 
+                                    <i class="fa" [ngClass]="columnaOrden === 'estado' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody *ngIf="listCitas.length === 0">
+                            <tr>
+                                <td colspan="7" class="text-center">No hay citas registradas</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="listCitas.length > 0 && citasFiltradas.length === 0">
+                            <tr>
+                                <td colspan="7" class="text-center">No se encontraron citas</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="citasFiltradas.length > 0">
+                            <tr *ngFor="let cita of citasPaginadas">
+                                <td class="text-center">{{ cita.fechaHora | date:'yyyy-MM-dd HH:mm' }}</td>
+                                <td class="text-center">{{ cita.cliente?.nombres }} {{ cita.cliente?.apellidos }}</td>
+                                <td class="text-center">{{ cita.mascota?.nombreMascota }}</td>
+                                <td class="text-center">{{ cita.medico?.nombres }} {{ cita.medico?.apellidos }}</td>
+                                <td class="text-center">{{ cita.motivo }}</td>
+                                
+                                <!-- ESTADO CON VALIDACIÓN DE NULOS -->
+                                <td class="text-center">
+                                    <span *ngIf="!cita.estado || cita.estado.trim() === ''" class="badge bg-secondary">
+                                        Pendiente confirmar estado
+                                    </span>
+                                    <span *ngIf="cita.estado && cita.estado.trim() !== ''" class="badge" 
+                                          [ngClass]="{
+                                            'bg-success': cita.estado === 'ATENDIDA',
+                                            'bg-danger': cita.estado === 'CANCELADA',
+                                            'bg-primary': cita.estado === 'PROGRAMADA',
+                                            'bg-warning text-dark': cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA'
+                                          }">
+                                        {{ cita.estado }}
+                                    </span>
+                                </td>
+                                
+                                <td class="text-center">
+                                    <button class="btn btn-outline-info d-inline-flex align-items-center justify-content-center" 
+                                            (click)="abrirEdicion(cita)" title="Editar">
+                                        <i class="fa fa-edit"></i>&nbsp;Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Paginación -->
+            <nav *ngIf="totalPaginas > 1" aria-label="Paginación de citas">
+                <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item" [class.disabled]="paginaActual === 1">
+                        <button class="page-link" type="button" [disabled]="paginaActual === 1"
+                            (click)="cambiarPagina(paginaActual - 1)">Anterior</button>
+                    </li>
+                    <li class="page-item" *ngFor="let pagina of paginas" [class.active]="pagina === paginaActual">
+                        <button class="page-link" type="button"
+                            [attr.aria-current]="pagina === paginaActual ? 'page' : null"
+                            (click)="cambiarPagina(pagina)">{{ pagina }}</button>
+                    </li>
+                    <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+                        <button class="page-link" type="button" [disabled]="paginaActual === totalPaginas"
+                            (click)="cambiarPagina(paginaActual + 1)">Siguiente</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Cita -->
+<div class="modal fade" id="modalCita" tabindex="-1" aria-labelledby="modalCitaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modalCitaLabel">{{ titleModal }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="closeModal()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card">
+                    <div class="card-body">
+                        <form [formGroup]="form">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="cliente" class="form-label">Cliente</label>
+                                    <select id="cliente" class="form-select" formControlName="cliente" [compareWith]="compararObjetos">
+                                        <option [ngValue]="null" disabled>Selecciona un cliente</option>
+                                        <option *ngFor="let c of listClientes" [ngValue]="c">
+                                            {{ c.nombres }} {{ c.apellidos }}
+                                        </option>
+                                    </select>
+                                    <div class="text-danger" *ngIf="f['cliente'].touched && f['cliente'].invalid">
+                                        Selecciona un cliente.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="mascota" class="form-label">Mascota</label>
+                                    <select id="mascota" class="form-select" formControlName="mascota" [compareWith]="compararObjetos">
+                                        <option [ngValue]="null" disabled>Selecciona una mascota</option>
+                                        <option *ngFor="let m of listMascotas" [ngValue]="m">
+                                            {{ m.nombreMascota }}
+                                        </option>
+                                    </select>
+                                    <div class="text-danger" *ngIf="f['mascota'].touched && f['mascota'].invalid">
+                                        Selecciona una mascota.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="medico" class="form-label">Médico</label>
+                                    <select id="medico" class="form-select" formControlName="medico" [compareWith]="compararObjetos">
+                                        <option [ngValue]="null" disabled>Selecciona un médico</option>
+                                        <option *ngFor="let med of listMedicos" [ngValue]="med">
+                                            {{ med.nombres }} {{ med.apellidos }}
+                                        </option>
+                                    </select>
+                                    <div class="text-danger" *ngIf="f['medico'].touched && f['medico'].invalid">
+                                        Selecciona un médico.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" formControlName="fecha">
+                                    <div class="text-danger" *ngIf="f['fecha'].touched && f['fecha'].invalid">
+                                        Ingresa la fecha.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Hora</label>
+                                    <input type="time" class="form-control" formControlName="hora">
+                                    <div class="text-danger" *ngIf="f['hora'].touched && f['hora'].invalid">
+                                        Ingresa la hora.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Motivo de la consulta</label>
+                                <input type="text" class="form-control" formControlName="motivo">
+                                <div class="text-danger" *ngIf="f['motivo'].touched && f['motivo'].invalid">
+                                    Ingresa el motivo de la consulta.
+                                </div>
+                            </div>
+
+                            <!-- ESTADO DE LA CITA -->
+                            <div class="mb-3">
+                                <label class="form-label">Estado de la Cita</label>
+                                <select class="form-select" formControlName="estado">
+                                    <option value="PROGRAMADA">Programada</option>
+                                    <option value="PENDIENTE">Pendiente</option>
+                                    <option value="CONFIRMADA">Confirmada</option>
+                                    <option value="ATENDIDA">Atendida</option>
+                                    <option value="CANCELADA">Cancelada</option>
+                                </select>
+                                <div class="text-danger" *ngIf="f['estado'].touched && f['estado'].invalid">
+                                    Selecciona un estado.
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">Cerrar</button>
+                <button type="button" class="btn btn-primary" (click)="guardarCita()" [disabled]="enviando">{{ titleBoton }}</button>
+            </div>
+        </div>
+    </div>
+</div>

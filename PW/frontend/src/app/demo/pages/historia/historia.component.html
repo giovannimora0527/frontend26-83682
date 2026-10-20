@@ -1,0 +1,130 @@
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col col-md-9">
+                    <input class="form-control" placeholder="Buscar por mascota, dueño, médico o descripción..." type="text"
+                        (input)="actualizarBusqueda($event)" />
+                </div>
+                <div class="col col-md-3 text-end">
+                    <button class="btn btn-md btn-outline-primary d-inline-flex align-items-center justify-content-center" (click)="abrirModal()">
+                        <i class="fa fa-plus" aria-hidden="true"></i>&nbsp; Nueva Anotación
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="table table-responsive table-condensed col col-md-12">
+                    <table class="table table-stripped table-condensed table-responsive">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('fecha')">
+                                    Fecha 
+                                    <i class="fa" [ngClass]="columnaOrden === 'fecha' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('mascota')">
+                                    Mascota 
+                                    <i class="fa" [ngClass]="columnaOrden === 'mascota' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('dueno')">
+                                    Dueño 
+                                    <i class="fa" [ngClass]="columnaOrden === 'dueno' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('medico')">
+                                    Médico 
+                                    <i class="fa" [ngClass]="columnaOrden === 'medico' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                                <th class="text-center" style="cursor: pointer;" (click)="ordenarPor('descripcion')">
+                                    Descripción / Evolución 
+                                    <i class="fa" [ngClass]="columnaOrden === 'descripcion' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody *ngIf="listAnotaciones.length === 0">
+                            <tr>
+                                <td colspan="5" class="text-center">No hay anotaciones registradas</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="listAnotaciones.length > 0 && anotacionesFiltradas.length === 0">
+                            <tr>
+                                <td colspan="5" class="text-center">No se encontraron anotaciones</td>
+                            </tr>
+                        </tbody>
+                        <tbody *ngIf="anotacionesFiltradas.length > 0">
+                            <tr *ngFor="let anotacion of anotacionesPaginadas">
+                                <td class="text-center">{{ anotacion.fecha | date:'yyyy-MM-dd HH:mm' }}</td>
+                                <td class="text-center">{{ anotacion.historia?.mascota?.nombreMascota }}</td>
+                                <td class="text-center">
+                                    {{ anotacion.historia?.mascota?.cliente?.nombres }} 
+                                    {{ anotacion.historia?.mascota?.cliente?.apellidos }}
+                                </td>
+                                <td class="text-center">{{ anotacion.medico?.nombres }} {{ anotacion.medico?.apellidos }}</td>
+                                <td class="text-center">{{ anotacion.descripcion }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Paginación -->
+            <nav *ngIf="totalPaginas > 1" aria-label="Paginación de historias">
+                <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item" [class.disabled]="paginaActual === 1">
+                        <button class="page-link" type="button" [disabled]="paginaActual === 1"
+                            (click)="cambiarPagina(paginaActual - 1)">Anterior</button>
+                    </li>
+                    <li class="page-item" *ngFor="let pagina of paginas" [class.active]="pagina === paginaActual">
+                        <button class="page-link" type="button"
+                            [attr.aria-current]="pagina === paginaActual ? 'page' : null"
+                            (click)="cambiarPagina(pagina)">{{ pagina }}</button>
+                    </li>
+                    <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+                        <button class="page-link" type="button" [disabled]="paginaActual === totalPaginas"
+                            (click)="cambiarPagina(paginaActual + 1)">Siguiente</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Anotación -->
+<div class="modal fade" id="modalHistoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Anotación de Historia</h5>
+                <button type="button" class="btn-close" (click)="closeModal()"></button>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="guardarAnotacion()">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Mascota</label>
+                            <select class="form-select" formControlName="mascota" [compareWith]="compararObjetos">
+                                <option [ngValue]="null" disabled>Selecciona mascota</option>
+                                <option *ngFor="let m of listMascotas" [ngValue]="m">{{ m.nombreMascota }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Médico</label>
+                            <select class="form-select" formControlName="medico" [compareWith]="compararObjetos">
+                                <option [ngValue]="null" disabled>Selecciona médico</option>
+                                <option *ngFor="let med of listMedicos" [ngValue]="med">{{ med.nombres }} {{ med.apellidos }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción / Evolución</label>
+                        <textarea class="form-control" formControlName="descripcion" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="enviando">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

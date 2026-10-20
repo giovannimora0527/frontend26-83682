@@ -1,0 +1,84 @@
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Gestión de Usuarios</h5>
+            <button class="btn btn-primary" (click)="nuevoUsuario()">Nuevo Usuario</button>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngIf="listUsuarios.length === 0">
+                        <td colspan="5" class="text-center">No hay usuarios registrados</td>
+                    </tr>
+                    <tr *ngFor="let u of listUsuarios">
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.rol }}</td>
+                        <td>
+                            <span class="badge" [ngClass]="u.activo ? 'bg-success' : 'bg-danger'">
+                                {{ u.activo ? 'Activo' : 'Inactivo' }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" (click)="abrirEdicion(u)">Editar</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ titleModal }}</h5>
+                <button type="button" class="btn-close" (click)="closeModal()"></button>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="guardarUsuario()">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de Usuario</label>
+                        <input type="text" class="form-control" formControlName="username">
+                    </div>
+                    <div class="mb-3" *ngIf="modoFormulario === 'C'">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" formControlName="password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" formControlName="email">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rol</label>
+                        <select class="form-select" formControlName="rol">
+                            <option value="" disabled>Seleccione...</option>
+                            <option value="ADMIN">Administrador</option>
+                            <option value="VETERINARIO">Veterinario</option>
+                            <option value="RECEPCIONISTA">Recepcionista</option>
+                        </select>
+                    </div>
+                    <div class="form-check" *ngIf="modoFormulario === 'E'">
+                        <input class="form-check-input" type="checkbox" formControlName="activo" id="activoCheck">
+                        <label class="form-check-label" for="activoCheck">Usuario Activo</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="enviando">{{ titleBoton }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
