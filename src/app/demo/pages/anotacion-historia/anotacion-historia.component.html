@@ -1,1 +1,268 @@
-<p>anotacion-historia works!</p>
+
+<!-- ========================================================
+     CLÍNICA VETERINARIA - UNIMINUTO
+     GESTIÓN DE ANOTACIONES MÉDICAS
+     ========================================================
+
+     Funcionalidades:
+
+     1. Mostrar anotaciones registradas en MySQL.
+     2. Buscar por ID, historia, médico o descripción.
+     3. Mostrar fecha y descripción.
+     4. Limpiar la búsqueda.
+     5. Mostrar errores de conexión.
+     6. Mostrar cantidad de registros.
+======================================================== -->
+
+<div class="row">
+
+  <div class="col-12">
+
+    <!-- ====================================================
+         1. TARJETA PRINCIPAL
+         ==================================================== -->
+
+    <div class="card">
+
+      <!-- Título del módulo -->
+
+      <div class="card-header">
+
+        <h5 class="mb-0">
+          Listado de anotaciones médicas
+        </h5>
+
+      </div>
+
+      <!-- Contenido -->
+
+      <div class="card-body">
+
+        <!-- ==================================================
+             2. DESCRIPCIÓN DEL MÓDULO
+             ================================================== -->
+
+        <p class="text-muted mb-4">
+
+          Consulta las anotaciones registradas en
+          las historias médicas de los pacientes
+          de la clínica veterinaria.
+
+        </p>
+
+        <!-- ==================================================
+             3. BUSCADOR DE ANOTACIONES
+             ================================================== -->
+
+        <div class="row mb-4">
+
+          <!-- Campo de búsqueda -->
+
+          <div class="col-md-8 mb-3">
+
+            <label
+              for="buscarAnotacion"
+              class="form-label"
+            >
+              Buscar anotación médica
+            </label>
+
+            <input
+              id="buscarAnotacion"
+              name="buscarAnotacion"
+              type="text"
+              class="form-control"
+              placeholder="Buscar por ID, historia, médico o descripción"
+              [(ngModel)]="textoBusqueda"
+            />
+
+          </div>
+
+          <!-- Botón para limpiar el buscador -->
+
+          <div class="col-md-4 mb-3 d-flex align-items-end">
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              (click)="limpiarBusqueda()"
+            >
+              Limpiar
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- ==================================================
+             4. MENSAJE DE CARGA
+             ================================================== -->
+
+        <div
+          *ngIf="cargando"
+          class="alert alert-info"
+          role="status"
+        >
+
+          Consultando anotaciones médicas...
+
+        </div>
+
+        <!-- ==================================================
+             5. MENSAJE DE ERROR
+             ================================================== -->
+
+        <div
+          *ngIf="mensajeError"
+          class="alert alert-danger"
+          role="alert"
+        >
+
+          {{ mensajeError }}
+
+          <!-- Permite intentar nuevamente la consulta -->
+
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger ms-3"
+            (click)="cargarAnotaciones()"
+          >
+            Reintentar
+          </button>
+
+        </div>
+
+        <!-- ==================================================
+             6. TABLA DE ANOTACIONES MÉDICAS
+             ================================================== -->
+
+        <div
+          *ngIf="!cargando && !mensajeError"
+          class="table-responsive"
+        >
+
+          <table
+            class="table table-bordered table-hover align-middle"
+          >
+
+            <!-- Encabezados de la tabla -->
+
+            <thead class="table-light">
+
+            <tr>
+
+              <th>ID</th>
+
+              <th>ID Historia Médica</th>
+
+              <th>ID Médico</th>
+
+              <th>Fecha</th>
+
+              <th>Descripción</th>
+
+            </tr>
+
+            </thead>
+
+            <!-- =================================================
+                 7. REGISTROS DE LA BASE DE DATOS
+                 ================================================= -->
+
+            <tbody>
+
+            <tr
+              *ngFor="let anotacion of anotacionesFiltradas"
+            >
+
+              <!-- ID de la anotación -->
+
+              <td>
+                {{ anotacion.id }}
+              </td>
+
+              <!-- ID de la historia médica -->
+
+              <td>
+                {{ anotacion.historiaId }}
+              </td>
+
+              <!-- ID del médico responsable -->
+
+              <td>
+                {{ anotacion.medicoId }}
+              </td>
+
+              <!-- Fecha de la anotación -->
+
+              <td>
+
+                {{
+                anotacion.fecha
+                ? (
+                anotacion.fecha
+                | date:'dd/MM/yyyy HH:mm'
+                )
+                : 'Sin fecha registrada'
+                }}
+
+              </td>
+
+              <!-- Descripción médica -->
+
+              <td>
+                {{ anotacion.descripcion }}
+              </td>
+
+            </tr>
+
+            <!-- =================================================
+                 8. MENSAJE CUANDO NO HAY REGISTROS
+                 ================================================= -->
+
+            <tr
+              *ngIf="anotacionesFiltradas.length === 0"
+            >
+
+              <td
+                colspan="5"
+                class="text-center text-muted py-4"
+              >
+
+                No se encontraron anotaciones médicas.
+
+              </td>
+
+            </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- ==================================================
+             9. CONTADOR DE REGISTROS
+             ================================================== -->
+
+        <div
+          *ngIf="!cargando && !mensajeError"
+          class="mt-3"
+        >
+
+          <span class="text-muted">
+
+            Registros encontrados:
+            {{ anotacionesFiltradas.length }}
+
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

@@ -1,1 +1,258 @@
-<p>historia-medica works!</p>
+
+<!-- ========================================================
+     CLÍNICA VETERINARIA - UNIMINUTO
+     MÓDULO DE GESTIÓN DE HISTORIAS MÉDICAS
+     ========================================================
+
+     Funcionalidades:
+
+     1. Consultar todas las historias médicas.
+     2. Buscar historias por ID de paciente.
+     3. Mostrar la fecha de creación.
+     4. Limpiar los filtros de búsqueda.
+     5. Mostrar mensajes cuando no existan registros.
+     6. Mostrar errores de conexión con Spring Boot.
+======================================================== -->
+
+<div class="row">
+
+  <div class="col-12">
+
+    <!-- ==================================================
+         1. TARJETA PRINCIPAL
+         ================================================== -->
+
+    <div class="card">
+
+      <!-- Título de la tarjeta -->
+
+      <div class="card-header">
+
+        <h5 class="mb-0">
+          Listado de historias médicas
+        </h5>
+
+      </div>
+
+      <!-- Contenido de la tarjeta -->
+
+      <div class="card-body">
+
+        <!-- ================================================
+             2. DESCRIPCIÓN
+             ================================================ -->
+
+        <p class="text-muted mb-4">
+
+          Consulta las historias médicas registradas
+          en la base de datos de la clínica veterinaria.
+
+        </p>
+
+        <!-- ================================================
+             3. BUSCADOR POR PACIENTE
+             ================================================ -->
+
+        <div class="row mb-4">
+
+          <!-- Campo para ingresar el ID del paciente -->
+
+          <div class="col-md-5 mb-3">
+
+            <label
+              for="pacienteBusqueda"
+              class="form-label"
+            >
+              ID del paciente
+            </label>
+
+            <input
+              id="pacienteBusqueda"
+              name="pacienteBusqueda"
+              type="number"
+              min="1"
+              step="1"
+              class="form-control"
+              placeholder="Ingresa el ID del paciente"
+              [(ngModel)]="pacienteBusqueda"
+              (keyup.enter)="buscarPorPaciente()"
+            />
+
+          </div>
+
+          <!-- Botón de búsqueda -->
+
+          <div class="col-md-3 mb-3 d-flex align-items-end">
+
+            <button
+              type="button"
+              class="btn btn-primary w-100"
+              [disabled]="cargando"
+              (click)="buscarPorPaciente()"
+            >
+              Buscar
+            </button>
+
+          </div>
+
+          <!-- Botón para limpiar la búsqueda -->
+
+          <div class="col-md-4 mb-3 d-flex align-items-end">
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              [disabled]="cargando"
+              (click)="limpiarBusqueda()"
+            >
+              Limpiar
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- ================================================
+             4. MENSAJE DE CARGA
+             ================================================ -->
+
+        <div
+          *ngIf="cargando"
+          class="alert alert-info"
+          role="status"
+        >
+
+          Consultando historias médicas...
+
+        </div>
+
+        <!-- ================================================
+             5. MENSAJE DE ERROR
+             ================================================ -->
+
+        <div
+          *ngIf="mensajeError"
+          class="alert alert-danger"
+          role="alert"
+        >
+
+          {{ mensajeError }}
+
+        </div>
+
+        <!-- ================================================
+             6. TABLA PRINCIPAL
+             ================================================ -->
+
+        <div
+          *ngIf="!cargando && !mensajeError"
+          class="table-responsive"
+        >
+
+          <table
+            class="table table-bordered table-hover align-middle"
+          >
+
+            <!-- Encabezados de la tabla -->
+
+            <thead class="table-light">
+
+            <tr>
+
+              <th>ID Historia</th>
+
+              <th>ID Paciente</th>
+
+              <th>Fecha de creación</th>
+
+            </tr>
+
+            </thead>
+
+            <!-- Registros recibidos desde Spring Boot -->
+
+            <tbody>
+
+            <tr
+              *ngFor="let historia of historiasMedicas"
+            >
+
+              <!-- Identificador de la historia -->
+
+              <td>
+                {{ historia.id }}
+              </td>
+
+              <!-- Identificador del paciente -->
+
+              <td>
+                {{ historia.pacienteId }}
+              </td>
+
+              <!-- Fecha de creación -->
+
+              <td>
+
+                {{
+                historia.fechaCreacion
+                ? (
+                historia.fechaCreacion
+                | date:'dd/MM/yyyy HH:mm'
+                )
+                : 'Sin fecha registrada'
+                }}
+
+              </td>
+
+            </tr>
+
+            <!-- ==========================================
+                 7. MENSAJE SIN REGISTROS
+                 ========================================== -->
+
+            <tr
+              *ngIf="historiasMedicas.length === 0"
+            >
+
+              <td
+                colspan="3"
+                class="text-center text-muted py-4"
+              >
+
+                No se encontraron historias médicas.
+
+              </td>
+
+            </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- ================================================
+             8. CONTADOR DE REGISTROS
+             ================================================ -->
+
+        <div
+          *ngIf="!cargando && !mensajeError"
+          class="mt-3"
+        >
+
+          <span class="text-muted">
+
+            Registros encontrados:
+            {{ historiasMedicas.length }}
+
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
