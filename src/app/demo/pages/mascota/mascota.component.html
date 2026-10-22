@@ -77,17 +77,26 @@
                                             aria-hidden="true"></i>
                                     </button>
                                 </th>
+                                <th class="text-center"
+                                    [attr.aria-sort]="columnaOrden === 'estado' ? (direccionOrden === 'asc' ? 'ascending' : 'descending') : 'none'">
+                                    <button type="button" class="btn btn-link p-0 text-dark text-decoration-none"
+                                        (click)="ordenarPor('estado')">
+                                        Estado <i class="fa"
+                                            [ngClass]="columnaOrden === 'estado' ? (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"
+                                            aria-hidden="true"></i>
+                                    </button>
+                                </th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody *ngIf="listMascotas.length === 0">
                             <tr>
-                                <td colspan="7" class="text-center">No hay mascotas registradas</td>
+                                <td colspan="8" class="text-center">No hay mascotas registradas</td>
                             </tr>
                         </tbody>
                         <tbody *ngIf="listMascotas.length > 0 && mascotasFiltradas.length === 0">
                             <tr>
-                                <td colspan="7" class="text-center">No se encontraron mascotas</td>
+                                <td colspan="8" class="text-center">No se encontraron mascotas</td>
                             </tr>
                         </tbody>
                         <tbody *ngIf="mascotasFiltradas.length > 0">
@@ -99,6 +108,10 @@
                                 <td class="text-center">{{ mascota.cliente.nombres }} {{ mascota.cliente.apellidos }}
                                 </td>
                                 <td class="text-center">{{ mascota.fechaRegistro | date:'yyyy-MM-dd HH:mm' }}</td>
+                                <td class="text-center">
+                                    <span class="badge" [class.bg-success]="mascota.activo === true"
+                                        [class.bg-secondary]="mascota.activo !== true">{{ obtenerEstado(mascota) }}</span>
+                                </td>
                                 <td class="text-center">
                                     <button class="btn btn-outline-info d-inline-flex 
                                     align-items-center justify-content-center" (click)="abrirEdicion(mascota)"
