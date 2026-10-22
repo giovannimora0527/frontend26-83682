@@ -1,42 +1,36 @@
-
 /**
- * ==========================================================
- * CLÍNICA VETERINARIA - UNIMINUTO
- * MODELO DE FÓRMULAS MÉDICAS
- * ==========================================================
- *
- * Representa los datos recibidos desde
- * el backend Spring Boot.
- *
- * Tabla MySQL: formula_medica
+ * Modelo de una fórmula médica.
+ * Representa los datos recibidos desde Spring Boot.
  */
-
-// ==========================================================
-// INTERFAZ DE FÓRMULAS MÉDICAS
-// ==========================================================
-
 export interface FormulaMedica {
 
-  // Identificador único de la fórmula.
+  // Identificador de la fórmula.
   id: number;
 
-  // Identificador de la cita médica.
+  // Cita médica relacionada.
   citaId: number;
 
-  // Identificador del medicamento formulado.
+  // Medicamento recetado.
   medicamentoId: number;
 
-  // Cantidad y frecuencia del medicamento.
+  // Cantidad o dosis del medicamento.
   dosis: string;
 
-  // Recomendaciones de administración.
+  // Frecuencia de administración.
+  frecuencia: string | null;
+
+  // Duración del tratamiento.
+  duracionTratamiento: string | null;
+
+  // Recomendaciones del médico.
   indicaciones: string | null;
 
-  // Fecha y hora de creación del registro.
+  // Fecha en que se emite la fórmula.
+  fechaEmision: string | null;
+
+  // Fecha de creación del registro.
   fechaCreacionRegistro: string;
 
-  // Fecha de última actualización.
-  // Puede ser nula si no se ha modificado.
+  // Última actualización.
   fechaActualizacionRegistro: string | null;
-
 }

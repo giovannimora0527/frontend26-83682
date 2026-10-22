@@ -82,5 +82,39 @@ export class FormulaMedicaService {
     );
 
   }
+/**
+ * Consulta una fórmula médica por su ID.
+ */
+consultarFormula(id: number): Observable<FormulaMedica> {
+  return this.http.get<FormulaMedica>(
+    `${this.apiUrl}/consultar/${id}`
+  );
+}
 
+/**
+ * Registra una nueva fórmula médica.
+ */
+crearFormula(
+  formula: Partial<FormulaMedica>
+): Observable<FormulaMedica> {
+
+  return this.http.post<FormulaMedica>(
+    `${this.apiUrl}/crear`,
+    formula
+  );
+}
+
+/**
+ * Actualiza una fórmula médica existente.
+ */
+actualizarFormula(
+  id: number,
+  formula: Partial<FormulaMedica>
+): Observable<FormulaMedica> {
+
+  return this.http.put<FormulaMedica>(
+    `${this.apiUrl}/actualizar/${id}`,
+    formula
+  );
+}
 }

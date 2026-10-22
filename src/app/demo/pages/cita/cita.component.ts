@@ -1,30 +1,6 @@
 
-/**
- * ==========================================================
- * CLÍNICA VETERINARIA - UNIMINUTO
- * COMPONENTE DE GESTIÓN DE CITAS
- * ==========================================================
- *
- * Funcionalidades:
- * 1. Consultar las citas.
- * 2. Cargar clientes desde MySQL.
- * 3. Cargar mascotas desde MySQL.
- * 4. Filtrar mascotas según su propietario.
- * 5. Buscar y filtrar citas.
- * 6. Paginar los registros.
- * 7. Crear nuevas citas.
- * 8. Actualizar citas existentes.
- * 9. Validar los datos.
- * 10. Mostrar mensajes con SweetAlert2.
- */
-
-// ==========================================================
-// 1. IMPORTACIONES
-// ==========================================================
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -35,39 +11,19 @@ import {
 
 import Swal from 'sweetalert2';
 
-// Servicio HTTP general.
 import { BackendService } from 'src/app/services/backend.service';
-
-// Servicio y modelo de clientes.
 import { ClienteService } from 'src/app/services/cliente.service';
 import { Cliente } from 'src/app/models/cliente';
-
-// Servicio y modelo de mascotas.
 import { MascotaService } from '../mascota/service/mascota.service';
 import { Mascota } from 'src/app/models/mascota';
-
-
- // ==========================================================
- // SERVICIO Y MODELO DE MÉDICOS VETERINARIOS
- // ==========================================================
-
- // Servicio encargado de consultar los médicos en Spring Boot.
- import { MedicoService } from 'src/app/services/medico.service';
-
- // Modelo que representa los médicos registrados en MySQL.
- import { Medico } from 'src/app/models/medico';
-
-
-// Dirección del backend.
+import { MedicoService } from 'src/app/services/medico.service';
+import { Medico } from 'src/app/models/medico';
 import { environment } from 'src/environments/environment';
 
-// ==========================================================
-// 2. MODELOS DE CITAS
-// ==========================================================
+// ======================================================
+// MODELOS DE CITAS MÉDICAS
+// ======================================================
 
-/**
- * Representa una cita recibida desde Spring Boot.
- */
 export interface Cita {
   id: number;
   clienteId: number;
@@ -78,9 +34,6 @@ export interface Cita {
   motivo: string | null;
 }
 
-/**
- * Información enviada para crear o actualizar citas.
- */
 export interface CrearCitaDTO {
   clienteId: number;
   mascotaId: number;
@@ -90,77 +43,60 @@ export interface CrearCitaDTO {
   motivo: string | null;
 }
 
-// ==========================================================
-// 3. CONFIGURACIÓN DEL COMPONENTE
-// ==========================================================
+// ======================================================
+// COMPONENTE DE GESTIÓN DE CITAS
+// ======================================================
 
 @Component({
   selector: 'app-cita',
   standalone: true,
-
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule
   ],
-
   templateUrl: './cita.component.html',
   styleUrl: './cita.component.scss'
 })
 export class CitaComponent implements OnInit {
 
-  // ========================================================
-  // 4. CONFIGURACIÓN DE API
-  // ========================================================
+  // ====================================================
+  // 1. CONFIGURACIÓN DEL BACKEND
+  // ====================================================
 
   private readonly api = 'cita';
 
-  // ========================================================
-  // 5. LISTADO DE CITAS
-  // ========================================================
+  // ====================================================
+  // 2. LISTADOS
+  // ====================================================
 
   citas: Cita[] = [];
+  clientes: Cliente[] = [];
+  mascotas: Mascota[] = [];
+  medicos: Medico[] = [];
+
+  // ====================================================
+  // 3. ESTADOS DE CARGA
+  // ====================================================
 
   cargando = false;
+  cargandoClientes = false;
+  cargandoMascotas = false;
+  guardando = false;
 
   errorCarga = '';
-
-  // ========================================================
-  // 6. CLIENTES
-  // ========================================================
-
-  /**
-   * Clientes recuperados de:
-   * GET /clinica/v1/cliente/listar-todos
-   */
-  clientes: Cliente[] = [];
-
-  cargandoClientes = false;
-
   errorClientes = '';
-
-  // ========================================================
-  // 7. MASCOTAS - NUEVO
-  // ========================================================
-
-  /**
-   * Mascotas recuperadas de:
-   * GET /clinica/v1/mascota/listar-detalle
-   *
-   * Cada mascota incluye su propietario.
-   */
-  mascotas: Mascota[] = [];
-
-  cargandoMascotas = false;
-
   errorMascotas = '';
 
-  // ========================================================
-  // 8. FILTROS
-  // ========================================================
+  // NUEVO:
+  // Mostrar los errores directamente dentro del modal.
+  mensajeErrorGuardar = '';
+
+  // ====================================================
+  // 4. BÚSQUEDA Y FILTROS
+  // ====================================================
 
   busqueda = '';
-
   filtroEstado = '';
 
   readonly estados: string[] = [
@@ -171,17 +107,16 @@ export class CitaComponent implements OnInit {
     'cancelada'
   ];
 
-  // ========================================================
-  // 9. PAGINACIÓN
-  // ========================================================
+  // ====================================================
+  // 5. PAGINACIÓN
+  // ====================================================
 
   paginaActual = 1;
-
   readonly registrosPorPagina = 10;
 
-  // ========================================================
-  // 10. FORMULARIO
-  // ========================================================
+  // ====================================================
+  // 6. FORMULARIO
+  // ====================================================
 
   formulario: FormGroup;
 
@@ -191,69 +126,33 @@ export class CitaComponent implements OnInit {
 
   citaSeleccionadaId: number | null = null;
 
-  guardando = false;
-
-
-  // ======================================================
-  // LISTADO DE MÉDICOS VETERINARIOS
-  // ======================================================
-
-  /**
-   * Almacena los médicos consultados desde MySQL.
-   *
-   * Posteriormente se utilizará para mostrar
-   * sus nombres y apellidos en el formulario
-   * de registro de citas.
-   */
-  medicos: Medico[] = [];
-
-
-  // ========================================================
-  // 11. CONSTRUCTOR
-  // ========================================================
+  // ====================================================
+  // 7. CONSTRUCTOR
+  // ====================================================
 
   constructor(
-
-  // Comunicación general con Spring Boot.
-  private readonly backendService: BackendService,
-
-  // Consulta de clientes registrados.
-  private readonly clienteService: ClienteService,
-
-  // Consulta de mascotas registradas.
-  private readonly mascotaService: MascotaService,
-
-  // Consulta de médicos veterinarios registrados.
-  private readonly medicoService: MedicoService,
-
-  // Construcción del formulario reactivo.
-  private readonly formBuilder: FormBuilder
-) {
+    private readonly backendService: BackendService,
+    private readonly clienteService: ClienteService,
+    private readonly mascotaService: MascotaService,
+    private readonly medicoService: MedicoService,
+    private readonly formBuilder: FormBuilder
+  ) {
 
     this.formulario = this.formBuilder.group({
 
       clienteId: [
         null,
-        [
-          Validators.required,
-          Validators.min(1)
-        ]
+        [Validators.required, Validators.min(1)]
       ],
 
       mascotaId: [
         null,
-        [
-          Validators.required,
-          Validators.min(1)
-        ]
+        [Validators.required, Validators.min(1)]
       ],
 
       medicoId: [
         null,
-        [
-          Validators.required,
-          Validators.min(1)
-        ]
+        [Validators.required, Validators.min(1)]
       ],
 
       fechaHora: [
@@ -272,30 +171,20 @@ export class CitaComponent implements OnInit {
 
   }
 
-  // ========================================================
-  // 12. INICIALIZACIÓN
-  // ========================================================
+  // ====================================================
+  // 8. INICIALIZACIÓN
+  // ====================================================
 
   ngOnInit(): void {
-
-
-
-
-
-    // Consultar citas existentes.
     this.cargarCitas();
-
-    // Consultar clientes registrados.
     this.cargarClientes();
-
-    // Consultar mascotas registradas.
     this.cargarMascotas();
     this.cargarMedicos();
   }
 
-  // ========================================================
-  // 13. CARGAR CITAS
-  // ========================================================
+  // ====================================================
+  // 9. CARGAR CITAS MÉDICAS
+  // ====================================================
 
   cargarCitas(): void {
 
@@ -311,13 +200,11 @@ export class CitaComponent implements OnInit {
       next: (respuesta) => {
 
         this.citas = respuesta ?? [];
-
         this.cargando = false;
-
         this.paginaActual = 1;
 
         console.log(
-          'Citas cargadas:',
+          'Citas cargadas correctamente:',
           this.citas
         );
 
@@ -326,20 +213,13 @@ export class CitaComponent implements OnInit {
       error: (error) => {
 
         this.cargando = false;
-
         this.errorCarga =
-          'No fue posible consultar las citas.';
+          'No fue posible consultar las citas médicas.';
 
         console.error(
           'Error al cargar citas:',
           error
         );
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Error de conexión',
-          text: this.errorCarga
-        });
 
       }
 
@@ -347,9 +227,9 @@ export class CitaComponent implements OnInit {
 
   }
 
-  // ========================================================
-  // 14. CARGAR CLIENTES
-  // ========================================================
+  // ====================================================
+  // 10. CARGAR CLIENTES
+  // ====================================================
 
   cargarClientes(): void {
 
@@ -361,13 +241,7 @@ export class CitaComponent implements OnInit {
       next: (respuesta) => {
 
         this.clientes = respuesta ?? [];
-
         this.cargandoClientes = false;
-
-        console.log(
-          'Clientes cargados:',
-          this.clientes
-        );
 
       },
 
@@ -389,18 +263,13 @@ export class CitaComponent implements OnInit {
 
   }
 
-  // ========================================================
-  // 15. CARGAR MASCOTAS - NUEVO
-  // ========================================================
+  // ====================================================
+  // 11. CARGAR MASCOTAS
+  // ====================================================
 
-  /**
-   * Reutiliza MascotaService para consultar
-   * todas las mascotas con sus propietarios.
-   */
   cargarMascotas(): void {
 
     this.cargandoMascotas = true;
-
     this.errorMascotas = '';
 
     this.mascotaService.listarMascotas().subscribe({
@@ -408,13 +277,7 @@ export class CitaComponent implements OnInit {
       next: (respuesta) => {
 
         this.mascotas = respuesta ?? [];
-
         this.cargandoMascotas = false;
-
-        console.log(
-          'Mascotas cargadas para citas:',
-          this.mascotas
-        );
 
       },
 
@@ -436,33 +299,60 @@ export class CitaComponent implements OnInit {
 
   }
 
-  // ========================================================
-  // 16. OBTENER NOMBRE DE CLIENTE
-  // ========================================================
+  // ====================================================
+  // 12. CARGAR MÉDICOS
+  // ====================================================
 
-  obtenerNombreCliente(cliente: Cliente): string {
+  cargarMedicos(): void {
 
-    const nombres = cliente.nombres ?? '';
+    this.medicoService.listarMedicos().subscribe({
 
-    const apellidos = cliente.apellidos ?? '';
+      next: (respuesta: Medico[]) => {
 
-    const documento = cliente.numeroDocumento ?? '';
+        this.medicos = respuesta ?? [];
 
-    const nombreCompleto =
-      `${nombres} ${apellidos}`.trim();
+        console.log(
+          'Médicos cargados:',
+          this.medicos
+        );
 
-    if (documento) {
-      return `${nombreCompleto} - ${documento}`;
-    }
+      },
 
-    return nombreCompleto ||
-      `Cliente ${cliente.clienteId}`;
+      error: (error) => {
+
+        this.medicos = [];
+
+        console.error(
+          'Error al cargar médicos:',
+          error
+        );
+
+      }
+
+    });
 
   }
 
-  // ========================================================
-  // 17. BUSCAR CLIENTE POR ID
-  // ========================================================
+  // ====================================================
+  // 13. MOSTRAR NOMBRE DEL CLIENTE
+  // ====================================================
+
+  obtenerNombreCliente(cliente: Cliente): string {
+
+    const nombreCompleto =
+      `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
+
+    const documento = cliente.numeroDocumento ?? '';
+
+    return documento
+      ? `${nombreCompleto} - ${documento}`
+      : nombreCompleto || `Cliente ${cliente.clienteId}`;
+
+  }
+
+  // ====================================================
+  // 14. OBTENER CLIENTE POR IDENTIFICADOR
+  // ====================================================
 
   obtenerClientePorId(
     clienteId: number
@@ -475,29 +365,15 @@ export class CitaComponent implements OnInit {
 
   }
 
-  // ========================================================
-  // 18. FILTRAR MASCOTAS POR CLIENTE - NUEVO
-  // ========================================================
+  // ====================================================
+  // 15. FILTRAR MASCOTAS DEL CLIENTE
+  // ====================================================
 
-  /**
-   * Devuelve únicamente las mascotas
-   * cuyo propietario coincide con
-   * el cliente elegido en el formulario.
-   *
-   * Ejemplo:
-   *
-   * Cliente seleccionado: 2
-   *
-   * Se mostrarán solo las mascotas cuyo
-   * cliente.clienteId sea igual a 2.
-   */
   get mascotasDelCliente(): Mascota[] {
 
     const clienteSeleccionado =
       this.formulario.get('clienteId')?.value;
 
-    // Si no se seleccionó cliente,
-    // no se muestran mascotas.
     if (
       clienteSeleccionado === null ||
       clienteSeleccionado === undefined ||
@@ -506,27 +382,18 @@ export class CitaComponent implements OnInit {
       return [];
     }
 
-    const clienteId = Number(clienteSeleccionado);
-
-    return this.mascotas.filter((mascota: Mascota) => {
-
-      const propietarioId =
-        mascota.cliente?.clienteId;
-
-      return Number(propietarioId) === clienteId;
-
-    });
+    return this.mascotas.filter(
+      mascota =>
+        Number(mascota.cliente?.clienteId) ===
+        Number(clienteSeleccionado)
+    );
 
   }
 
-  // ========================================================
-  // 19. OBTENER NOMBRE DE MASCOTA - NUEVO
-  // ========================================================
+  // ====================================================
+  // 16. MOSTRAR NOMBRE DE LA MASCOTA
+  // ====================================================
 
-  /**
-   * Texto utilizado para mostrar la mascota
-   * dentro de la lista desplegable.
-   */
   obtenerNombreMascota(mascota: Mascota): string {
 
     const nombre =
@@ -539,40 +406,52 @@ export class CitaComponent implements OnInit {
 
   }
 
-  // ========================================================
-  // 20. CAMBIO DE CLIENTE - NUEVO
-  // ========================================================
+  // ====================================================
+  // 17. MOSTRAR NOMBRE DEL MÉDICO
+  // ====================================================
 
-  /**
-   * Cuando el usuario cambia de cliente,
-   * se limpia la mascota anteriormente elegida.
-   *
-   * Evita asociar una mascota con
-   * un propietario incorrecto.
-   *
-   * En el siguiente paso conectaremos
-   * este método con el HTML.
-   */
-  alCambiarCliente(): void {
+  obtenerNombreMedico(id: number): string {
 
-    this.formulario.get('mascotaId')?.reset(null);
+    const medico = this.medicos.find(
+      item => Number(item.id) === Number(id)
+    );
+
+    if (medico) {
+      return `${medico.nombres} ${medico.apellidos}`;
+    }
+
+    return `Médico ID: ${id}`;
 
   }
 
-  // ========================================================
-  // 21. FILTRAR CITAS
-  // ========================================================
+  // ====================================================
+  // 18. CAMBIO DE CLIENTE
+  // ====================================================
+
+  alCambiarCliente(): void {
+
+    // Evita seleccionar una mascota de otro cliente.
+    this.formulario.get('mascotaId')?.reset(null);
+
+    // Limpiar errores anteriores.
+    this.mensajeErrorGuardar = '';
+
+  }
+
+  // ====================================================
+  // 19. FILTRAR CITAS
+  // ====================================================
 
   get citasFiltradas(): Cita[] {
 
     const texto =
       this.busqueda.trim().toLowerCase();
 
-    return this.citas.filter((cita: Cita) => {
+    return this.citas.filter(cita => {
 
       const coincideEstado =
         !this.filtroEstado ||
-        cita.estado.toLowerCase() ===
+        (cita.estado ?? '').toLowerCase() ===
         this.filtroEstado.toLowerCase();
 
       const cliente =
@@ -582,12 +461,16 @@ export class CitaComponent implements OnInit {
         ? this.obtenerNombreCliente(cliente)
         : '';
 
+      const nombreMedico =
+        this.obtenerNombreMedico(cita.medicoId);
+
       const datosBusqueda = [
         cita.id,
         cita.clienteId,
         nombreCliente,
         cita.mascotaId,
         cita.medicoId,
+        nombreMedico,
         cita.estado,
         cita.motivo ?? '',
         cita.fechaHora
@@ -604,9 +487,9 @@ export class CitaComponent implements OnInit {
 
   }
 
-  // ========================================================
-  // 22. PAGINACIÓN
-  // ========================================================
+  // ====================================================
+  // 20. PAGINACIÓN
+  // ====================================================
 
   get totalPaginas(): number {
 
@@ -657,71 +540,64 @@ export class CitaComponent implements OnInit {
   limpiarFiltros(): void {
 
     this.busqueda = '';
-
     this.filtroEstado = '';
-
     this.paginaActual = 1;
 
   }
 
-  // ========================================================
-  // 23. ABRIR FORMULARIO DE NUEVA CITA
-  // ========================================================
+  // ====================================================
+  // 21. REGISTRAR NUEVA CITA
+  // ====================================================
 
   nuevaCita(): void {
 
     this.modoFormulario = 'crear';
-
     this.citaSeleccionadaId = null;
 
-    this.formulario.reset({
+    // NUEVO: evitar mostrar errores antiguos.
+    this.mensajeErrorGuardar = '';
 
+    this.formulario.reset({
       clienteId: null,
       mascotaId: null,
       medicoId: null,
       fechaHora: '',
       estado: 'programada',
       motivo: ''
-
     });
 
     this.mostrarFormulario = true;
 
   }
 
-  // ========================================================
-  // 24. EDITAR CITA
-  // ========================================================
+  // ====================================================
+  // 22. EDITAR CITA
+  // ====================================================
 
   editarCita(cita: Cita): void {
 
     this.modoFormulario = 'editar';
-
     this.citaSeleccionadaId = cita.id;
 
+    // NUEVO: limpiar mensajes al abrir otra cita.
+    this.mensajeErrorGuardar = '';
+
     this.formulario.patchValue({
-
       clienteId: cita.clienteId,
-
       mascotaId: cita.mascotaId,
-
       medicoId: cita.medicoId,
-
       fechaHora: cita.fechaHora.substring(0, 16),
-
       estado: cita.estado,
-
       motivo: cita.motivo ?? ''
-
     });
 
     this.mostrarFormulario = true;
 
   }
 
-  // ========================================================
-  // 25. CERRAR FORMULARIO
-  // ========================================================
+  // ====================================================
+  // 23. CERRAR EL FORMULARIO
+  // ====================================================
 
   cerrarFormulario(): void {
 
@@ -730,39 +606,54 @@ export class CitaComponent implements OnInit {
     }
 
     this.mostrarFormulario = false;
-
     this.citaSeleccionadaId = null;
+    this.mensajeErrorGuardar = '';
 
   }
 
-  // ========================================================
-  // 26. GUARDAR O ACTUALIZAR CITA
-  // ========================================================
+  // ====================================================
+  // 24. MOSTRAR ERRORES DENTRO DEL FORMULARIO
+  // ====================================================
+
+  private mostrarErrorFormulario(mensaje: string): void {
+
+    this.mensajeErrorGuardar = mensaje;
+
+    console.warn(
+      'Validación del formulario:',
+      mensaje
+    );
+
+  }
+
+  // ====================================================
+  // 25. GUARDAR O ACTUALIZAR CITA
+  // ====================================================
 
   guardarCita(): void {
 
-    // Evitar peticiones duplicadas.
+    // Evitar enviar solicitudes duplicadas.
     if (this.guardando) {
       return;
     }
 
-    // Verificar los campos del formulario.
+    // Limpiar el error anterior.
+    this.mensajeErrorGuardar = '';
+
+    // Verificar campos obligatorios.
     if (this.formulario.invalid) {
 
       this.formulario.markAllAsTouched();
 
-      Swal.fire({
-        icon: 'warning',
-        title: 'Formulario incompleto',
-        text: 'Completa los campos obligatorios.'
-      });
+      this.mostrarErrorFormulario(
+        'Completa correctamente todos los campos obligatorios.'
+      );
 
       return;
-
     }
 
-    const valores =
-      this.formulario.getRawValue();
+    // Obtener información del formulario.
+    const valores = this.formulario.getRawValue();
 
     const datos: CrearCitaDTO = {
 
@@ -781,7 +672,10 @@ export class CitaComponent implements OnInit {
 
     };
 
-    // Comprobar que los IDs sean enteros positivos.
+    // ==================================================
+    // VALIDACIÓN 1: IDENTIFICADORES
+    // ==================================================
+
     const identificadoresValidos = [
       datos.clienteId,
       datos.mascotaId,
@@ -792,18 +686,17 @@ export class CitaComponent implements OnInit {
 
     if (!identificadoresValidos) {
 
-      Swal.fire({
-        icon: 'warning',
-        title: 'Identificadores incorrectos',
-        text: 'Selecciona identificadores válidos.'
-      });
+      this.mostrarErrorFormulario(
+        'Selecciona un cliente, una mascota y un médico válidos.'
+      );
 
       return;
-
     }
 
-    // Verificar que la mascota corresponda
-    // al cliente seleccionado.
+    // ==================================================
+    // VALIDACIÓN 2: PROPIETARIO DE LA MASCOTA
+    // ==================================================
+
     if (!this.cargandoMascotas && !this.errorMascotas) {
 
       const mascotaSeleccionada = this.mascotas.find(
@@ -817,70 +710,68 @@ export class CitaComponent implements OnInit {
         datos.clienteId
       ) {
 
-        Swal.fire({
-          icon: 'warning',
-          title: 'Propietario incorrecto',
-          text:
-            'La mascota seleccionada no pertenece al cliente.'
-        });
+        this.mostrarErrorFormulario(
+          'La mascota seleccionada no pertenece al cliente.'
+        );
 
         return;
-
       }
 
     }
 
-    // Validar fecha y hora.
+    // ==================================================
+    // VALIDACIÓN 3: FECHA Y HORA
+    // ==================================================
+
     const fecha = new Date(datos.fechaHora);
 
     if (Number.isNaN(fecha.getTime())) {
 
-      Swal.fire({
-        icon: 'warning',
-        title: 'Fecha inválida',
-        text: 'Selecciona una fecha y hora válidas.'
-      });
+      this.mostrarErrorFormulario(
+        'Selecciona una fecha y hora válidas.'
+      );
 
       return;
-
     }
 
-    // Evitar nuevas citas en el pasado.
+    // ==================================================
+    // VALIDACIÓN 4: NO REGISTRAR CITAS EN EL PASADO
+    // ==================================================
+
     if (
       this.modoFormulario === 'crear' &&
       fecha.getTime() < Date.now()
     ) {
 
-      Swal.fire({
-        icon: 'warning',
-        title: 'Fecha incorrecta',
-        text:
-          'No puedes crear citas en fechas pasadas.'
-      });
+      this.mostrarErrorFormulario(
+        'No puedes registrar citas en fechas pasadas.'
+      );
 
       return;
-
     }
 
-    // Validar el ID cuando se está editando.
+    // ==================================================
+    // VALIDACIÓN 5: EXISTENCIA DE CITA AL EDITAR
+    // ==================================================
+
     if (
       this.modoFormulario === 'editar' &&
       this.citaSeleccionadaId === null
     ) {
 
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se encontró la cita seleccionada.'
-      });
+      this.mostrarErrorFormulario(
+        'No se encontró la cita que deseas actualizar.'
+      );
 
       return;
-
     }
+
+    // ==================================================
+    // ENVIAR SOLICITUD AL BACKEND
+    // ==================================================
 
     this.guardando = true;
 
-    // Elegir POST o PUT según la operación.
     const peticion = this.modoFormulario === 'crear'
 
       ? this.backendService.post<Cita>(
@@ -899,9 +790,15 @@ export class CitaComponent implements OnInit {
 
     peticion.subscribe({
 
+      // =================================================
+      // RESPUESTA EXITOSA
+      // =================================================
+
       next: (citaGuardada: Cita) => {
 
         this.guardando = false;
+
+        this.mensajeErrorGuardar = '';
 
         this.cerrarFormulario();
 
@@ -916,6 +813,10 @@ export class CitaComponent implements OnInit {
 
       },
 
+      // =================================================
+      // NUEVO: MOSTRAR ERRORES SIN OCULTAR EL FORMULARIO
+      // =================================================
+
       error: (error) => {
 
         this.guardando = false;
@@ -925,87 +826,68 @@ export class CitaComponent implements OnInit {
           error
         );
 
-        const mensaje =
-          error.error?.message ||
-          error.error?.detail ||
-          'No fue posible guardar la cita. Revisa los datos y el horario.';
+        const mensajeBackend =
+          typeof error.error?.message === 'string'
+            ? error.error.message
+            : typeof error.error?.detail === 'string'
+              ? error.error.detail
+              : '';
 
-        Swal.fire({
-          icon: 'error',
-          title: 'Error al guardar',
-          text: mensaje
-        });
+        // Error HTTP 409: conflicto.
+        if (error.status === 409) {
+
+          this.mensajeErrorGuardar =
+            'No se pudo guardar la cita porque existe un conflicto. ' +
+            'Comprueba la disponibilidad del veterinario y ' +
+            'selecciona otro horario si es necesario.';
+
+        }
+
+        // Error HTTP 400: datos incorrectos.
+        else if (error.status === 400) {
+
+          this.mensajeErrorGuardar =
+            mensajeBackend ||
+            'La solicitud contiene datos incorrectos. ' +
+            'Revisa el cliente, la mascota, el médico y la fecha.';
+
+        }
+
+        // Error HTTP 404: recurso no encontrado.
+        else if (error.status === 404) {
+
+          this.mensajeErrorGuardar =
+            'No se encontró el recurso solicitado en el servidor.';
+
+        }
+
+        // Error de conexión.
+        else if (error.status === 0) {
+
+          this.mensajeErrorGuardar =
+            'No se pudo conectar con Spring Boot. ' +
+            'Comprueba que el backend esté encendido.';
+
+        }
+
+        // Otros errores.
+        else {
+
+          this.mensajeErrorGuardar =
+            mensajeBackend ||
+            'No fue posible guardar la cita. ' +
+            'Revisa los datos e inténtalo nuevamente.';
+
+        }
+
+        // IMPORTANTE:
+        // No cerrar el formulario cuando ocurra un error.
+        // El usuario podrá corregir los datos y reintentar.
 
       }
 
     });
 
-  }
-
-  // ======================================================
-  // CONSULTAR MÉDICOS VETERINARIOS DESDE MYSQL
-  // ======================================================
-
-  /**
-   * Obtiene la lista de médicos registrados
-   * desde el backend de Spring Boot.
-   */
-  cargarMedicos(): void {
-
-    // Consultar los médicos.
-    this.medicoService.listarMedicos().subscribe({
-
-      // Cuando la consulta sea correcta.
-      next: (respuesta: Medico[]) => {
-
-        // Guardar los médicos recibidos.
-        this.medicos = respuesta;
-
-        console.log(
-          'Médicos cargados correctamente:',
-          this.medicos
-        );
-      },
-
-      // Si ocurre un error.
-      error: (error) => {
-
-        console.error(
-          'Error al cargar médicos:',
-          error
-        );
-
-        this.medicos = [];
-      }
-    });
-  }
-
-  // ======================================================
-  // OBTENER EL NOMBRE DEL MÉDICO VETERINARIO
-  // ======================================================
-
-  /**
-   * Busca un médico en la lista cargada desde MySQL,
-   * utilizando su identificador.
-   *
-   * @param id Identificador del médico.
-   * @returns Nombre y apellido del veterinario.
-   */
-  obtenerNombreMedico(id: number): string {
-
-    // Buscar el médico correspondiente.
-    const medicoEncontrado = this.medicos.find(
-      medico => Number(medico.id) === Number(id)
-    );
-
-    // Si existe, devolver su nombre completo.
-    if (medicoEncontrado) {
-      return `${medicoEncontrado.nombres} ${medicoEncontrado.apellidos}`;
-    }
-
-    // Si todavía no se cargaron los médicos,
-    // mostrar temporalmente el identificador.
-    return `Médico ID: ${id}`;
   }
 
 }

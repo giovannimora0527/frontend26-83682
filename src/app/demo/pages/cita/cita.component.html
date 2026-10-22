@@ -1,30 +1,32 @@
 
-<!-- ===================================================== -->
+<!-- ====================================================== -->
 <!-- CLÍNICA VETERINARIA - UNIMINUTO                      -->
-<!-- GESTIÓN DE CITAS                                    -->
-<!-- ===================================================== -->
+<!-- GESTIÓN DE CITAS MÉDICAS                             -->
+<!-- ====================================================== -->
 
 <div class="row">
   <div class="col-12">
 
-    <!-- ================================================= -->
-    <!-- 1. TÍTULO DEL MÓDULO                             -->
-    <!-- ================================================= -->
+    <!-- TÍTULO -->
 
     <div class="page-header">
       <div class="page-block">
-        <h3 class="mb-2">Gestión de Citas</h3>
+
+        <h3 class="mb-2">
+          Gestión de Citas
+        </h3>
 
         <p class="text-muted">
           Consulta, registra y administra las citas
           médicas de la clínica veterinaria.
         </p>
+
       </div>
     </div>
 
-    <!-- ================================================= -->
-    <!-- 2. TARJETA PRINCIPAL                             -->
-    <!-- ================================================= -->
+    <!-- ================================================== -->
+    <!-- LISTADO DE CITAS                                   -->
+    <!-- ================================================== -->
 
     <div class="card">
 
@@ -34,19 +36,13 @@
 
       <div class="card-body">
 
-        <!-- ============================================= -->
-        <!-- 3. BÚSQUEDA Y FILTROS                         -->
-        <!-- ============================================= -->
+        <!-- BÚSQUEDA Y FILTROS -->
 
         <div class="row g-3 align-items-end mb-4">
 
-          <!-- Buscar citas -->
-
           <div class="col-md-5">
-            <label
-              for="buscarCita"
-              class="form-label"
-            >
+
+            <label for="buscarCita" class="form-label">
               Buscar cita
             </label>
 
@@ -58,15 +54,12 @@
               [(ngModel)]="busqueda"
               (ngModelChange)="actualizarFiltros()"
             />
+
           </div>
 
-          <!-- Filtrar por estado -->
-
           <div class="col-md-3">
-            <label
-              for="filtroEstado"
-              class="form-label"
-            >
+
+            <label for="filtroEstado" class="form-label">
               Estado de la cita
             </label>
 
@@ -76,6 +69,7 @@
               [(ngModel)]="filtroEstado"
               (ngModelChange)="actualizarFiltros()"
             >
+
               <option value="">
                 Todos los estados
               </option>
@@ -86,12 +80,13 @@
               >
                 {{ estado | titlecase }}
               </option>
+
             </select>
+
           </div>
 
-          <!-- Limpiar filtros -->
-
           <div class="col-md-2">
+
             <button
               type="button"
               class="btn btn-outline-secondary w-100"
@@ -99,11 +94,11 @@
             >
               Limpiar
             </button>
+
           </div>
 
-          <!-- Abrir nueva cita -->
-
           <div class="col-md-2">
+
             <button
               type="button"
               class="btn btn-primary w-100"
@@ -112,18 +107,18 @@
               <i class="feather icon-plus me-1"></i>
               Nueva cita
             </button>
+
           </div>
 
         </div>
 
-        <!-- ============================================= -->
-        <!-- 4. INDICADOR DE CARGA                         -->
-        <!-- ============================================= -->
+        <!-- CARGANDO CITAS -->
 
         <div
           *ngIf="cargando"
           class="text-center py-4"
         >
+
           <div
             class="spinner-border text-primary"
             role="status"
@@ -132,16 +127,16 @@
           <p class="mt-2">
             Cargando citas...
           </p>
+
         </div>
 
-        <!-- ============================================= -->
-        <!-- 5. ERROR AL CONSULTAR CITAS                   -->
-        <!-- ============================================= -->
+        <!-- ERROR AL CARGAR CITAS -->
 
         <div
           *ngIf="errorCarga && !cargando"
           class="alert alert-danger"
         >
+
           {{ errorCarga }}
 
           <button
@@ -151,11 +146,10 @@
           >
             Reintentar
           </button>
+
         </div>
 
-        <!-- ============================================= -->
-        <!-- 6. TABLA DE CITAS                             -->
-        <!-- ============================================= -->
+        <!-- TABLA -->
 
         <div
           *ngIf="!cargando && !errorCarga"
@@ -167,6 +161,7 @@
           >
 
             <thead class="table-light">
+
             <tr class="text-center">
               <th>ID</th>
               <th>Cliente</th>
@@ -177,27 +172,27 @@
               <th>Motivo</th>
               <th>Acciones</th>
             </tr>
+
             </thead>
 
             <tbody>
 
-            <!-- Mostrar citas registradas -->
-
             <tr *ngFor="let cita of citasPaginadas">
 
-              <!-- ID de la cita -->
+              <!-- ID -->
 
               <td class="text-center">
                 {{ cita.id }}
               </td>
 
-              <!-- Nombre completo del cliente -->
+              <!-- CLIENTE -->
 
               <td>
+
                 <ng-container
                   *ngIf="
                       obtenerClientePorId(cita.clienteId)
-                        as cliente;
+                      as cliente;
                       else clienteNoDisponible
                     "
                 >
@@ -208,40 +203,28 @@
                 <ng-template #clienteNoDisponible>
                   Cliente ID: {{ cita.clienteId }}
                 </ng-template>
+
               </td>
 
-              <!--
-                Por ahora conservamos el ID
-                de la mascota en la tabla.
-                La selección por nombre se hará
-                desde el formulario.
-              -->
+              <!-- MASCOTA -->
 
               <td class="text-center">
                 {{ cita.mascotaId }}
               </td>
 
-              <!-- Médico -->
+              <!-- MÉDICO -->
 
-              <!-- ================================================== -->
-              <!-- MOSTRAR NOMBRE DEL MÉDICO EN LUGAR DE SU ID -->
-              <!-- ================================================== -->
-
-              <td class="text-center">
+              <td>
                 {{ obtenerNombreMedico(cita.medicoId) }}
               </td>
 
-
-              <!-- Fecha y hora -->
+              <!-- FECHA -->
 
               <td>
-                {{
-                cita.fechaHora
-                | date:'dd/MM/yyyy HH:mm'
-                }}
+                {{ cita.fechaHora | date:'dd/MM/yyyy HH:mm' }}
               </td>
 
-              <!-- Estado -->
+              <!-- ESTADO -->
 
               <td class="text-center">
 
@@ -250,16 +233,12 @@
                     [ngClass]="{
                       'bg-warning text-dark':
                         cita.estado === 'pendiente',
-
                       'bg-primary':
                         cita.estado === 'programada',
-
                       'bg-info text-dark':
                         cita.estado === 'confirmada',
-
                       'bg-success':
                         cita.estado === 'atendida',
-
                       'bg-danger':
                         cita.estado === 'cancelada'
                     }"
@@ -269,16 +248,13 @@
 
               </td>
 
-              <!-- Motivo -->
+              <!-- MOTIVO -->
 
               <td>
-                {{
-                cita.motivo ||
-                'Sin motivo registrado'
-                }}
+                {{ cita.motivo || 'Sin motivo registrado' }}
               </td>
 
-              <!-- Acciones -->
+              <!-- EDITAR -->
 
               <td class="text-center">
 
@@ -299,15 +275,17 @@
 
             </tr>
 
-            <!-- Mensaje cuando no hay citas -->
+            <!-- TABLA VACÍA -->
 
             <tr *ngIf="citasFiltradas.length === 0">
+
               <td
                 colspan="8"
                 class="text-center text-muted py-4"
               >
-                No se encontraron citas.
+                No se encontraron citas médicas.
               </td>
+
             </tr>
 
             </tbody>
@@ -316,9 +294,7 @@
 
         </div>
 
-        <!-- ============================================= -->
-        <!-- 7. PAGINACIÓN                                 -->
-        <!-- ============================================= -->
+        <!-- PAGINACIÓN -->
 
         <div
           *ngIf="
@@ -338,12 +314,11 @@
 
             <ul class="pagination mb-0">
 
-              <!-- Anterior -->
-
               <li
                 class="page-item"
                 [class.disabled]="paginaActual === 1"
               >
+
                 <button
                   type="button"
                   class="page-link"
@@ -352,15 +327,15 @@
                 >
                   Anterior
                 </button>
-              </li>
 
-              <!-- Números de página -->
+              </li>
 
               <li
                 *ngFor="let pagina of paginas"
                 class="page-item"
                 [class.active]="paginaActual === pagina"
               >
+
                 <button
                   type="button"
                   class="page-link"
@@ -368,26 +343,23 @@
                 >
                   {{ pagina }}
                 </button>
-              </li>
 
-              <!-- Siguiente -->
+              </li>
 
               <li
                 class="page-item"
-                [class.disabled]="
-                  paginaActual === totalPaginas
-                "
+                [class.disabled]="paginaActual === totalPaginas"
               >
+
                 <button
                   type="button"
                   class="page-link"
-                  [disabled]="
-                    paginaActual === totalPaginas
-                  "
+                  [disabled]="paginaActual === totalPaginas"
                   (click)="cambiarPagina(paginaActual + 1)"
                 >
                   Siguiente
                 </button>
+
               </li>
 
             </ul>
@@ -403,9 +375,9 @@
   </div>
 </div>
 
-<!-- ===================================================== -->
-<!-- 8. FORMULARIO MODAL                                  -->
-<!-- ===================================================== -->
+<!-- ====================================================== -->
+<!-- FORMULARIO MODAL                                      -->
+<!-- ====================================================== -->
 
 <div
   *ngIf="mostrarFormulario"
@@ -424,9 +396,7 @@
 
     <div class="modal-content">
 
-      <!-- ============================================= -->
-      <!-- 9. ENCABEZADO DEL MODAL                       -->
-      <!-- ============================================= -->
+      <!-- ENCABEZADO -->
 
       <div class="modal-header">
 
@@ -451,9 +421,7 @@
 
       </div>
 
-      <!-- ============================================= -->
-      <!-- 10. FORMULARIO REACTIVO                       -->
-      <!-- ============================================= -->
+      <!-- FORMULARIO REACTIVO -->
 
       <form
         [formGroup]="formulario"
@@ -462,38 +430,49 @@
 
         <div class="modal-body">
 
+          <!-- ============================================ -->
+          <!-- NUEVO: MENSAJE VISIBLE DE ERROR             -->
+          <!-- ============================================ -->
+
+          <div
+            *ngIf="mensajeErrorGuardar"
+            class="alert alert-danger d-flex align-items-start mb-3"
+            role="alert"
+          >
+
+            <div>
+
+              <strong>
+                No se pudo guardar la cita.
+              </strong>
+
+              <p class="mb-0 mt-1">
+                {{ mensajeErrorGuardar }}
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- ============================================ -->
+          <!-- CAMPOS DEL FORMULARIO                       -->
+          <!-- ============================================ -->
+
           <div class="row g-3">
 
-            <!-- ======================================= -->
-            <!-- 11. SELECCIONAR CLIENTE                 -->
-            <!-- ======================================= -->
+            <!-- CLIENTE -->
 
             <div class="col-md-6">
 
-              <label
-                for="clienteId"
-                class="form-label"
-              >
+              <label for="clienteId" class="form-label">
                 Cliente *
               </label>
-
-              <!--
-                El usuario selecciona un nombre,
-                pero Angular guarda el clienteId.
-
-                IMPORTANTE:
-                Al cambiar cliente, llamamos
-                a alCambiarCliente() para limpiar
-                la mascota seleccionada.
-              -->
 
               <select
                 id="clienteId"
                 class="form-select"
                 formControlName="clienteId"
-                [attr.disabled]="
-                  cargandoClientes ? '' : null
-                "
+                [disabled]="cargandoClientes"
                 (change)="alCambiarCliente()"
               >
 
@@ -510,8 +489,6 @@
 
               </select>
 
-              <!-- Cargando clientes -->
-
               <small
                 *ngIf="cargandoClientes"
                 class="text-muted d-block mt-2"
@@ -519,26 +496,21 @@
                 Cargando clientes...
               </small>
 
-              <!-- Clientes disponibles -->
-
               <small
                 *ngIf="
                   !cargandoClientes &&
-                  !errorClientes &&
-                  clientes.length > 0
+                  !errorClientes
                 "
                 class="text-muted d-block mt-2"
               >
-                Clientes disponibles:
-                {{ clientes.length }}
+                Clientes disponibles: {{ clientes.length }}
               </small>
-
-              <!-- Error de clientes -->
 
               <div
                 *ngIf="errorClientes"
                 class="text-danger mt-2"
               >
+
                 {{ errorClientes }}
 
                 <button
@@ -548,9 +520,8 @@
                 >
                   Reintentar
                 </button>
-              </div>
 
-              <!-- Validación -->
+              </div>
 
               <small
                 *ngIf="
@@ -564,30 +535,13 @@
 
             </div>
 
-            <!-- ======================================= -->
-            <!-- 12. SELECCIONAR MASCOTA - NUEVO         -->
-            <!-- ======================================= -->
+            <!-- MASCOTA -->
 
             <div class="col-md-6">
 
-              <label
-                for="mascotaId"
-                class="form-label"
-              >
+              <label for="mascotaId" class="form-label">
                 Mascota *
               </label>
-
-              <!--
-                La lista se obtiene desde
-                MascotaService.
-
-                mascotasDelCliente contiene
-                únicamente las mascotas que
-                pertenecen al cliente seleccionado.
-
-                [ngValue] almacena el mascotaId
-                numérico esperado por Spring Boot.
-              -->
 
               <select
                 id="mascotaId"
@@ -613,15 +567,8 @@
 
                 </option>
 
-                <!--
-                  Mostrar únicamente las mascotas
-                  del propietario seleccionado.
-                -->
-
                 <option
-                  *ngFor="
-                    let mascota of mascotasDelCliente
-                  "
+                  *ngFor="let mascota of mascotasDelCliente"
                   [ngValue]="mascota.mascotaId"
                 >
                   {{ obtenerNombreMascota(mascota) }}
@@ -629,37 +576,17 @@
 
               </select>
 
-              <!-- Indicador de carga -->
-
-              <small
-                *ngIf="cargandoMascotas"
-                class="text-muted d-block mt-2"
-              >
-                Cargando mascotas...
-              </small>
-
-              <!--
-                Mostrar la cantidad de mascotas
-                asociadas al cliente seleccionado.
-              -->
-
               <small
                 *ngIf="
                   !cargandoMascotas &&
                   !errorMascotas &&
-                  formulario.get('clienteId')?.value &&
-                  mascotasDelCliente.length > 0
+                  formulario.get('clienteId')?.value
                 "
                 class="text-muted d-block mt-2"
               >
                 Mascotas de este cliente:
                 {{ mascotasDelCliente.length }}
               </small>
-
-              <!--
-                Mostrar aviso si el cliente
-                todavía no tiene mascotas.
-              -->
 
               <small
                 *ngIf="
@@ -670,11 +597,8 @@
                 "
                 class="text-warning d-block mt-2"
               >
-                Este cliente no tiene mascotas
-                registradas.
+                Este cliente no tiene mascotas registradas.
               </small>
-
-              <!-- Error al consultar mascotas -->
 
               <div
                 *ngIf="errorMascotas"
@@ -693,8 +617,6 @@
 
               </div>
 
-              <!-- Validación de mascota -->
-
               <small
                 *ngIf="
                   formulario.get('mascotaId')?.invalid &&
@@ -707,70 +629,56 @@
 
             </div>
 
-            <!-- ======================================= -->
-            <!-- 13. MÉDICO VETERINARIO                  -->
-            <!-- ======================================= -->
+            <!-- MÉDICO -->
 
             <div class="col-md-6">
 
-              <label
-                for="medicoId"
-                class="form-label"
-              >
+              <label for="medicoId" class="form-label">
                 Médico veterinario *
               </label>
-
-              <!--
-
-
-                Lo convertiremos en lista desplegable
-                cuando integremos los médicos.
-              -->
-
-
-              <!-- ================================================== -->
-              <!-- SELECCIONAR MÉDICO VETERINARIO -->
-              <!-- ================================================== -->
 
               <select
                 id="medicoId"
                 class="form-select"
                 formControlName="medicoId"
               >
-                <!-- Opción inicial -->
+
                 <option [ngValue]="null">
                   Seleccionar médico veterinario
                 </option>
 
-                <!-- Mostrar los médicos obtenidos desde MySQL -->
                 <option
                   *ngFor="let medico of medicos"
                   [ngValue]="medico.id"
                 >
-                  {{ medico.nombres }} {{ medico.apellidos }}
+                  {{ medico.nombres }}
+                  {{ medico.apellidos }}
                   - {{ medico.registroProfesional }}
                 </option>
+
               </select>
 
-              <!-- Mostrar cuántos médicos se cargaron -->
-              <small class="text-muted">
+              <small class="text-muted d-block mt-2">
                 Médicos disponibles: {{ medicos.length }}
               </small>
 
-              />
+              <small
+                *ngIf="
+                  formulario.get('medicoId')?.invalid &&
+                  formulario.get('medicoId')?.touched
+                "
+                class="text-danger d-block mt-2"
+              >
+                Debes seleccionar un médico.
+              </small>
 
             </div>
 
-            <!-- ======================================= -->
-            <!-- 14. FECHA Y HORA                        -->
-            <!-- ======================================= -->
+            <!-- FECHA Y HORA -->
 
             <div class="col-md-6">
 
-              <label
-                for="fechaHora"
-                class="form-label"
-              >
+              <label for="fechaHora" class="form-label">
                 Fecha y hora *
               </label>
 
@@ -781,18 +689,23 @@
                 formControlName="fechaHora"
               />
 
+              <small
+                *ngIf="
+                  formulario.get('fechaHora')?.invalid &&
+                  formulario.get('fechaHora')?.touched
+                "
+                class="text-danger d-block mt-2"
+              >
+                Selecciona la fecha y hora de la cita.
+              </small>
+
             </div>
 
-            <!-- ======================================= -->
-            <!-- 15. ESTADO DE LA CITA                   -->
-            <!-- ======================================= -->
+            <!-- ESTADO -->
 
             <div class="col-md-6">
 
-              <label
-                for="estado"
-                class="form-label"
-              >
+              <label for="estado" class="form-label">
                 Estado de la cita *
               </label>
 
@@ -820,16 +733,11 @@
 
             </div>
 
-            <!-- ======================================= -->
-            <!-- 16. MOTIVO DE CONSULTA                  -->
-            <!-- ======================================= -->
+            <!-- MOTIVO -->
 
             <div class="col-12">
 
-              <label
-                for="motivo"
-                class="form-label"
-              >
+              <label for="motivo" class="form-label">
                 Motivo de la consulta
               </label>
 
@@ -845,9 +753,7 @@
 
           </div>
 
-          <!-- ========================================= -->
-          <!-- 17. MENSAJE INFORMATIVO                   -->
-          <!-- ========================================= -->
+          <!-- MENSAJE INFORMATIVO -->
 
           <div class="alert alert-info mt-4 mb-0">
 
@@ -864,13 +770,9 @@
 
         </div>
 
-        <!-- ============================================= -->
-        <!-- 18. BOTONES DEL FORMULARIO                    -->
-        <!-- ============================================= -->
+        <!-- BOTONES -->
 
         <div class="modal-footer">
-
-          <!-- Cerrar -->
 
           <button
             type="button"
@@ -881,14 +783,11 @@
             Cerrar
           </button>
 
-          <!-- Guardar o actualizar -->
-
           <button
             type="submit"
             class="btn btn-primary"
             [disabled]="
               guardando ||
-              formulario.invalid ||
               cargandoMascotas ||
               !!errorMascotas
             "
