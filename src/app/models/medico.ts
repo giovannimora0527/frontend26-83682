@@ -18,6 +18,7 @@ export class Medico {
 
   // Identificador único del médico.
   id?: number;
+  activo?: boolean;
 
   // Tipo de documento: CC, CE, etc.
   tipoDocumento?: string;

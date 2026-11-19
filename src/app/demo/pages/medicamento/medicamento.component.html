@@ -1,215 +1,216 @@
-
-<!--
-==========================================================
-CLÍNICA VETERINARIA - UNIMINUTO
-GESTIÓN DE MEDICAMENTOS
-==========================================================
-
-Esta pantalla permite:
-
-1. Consultar medicamentos registrados.
-2. Buscar medicamentos.
-3. Mostrar sus fechas.
-4. Consultar información almacenada en MySQL.
--->
-
-<div class="row">
-
-  <div class="col-12">
-
-    <div class="card">
-
-      <!-- =============================================== -->
-      <!-- 1. TÍTULO -->
-      <!-- =============================================== -->
-
-      <div class="card-header">
-
-        <h5>
-          Listado de medicamentos registrados
-        </h5>
-
+<section class="card">
+  <header class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <h2 class="mb-0">Gestión de medicamentos</h2>
+    @if (puedeModificar) {
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-primary" (click)="abrirProducto()">Nuevo producto</button>
+        <button type="button" class="btn btn-outline-primary" (click)="abrirImportacion()">Importar inventario</button>
       </div>
+    }
+  </header>
+  <div class="card-body">
+    @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+    @if (aviso) { <div class="alert alert-success" role="status">{{ aviso }}</div> }
+    @if (ocupado) { <p class="text-muted" role="status">Procesando…</p> }
 
-      <div class="card-body">
-
-        <p class="text-muted">
-
-          Consulta los medicamentos registrados en
-          la base de datos de la clínica veterinaria.
-
-        </p>
-
-        <!-- ============================================= -->
-        <!-- 2. BUSCADOR -->
-        <!-- ============================================= -->
-
-        <div class="row mb-4">
-
-          <div class="col-md-8 mb-2">
-
-            <label class="form-label">
-              Buscar medicamento
+    @if (producto; as p) {
+      <section class="inventory-panel">
+        <h3>{{ editando === null ? 'Nuevo producto' : 'Editar producto' }}</h3>
+        <form #formProducto="ngForm" (ngSubmit)="formProducto.valid && guardarProducto(p)">
+          <div class="inventory-fields">
+            <label>Código <input class="form-control" name="codigo" [(ngModel)]="p.codigo" maxlength="8" pattern="[a-zA-Z0-9]{8}" required></label>
+            <label>Nombre <input class="form-control" name="nombre" [(ngModel)]="p.nombre" maxlength="100" required></label>
+            <label>Presentación <input class="form-control" name="presentacion" [(ngModel)]="p.presentacion" maxlength="100"></label>
+            <label>Tipo
+              <select class="form-select" name="tipo" [(ngModel)]="p.tipo">
+                <option value="MEDICAMENTO">Medicamento</option><option value="PRODUCTO">Producto médico</option><option value="UTENSILIO">Utensilio</option>
+              </select>
             </label>
-
-            <input
-              type="text"
-              class="form-control"
-              placeholder="Buscar por ID, nombre, descripción o presentación"
-              [value]="textoBusqueda"
-              (input)="buscarMedicamento($event)"
-            />
-
+            <label>Registro INVIMA <input class="form-control" name="invima" [(ngModel)]="p.invima" maxlength="100" [required]="p.tipo === 'MEDICAMENTO'"></label>
+            <label>Precio de compra <input class="form-control" type="number" min="0" step="0.01" name="precioCompra" [(ngModel)]="p.precioCompra" required></label>
+            <label>Precio de venta <input class="form-control" type="number" min="0" step="0.01" name="precioVenta" [(ngModel)]="p.precioVenta" required></label>
+            <label>Stock mínimo <input class="form-control" type="number" min="0" step="1" name="stockMinimo" [(ngModel)]="p.stockMinimo" required></label>
+            <label>Fecha de compra <input class="form-control" type="date" name="fechaCompra" [(ngModel)]="p.fechaCompra" required></label>
+            <label>Fecha de ingreso <input class="form-control" type="date" name="fechaIngreso" [(ngModel)]="p.fechaIngreso" required></label>
+            <label>Próximo pedido <input class="form-control" type="date" name="proximoPedido" [(ngModel)]="p.fechaProximoPedido"></label>
+            <label>Vencimiento de referencia <input class="form-control" type="date" name="fechaVence" [(ngModel)]="p.fechaVence"></label>
+            <label class="inventory-wide">Descripción <textarea class="form-control" name="descripcion" [(ngModel)]="p.descripcion" maxlength="5000" rows="2"></textarea></label>
+            <label class="form-check"><input class="form-check-input" type="checkbox" name="activo" [(ngModel)]="p.activo"> Activo</label>
           </div>
-
-          <div class="col-md-4 mb-2">
-
-            <label class="form-label">
-              &nbsp;
-            </label>
-
-            <button
-              type="button"
-              class="btn btn-outline-secondary w-100 d-block"
-              (click)="limpiarBusqueda()"
-            >
-              Limpiar
-            </button>
-
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" type="submit" [disabled]="formProducto.invalid || ocupado">Guardar producto</button>
+            <button class="btn btn-outline-secondary" type="button" (click)="producto = null">Cancelar</button>
           </div>
+        </form>
+      </section>
+    }
 
+    @if (importacionAbierta && puedeModificar) {
+      <section class="inventory-panel">
+        <div class="d-flex align-items-center justify-content-between">
+          <h3>Carga masiva</h3><button class="btn btn-outline-secondary" type="button" (click)="importacionAbierta = false">Cerrar</button>
         </div>
-
-        <!-- ============================================= -->
-        <!-- 3. INDICADOR DE CARGA -->
-        <!-- ============================================= -->
-
-        <div
-          *ngIf="cargando"
-          class="alert alert-info"
-        >
-          Consultando medicamentos...
+        <p>Usa un CSV UTF-8 separado por comas o un XLSX de una sola hoja. Máximo 2 MiB y 2000 filas. Usa fechas AAAA-MM-DD y decimales con punto.</p>
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+          <label>Archivo Excel o CSV <input class="form-control" type="file" accept=".xlsx,.csv" (change)="seleccionarArchivo($event)"></label>
+          <button type="button" class="btn btn-outline-secondary" (click)="descargarPlantilla()">Descargar plantilla</button>
+          <button type="button" class="btn btn-primary" [disabled]="!archivo || ocupado" (click)="previsualizar()">Validar y previsualizar</button>
         </div>
+        @if (importacion; as carga) {
+          <p class="mt-3 mb-2"><strong>{{ carga.resumen.archivo }}</strong>
+            @if (carga.resumen.fechaConfirmacion) {
+              · Importados {{ carga.resumen.importados }} · Rechazados {{ carga.resumen.rechazados }}
+            } @else {
+              · Válidos {{ carga.filas.length - carga.resumen.rechazados }} · Con errores {{ carga.resumen.rechazados }}
+            }
+          </p>
+          <div class="table-responsive inventory-preview">
+            <table class="table table-sm">
+              <thead><tr><th>Fila</th><th>Código</th><th>Producto</th><th>Validación</th></tr></thead>
+              <tbody>
+                @for (fila of carga.filas; track fila.numero) {
+                  <tr><td>{{ fila.numero }}</td><td>{{ fila.producto?.codigo || '—' }}</td><td>{{ fila.producto?.nombre || '—' }}</td>
+                    <td [class.text-danger]="fila.errores.length > 0">{{ fila.errores.join(' · ') || 'Válido' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (carga.resumen.rechazados > 0) {
+            <button class="btn btn-outline-secondary me-2" type="button" (click)="descargarErrores(carga)">Descargar errores</button>
+          }
+          @if (!carga.resumen.fechaConfirmacion && carga.resumen.usuarioId === usuarioId) {
+            <button class="btn btn-primary" type="button" [disabled]="ocupado || carga.filas.length === carga.resumen.rechazados"
+              (click)="confirmar(carga.resumen.id)">Confirmar registros válidos</button>
+          }
+        }
+        <details class="mt-3">
+          <summary>Historial de importaciones</summary>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead><tr><th>Fecha</th><th>Archivo</th><th>Usuario</th><th>Resultado</th></tr></thead>
+              <tbody>
+                @for (registro of historial; track registro.id) {
+                  <tr><td>{{ registro.fecha | date:'short' }}</td><td><button class="btn btn-link p-0" type="button" (click)="detalleImportacion(registro.id)">{{ registro.archivo }}</button></td>
+                    <td>{{ registro.usuarioId }}</td><td>{{ registro.fechaConfirmacion ? registro.importados + ' importados, ' + registro.rechazados + ' rechazados' : 'Pendiente de confirmar' }}</td></tr>
+                } @empty { <tr><td colspan="4">Aún no hay importaciones.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+    }
 
-        <!-- ============================================= -->
-        <!-- 4. MENSAJE DE ERROR -->
-        <!-- ============================================= -->
-
-        <div
-          *ngIf="mensajeError"
-          class="alert alert-danger"
-        >
-          {{ mensajeError }}
-        </div>
-
-        <!-- ============================================= -->
-        <!-- 5. TABLA DE MEDICAMENTOS -->
-        <!-- ============================================= -->
-
-        <div class="table-responsive">
-
-          <table
-            class="table table-bordered table-hover"
-          >
-
-            <!-- ENCABEZADOS -->
-
-            <thead class="table-light">
-
-            <tr>
-
-              <th>ID</th>
-
-              <th>Nombre</th>
-
-              <th>Descripción</th>
-
-              <th>Presentación</th>
-
-              <th>Fecha de compra</th>
-
-              <th>Fecha de vencimiento</th>
-
-            </tr>
-
-            </thead>
-
-            <!-- REGISTROS -->
-
-            <tbody>
-
-            <tr
-              *ngFor="let medicamento of medicamentosFiltrados"
-            >
-
-              <td>
-                {{ medicamento.id }}
-              </td>
-
-              <td>
-                {{ medicamento.nombre }}
-              </td>
-
-              <td>
-                {{ medicamento.descripcion || 'Sin descripción' }}
-              </td>
-
-              <td>
-                {{ medicamento.presentacion || 'Sin presentación' }}
-              </td>
-
-              <td>
-                {{ formatearFecha(medicamento.fechaCompra) }}
-              </td>
-
-              <td>
-                {{ formatearFecha(medicamento.fechaVence) }}
-              </td>
-
-            </tr>
-
-            <!-- SIN RESULTADOS -->
-
-            <tr
-              *ngIf="
-                  !cargando &&
-                  !mensajeError &&
-                  medicamentosFiltrados.length === 0
-                "
-            >
-
-              <td
-                colspan="6"
-                class="text-center text-muted"
-              >
-
-                No se encontraron medicamentos.
-
-              </td>
-
-            </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        <!-- ============================================= -->
-        <!-- 6. CONTADOR DE REGISTROS -->
-        <!-- ============================================= -->
-
-        <div class="mt-3 text-muted">
-
-          Registros encontrados:
-          {{ medicamentosFiltrados.length }}
-
-        </div>
-
-      </div>
-
+    <div class="d-flex flex-wrap gap-3 mb-3 align-items-end">
+      <label>Buscar <input type="search" class="form-control" [(ngModel)]="busqueda" (ngModelChange)="pagina = 1" placeholder="Código, nombre o presentación"></label>
+      <label>Filtrar por
+        <select class="form-select" [(ngModel)]="filtro" (ngModelChange)="pagina = 1">
+          <option value="TODOS">Todos</option><option value="ACTIVO">Activos</option><option value="INACTIVO">Inactivos</option>
+          <option value="AGOTADO">Agotados</option><option value="BAJO">Stock bajo</option>
+          <option value="VENCIDO">Con lotes vencidos</option><option value="PROXIMO">Próximos a vencer</option>
+        </select>
+      </label>
     </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Producto</th><th>Precios</th><th>Existencias</th><th>Vencimiento</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+          @for (ficha of visibles; track ficha.id) {
+            <tr>
+              <td><strong>{{ ficha.producto.nombre }}</strong><div class="small text-muted">{{ ficha.producto.codigo }} · {{ ficha.producto.tipo }}</div><span class="small">{{ ficha.producto.presentacion }}</span></td>
+              <td>Compra {{ ficha.producto.precioCompra | currency:'COP':'symbol-narrow' }}<br>Venta {{ ficha.producto.precioVenta | currency:'COP':'symbol-narrow' }}</td>
+              <td>{{ ficha.disponible }} disponibles / {{ ficha.existencia }} totales<br><small>Mínimo {{ ficha.producto.stockMinimo }}</small></td>
+              <td>{{ ficha.vencimientoLote || ficha.producto.fechaVence || '—' }}</td>
+              <td>
+                <span class="badge text-bg-secondary">{{ ficha.producto.activo ? 'Activo' : 'Inactivo' }}</span>
+                @if (ficha.producto.activo && ficha.disponible === 0) { <span class="badge text-bg-danger">Agotado</span> }
+                @else if (ficha.producto.activo && ficha.disponible < ficha.producto.stockMinimo) { <span class="badge text-bg-warning">Stock bajo</span> }
+                @if (ficha.vencido) { <span class="badge text-bg-danger">Lote vencido</span> }
+                @if (ficha.proximoVencer) { <span class="badge text-bg-warning">Próximo a vencer</span> }
+              </td>
+              <td><div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="abrirDetalle(ficha)">Lotes</button>
+                @if (puedeModificar) { <button type="button" class="btn btn-sm btn-outline-secondary" (click)="abrirProducto(ficha)">Editar</button> }
+              </div></td>
+            </tr>
+          } @empty { <tr><td colspan="6">{{ ocupado ? 'Consultando inventario…' : 'No hay productos para mostrar.' }}</td></tr> }
+        </tbody>
+      </table>
+    </div>
+    <nav class="d-flex gap-3 align-items-center" aria-label="Paginación del inventario">
+      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="pagina <= 1" (click)="pagina = pagina - 1">Anterior</button>
+      <span>Página {{ pagina }} de {{ totalPaginas }}</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="pagina >= totalPaginas" (click)="pagina = pagina + 1">Siguiente</button>
+    </nav>
 
+    @if (seleccionado; as ficha) {
+      <section class="inventory-panel mt-3">
+        <div class="d-flex justify-content-between gap-2">
+          <h3>Lotes de {{ ficha.producto.nombre }}</h3>
+          <button class="btn btn-outline-secondary" type="button" (click)="seleccionado = null">Cerrar detalle</button>
+        </div>
+        <p>{{ ficha.disponible }} disponibles para entrega · {{ ficha.existencia }} en total.</p>
+        @if (puedeModificar && ficha.producto.activo) {
+          <button class="btn btn-primary mb-2" type="button" (click)="nuevoLote(ficha)">Registrar lote</button>
+        }
+        @if (lote; as nuevo) {
+          <form #formLote="ngForm" (ngSubmit)="formLote.valid && guardarLote(ficha, nuevo)" class="mb-3">
+            <div class="inventory-fields">
+              <label>Número <input class="form-control" name="numero" [(ngModel)]="nuevo.numero" maxlength="60" required></label>
+              <label>Costo unitario <input class="form-control" type="number" min="0" step="0.01" name="costo" [(ngModel)]="nuevo.costo" required></label>
+              <label>Cantidad inicial <input class="form-control" type="number" min="0" step="1" name="cantidad" [(ngModel)]="nuevo.cantidad" required></label>
+              <label>Ingreso <input class="form-control" type="date" name="ingreso" [(ngModel)]="nuevo.fechaIngreso" required></label>
+              <label>Vencimiento <input class="form-control" type="date" name="vencimiento" [(ngModel)]="nuevo.fechaVence"></label>
+              <label>Referencia <input class="form-control" name="referencia" [(ngModel)]="nuevo.referencia" maxlength="100"></label>
+            </div>
+            <button class="btn btn-primary mt-2" type="submit" [disabled]="formLote.invalid || ocupado">Guardar lote</button>
+            <button class="btn btn-link mt-2" type="button" (click)="lote = null">Cancelar</button>
+          </form>
+        }
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead><tr><th>Lote</th><th>Costo</th><th>Ingreso</th><th>Vence</th><th>Cantidad</th><th>Estado</th>@if (puedeModificar) {<th>Acción</th>}</tr></thead>
+            <tbody>
+              @for (item of lotes; track item.id) {
+                <tr><td>{{ item.numero }}</td><td>{{ item.costo | currency:'COP':'symbol-narrow' }}</td><td>{{ item.fechaIngreso }}</td>
+                  <td>{{ item.fechaVence || '—' }}</td><td>{{ item.cantidad }}</td>
+                  <td>{{ item.vencido ? 'Vencido' : item.proximoVencer ? 'Próximo a vencer' : item.disponible ? 'Disponible' : 'Sin disponibilidad' }}</td>
+                  @if (puedeModificar) { <td><button class="btn btn-sm btn-outline-primary" type="button" (click)="nuevoMovimiento(item)">Movimiento</button></td> }
+                </tr>
+              } @empty { <tr><td colspan="7">No hay lotes registrados.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+        @if (movimiento; as mov) {
+          <form #formMovimiento="ngForm" (ngSubmit)="formMovimiento.valid && guardarMovimiento(ficha, mov)">
+            <div class="inventory-fields">
+              <label>Tipo
+                <select class="form-select" name="tipoMovimiento" [(ngModel)]="mov.tipo">
+                  <option value="ENTRADA">Entrada</option><option value="SALIDA">Salida</option><option value="AJUSTE">Ajuste</option>
+                </select>
+              </label>
+              <label>Cantidad <input class="form-control" type="number" step="1" [min]="mov.tipo === 'AJUSTE' ? -2147483648 : 1" name="cantidadMov" [(ngModel)]="mov.cantidad" required></label>
+              <label>Motivo <input class="form-control" name="motivo" [(ngModel)]="mov.motivo" maxlength="255" required></label>
+              <label>Referencia <input class="form-control" name="referenciaMov" [(ngModel)]="mov.referencia" maxlength="100"></label>
+            </div>
+            <button class="btn btn-primary mt-2" type="submit" [disabled]="formMovimiento.invalid || mov.cantidad === 0 || ocupado">Confirmar movimiento</button>
+            <button class="btn btn-link mt-2" type="button" (click)="movimiento = null">Cancelar</button>
+          </form>
+        }
+        @if (puedeModificar) {
+          <h4 class="mt-3">Historial de movimientos</h4>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead><tr><th>Fecha</th><th>Lote</th><th>Tipo</th><th>Cantidad</th><th>Saldo</th><th>Usuario</th><th>Motivo y referencia</th></tr></thead>
+              <tbody>
+                @for (m of movimientos; track m.id) {
+                  <tr><td>{{ m.fecha | date:'short' }}</td><td>{{ m.lote }}</td><td>{{ m.tipo }}</td><td>{{ m.cantidad }}</td><td>{{ m.saldo }}</td>
+                    <td>{{ m.usuario }}</td><td>{{ m.motivo }} {{ m.referencia }}</td></tr>
+                } @empty { <tr><td colspan="7">No hay movimientos registrados.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
   </div>
-
-</div>
+</section>

@@ -15,6 +15,12 @@
         <app-breadcrumb />
         <div class="main-body">
           <div class="page-wrapper">
+            @if (auth.avisoAcceso()) {
+              <div class="alert alert-warning alert-dismissible" role="alert">
+                {{ auth.avisoAcceso() }}
+                <button type="button" class="btn-close" aria-label="Cerrar aviso" (click)="auth.limpiarAviso()"></button>
+              </div>
+            }
             @if (isHome) {
               <section class="clinic-home" aria-labelledby="clinic-home-title">
                 <div class="clinic-home__intro">
@@ -23,10 +29,16 @@
                   <p>
                     Organiza la atención, el seguimiento y el cuidado de nuestras mascotas desde un solo lugar.
                   </p>
+                  @if (puedeGestionarUsuarios()) {
                   <a class="clinic-home__action" routerLink="/inicio/usuarios">
-                    <i class="feather icon-users" aria-hidden="true"></i>
-                    Gestionar usuarios
-                  </a>
+                  <i class="feather icon-users" aria-hidden="true"></i>
+                  Gestionar usuarios
+                </a>
+
+                  <!-- Conserva aquí el botón original Gestionar usuarios -->
+
+                  }
+
                 </div>
 
                 <div class="clinic-home__panel" aria-label="Resumen de la clinica">
@@ -46,7 +58,7 @@
                     <i class="feather icon-calendar" aria-hidden="true"></i>
                     <div>
                       <strong>Agenda organizada</strong>
-                      <span>Prepara cada jornada con claridad. Las citas se gestionan de manera eficiente. 
+                      <span>Prepara cada jornada con claridad. Las citas se gestionan de manera eficiente.
                         </span>
                     </div>
                   </article>

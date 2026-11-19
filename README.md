@@ -41,6 +41,14 @@
 - [More Pro Angular Templates](#more-premium-angular-dashboard-templates)
 - [Follow us](#follow-us)
 
+## Despliegue local con Docker
+
+Con Spring Boot y MySQL en ejecución desde el Compose de `backend2026-83682`, ejecuta `docker compose up -d --build --wait` en este repositorio y abre [la página de inicio de sesión](http://localhost:18080/login).
+
+Por defecto, Nginx reenvía las solicitudes de `/clinica/v1/` a `backend:8080` por la red Docker existente `backend2026-83682_default`. Puedes ajustar `FRONTEND_PORT`, `BACKEND_UPSTREAM` y `BACKEND_NETWORK` como variables de entorno al ejecutar Compose.
+
+Comprueba el contenedor con `docker compose ps`. Para retirar este despliegue, ejecuta `docker compose down` desde este repositorio.
+
 ## Getting Started
 
 1. Clone from Github
@@ -109,3 +117,38 @@ To report a bug, please submit an [issue](https://github.com/codedthemes/datta-a
 - Dribbble [https://dribbble.com/codedthemes](https://dribbble.com/codedthemes)
 - Facebook [https://www.facebook.com/codedthemes](https://www.facebook.com/codedthemes)
 - Twitter [https://twitter.com/codedthemes](https://twitter.com/codedthemes)
+
+## Atención veterinaria y tarifas
+
+El Administrador gestiona vigencias e historial de precios desde Especializaciones.
+El médico abre una cita propia en el Calendario médico y elige Ver atención clínica.
+Desde allí puede consultar antecedentes, guardar el diagnóstico, registrar servicios,
+crear fórmulas de varios medicamentos y descargar los PDF. La prefactura se
+habilita al finalizar. Fórmulas reúne las fórmulas clínicas y el acceso a PDF
+de las fórmulas anteriores.
+
+Usa npm test -- --watch=false --browsers=ChromeHeadless para ejecutar las
+pruebas y npm run build -- --configuration production para compilar la aplicación.
+
+## Despacho de Medicamentos
+
+El perfil Despacho Médico abre Despacho de Medicamentos desde el menú. Puede
+buscar una fórmula confirmada, ingresar las cantidades por lote, sugerir FEFO,
+revisar el resumen y confirmar la entrega. La preparación conserva el stock.
+Historial de entregas permite filtrar por fecha y descargar el comprobante PDF.
+La reversión exige motivo y confirmación de la devolución.
+
+## Facturación
+
+Administración y Recepción abren Facturación desde el menú. En Nueva factura,
+seleccionan una atención finalizada y revisan los conceptos e importes
+calculados por Spring. Recepción emite sin descuento. Administración puede
+aplicar un descuento con motivo y anular facturas sin pagos. La pantalla
+permite registrar abonos y usar el saldo vigente como importe del pago.
+
+## Reportes
+
+Abre Reportes desde el menú y selecciona un informe. Consulta el período
+y los filtros aplicables antes de descargar PDF o Excel. Administración
+tiene acceso financiero, médico e inventario. Recepción ve el resumen
+operativo de citas. Las descargas incluyen el conjunto filtrado completo.

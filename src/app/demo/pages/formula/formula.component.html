@@ -1,3 +1,5 @@
+@if (esMedico) { <app-formulas-clinicas /> }
+@if (errorPdf) { <p class="alert alert-danger" role="alert">{{ errorPdf }}</p> }
 
 <!-- =====================================================
      CLÍNICA VETERINARIA - UNIMINUTO
@@ -35,14 +37,7 @@
         <!-- BOTÓN PARA CREAR -->
         <div class="mb-4">
 
-          <button
-            type="button"
-            class="btn btn-primary"
-            (click)="abrirNuevaFormula()">
 
-            + Nueva fórmula médica
-
-          </button>
 
           <button
             type="button"
@@ -200,14 +195,9 @@
 
                   </button>
 
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-warning"
-                    (click)="abrirEditarFormula(formula)">
-
-                    Editar
-
-                  </button>
+                  @if (esMedico) {
+                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="descargarHistorica(formula.id)">Descargar PDF histórico</button>
+                  }
 
                 </div>
 

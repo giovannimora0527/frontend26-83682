@@ -9,6 +9,14 @@ import { NavigationComponent } from './navigation/navigation.component';
 import { ConfigurationComponent } from 'src/app/theme/layout/admin/configuration/configuration.component';
 import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
 
+
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, map, of } from 'rxjs';
+import { MenuService } from 'src/app/services/menu.service';
+import { AuthService } from 'src/app/services/auth.service';
+
+
+
 @Component({
   selector: 'app-admin',
   imports: [NavBarComponent, NavigationComponent, RouterModule, CommonModule, ConfigurationComponent, BreadcrumbsComponent],
@@ -16,6 +24,19 @@ import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadc
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent {
+
+  // Servicio que consulta los permisos desde Spring Boot.
+  private readonly menuService = inject(MenuService);
+
+  readonly auth = inject(AuthService);
+  readonly puedeGestionarUsuarios = toSignal(
+    this.menuService.obtenerMenusPropios().pipe(
+      map(menus => menus.some(menu => menu.url === '/inicio/usuarios')),
+      catchError(() => of(false))
+    ),
+    { initialValue: false }
+  );
+
   private readonly router = inject(Router);
 
   // public props

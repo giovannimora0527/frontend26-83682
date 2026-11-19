@@ -10,9 +10,11 @@
  */
 
 // 1. IMPORTACIONES
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../services/auth.service';
+import { TarifarioComponent } from './tarifario.component';
 
 import {
   Especializacion,
@@ -26,13 +28,15 @@ import {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule, TarifarioComponent
   ],
 
   templateUrl: './especializacion.component.html',
   styleUrl: './especializacion.component.scss'
 })
 export class EspecializacionComponent implements OnInit {
+  readonly esAdmin = ['ADMIN', 'ADMINISTRADOR'].includes((inject(AuthService).obtenerPerfil() ?? '').trim().toUpperCase());
+
 
   // 3. VARIABLES PRINCIPALES
 
@@ -55,6 +59,7 @@ export class EspecializacionComponent implements OnInit {
 
   // 5. INICIALIZACIÓN
   ngOnInit(): void {
+    if (this.esAdmin) return;
 
     // Consultar las especializaciones al abrir.
     this.cargarEspecializaciones();

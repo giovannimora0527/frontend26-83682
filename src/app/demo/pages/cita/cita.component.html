@@ -28,6 +28,34 @@
     <!-- LISTADO DE CITAS                                   -->
     <!-- ================================================== -->
 
+    @if (esAdmin) {
+      <details class="card p-3 mb-3">
+        <summary>Configurar disponibilidad de médicos</summary>
+        <label class="mt-2">Seleccionar médico
+          <select class="form-select" [(ngModel)]="medicoConfiguracion">
+            <option [ngValue]="null">Selecciona un médico</option>
+            @for (medico of medicos; track medico.id) {
+              <option [ngValue]="medico.id">{{ medico.nombres }} {{ medico.apellidos }}{{ medico.activo === false ? ' (inactivo)' : '' }}</option>
+            }
+          </select>
+        </label>
+        @if (medicoConfiguracion !== null) { <app-agenda-configuracion class="mt-2" [medico]="medicoConfiguracion" /> }
+      </details>
+    }
+    @if (errorAgenda) { <p role="alert" class="alert alert-danger">{{ errorAgenda }}</p> }
+    @if (citaHistorial; as seleccion) {
+      <section class="card p-3 mb-3" aria-label="Historial de la cita">
+        <div class="d-flex justify-content-between">
+          <h3 class="h5">Historial de la cita {{ seleccion.id }}</h3>
+          <button type="button" class="btn btn-outline-secondary" (click)="citaHistorial = null">Cerrar historial</button>
+        </div>
+        <ul>
+          @for (revision of historial; track revision.id) {
+            <li>{{ revision.fecha.replace('T',' ') }} · {{ revision.anterior?.estado || 'Creada' }} → {{ revision.actual.estado }} · {{ revision.actual.inicio?.replace('T',' ') }}</li>
+          } @empty { <li>Sin cambios registrados.</li> }
+        </ul>
+      </section>
+    }
     <div class="card">
 
       <div class="card-header">
@@ -221,7 +249,7 @@
               <!-- FECHA -->
 
               <td>
-                {{ cita.fechaHora | date:'dd/MM/yyyy HH:mm' }}
+                {{ cita.fechaHora | date:'dd/MM/yyyy HH:mm' }} – {{ cita.fechaFin | date:'HH:mm' }}
               </td>
 
               <!-- ESTADO -->
@@ -263,13 +291,17 @@
                   class="btn btn-outline-primary btn-sm"
                   [disabled]="
                       cita.estado === 'cancelada' ||
-                      cita.estado === 'atendida'
+                      cita.estado === 'atendida' || cita.estado === 'finalizada'
                     "
                   (click)="editarCita(cita)"
                 >
                   <i class="feather icon-edit me-1"></i>
                   Editar
                 </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" (click)="verHistorial(cita)">Historial</button>
+                @if (esAdmin && cita.estado === 'atendida') {
+                  <button type="button" class="btn btn-sm btn-primary ms-1" (click)="finalizar(cita)">Finalizar cita</button>
+                }
 
               </td>
 
@@ -641,6 +673,7 @@
                 id="medicoId"
                 class="form-select"
                 formControlName="medicoId"
+                (change)="disponibilidad = null"
               >
 
                 <option [ngValue]="null">
@@ -679,7 +712,7 @@
             <div class="col-md-6">
 
               <label for="fechaHora" class="form-label">
-                Fecha y hora *
+                Inicio de la cita (Bogotá) *
               </label>
 
               <input
@@ -687,6 +720,7 @@
                 type="datetime-local"
                 class="form-control"
                 formControlName="fechaHora"
+                (change)="disponibilidad = null"
               />
 
               <small
@@ -699,6 +733,25 @@
                 Selecciona la fecha y hora de la cita.
               </small>
 
+            </div>
+
+            <div class="col-md-6">
+              <label for="fechaFin" class="form-label">Fin de la cita (Bogotá) *</label>
+              <input id="fechaFin" type="datetime-local" class="form-control" formControlName="fechaFin">
+            </div>
+            <div class="col-12">
+              <button type="button" class="btn btn-outline-primary" (click)="consultarDisponibilidad()">Consultar disponibilidad</button>
+              @if (disponibilidad; as horario) {
+                @if (!horario.activo) { <p class="text-danger mt-2">El médico está inactivo.</p> }
+                @else if (!horario.libres.length) { <p class="text-muted mt-2">No hay franjas libres para la fecha. Revisa el horario del médico.</p> }
+                @else {
+                  <div class="d-flex gap-2 flex-wrap mt-2">
+                    @for (franja of horario.libres; track franja.inicio) {
+                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="usarFranja(franja)">{{ franja.inicio.slice(11,16) }}–{{ franja.fin.slice(11,16) }}</button>
+                    }
+                  </div>
+                }
+              }
             </div>
 
             <!-- ESTADO -->
@@ -716,15 +769,8 @@
               >
 
                 <option
-                  *ngFor="let estado of estados"
+                  *ngFor="let estado of estadosFormulario"
                   [value]="estado"
-                  [disabled]="
-                    modoFormulario === 'crear' &&
-                    (
-                      estado === 'atendida' ||
-                      estado === 'cancelada'
-                    )
-                  "
                 >
                   {{ estado | titlecase }}
                 </option>

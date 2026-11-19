@@ -1,0 +1,166 @@
+<section class="card">
+  <header class="card-header"><h2 class="h5 mb-0">Despacho de Medicamentos</h2></header>
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button type="button" class="btn btn-outline-primary" [class.active]="tab === 'formulas'"
+        [disabled]="ocupado" (click)="cambiarVista('formulas')">Fórmulas</button>
+      <button type="button" class="btn btn-outline-primary" [class.active]="tab === 'historial'"
+        [disabled]="ocupado" (click)="cambiarVista('historial')">Historial de entregas</button>
+    </div>
+    @if (ocupado) { <p role="status">Procesando…</p> }
+    @if (error) { <p class="alert alert-danger" role="alert">{{ error }}</p> }
+    @if (aviso) { <p class="alert alert-success" role="status">{{ aviso }}</p> }
+
+    @if (tab === 'formulas') {
+      <form class="d-flex flex-wrap align-items-end gap-2 mb-3" (ngSubmit)="buscar()">
+        <label>Número de fórmula<input class="form-control" name="formula" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="filtros.id"></label>
+        <label>Propietario<input class="form-control" name="propietario" [(ngModel)]="filtros.propietario"></label>
+        <label>Mascota<input class="form-control" name="mascota" [(ngModel)]="filtros.mascota"></label>
+        <label>Fecha<input class="form-control" name="fecha" type="date" [(ngModel)]="filtros.fecha"></label>
+        <label>Estado<select class="form-select" name="estado" [(ngModel)]="filtros.estado">
+          <option value="">Todos</option>
+          @for (e of estados; track e) { <option [value]="e">{{ etiqueta(e) }}</option> }
+        </select></label>
+        <button class="btn btn-primary" [disabled]="ocupado">Buscar fórmulas</button>
+      </form>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Fórmula</th><th>Fecha</th><th>Veterinario</th><th>Mascota</th><th>Propietario</th><th>Estado</th><th>Acción</th></tr></thead>
+          <tbody>
+            @for (f of formulas; track f.id) {
+              <tr><td>{{ f.id }}</td><td>{{ f.fecha.replace('T', ' ') }}</td><td>{{ f.veterinario }}</td>
+                <td>{{ f.mascota }}</td><td>{{ f.propietario }}</td><td>{{ etiqueta(f.estado) }}</td>
+                <td><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado"
+                  (click)="abrir(f.id)">Consultar fórmula {{ f.id }}</button></td></tr>
+            } @empty { <tr><td colspan="7">Sin fórmulas para los filtros seleccionados.</td></tr> }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <form class="d-flex flex-wrap align-items-end gap-2 mb-3" (ngSubmit)="buscar()">
+        <label>Desde<input type="date" class="form-control" name="desde" [(ngModel)]="fechas.desde"></label>
+        <label>Hasta<input type="date" class="form-control" name="hasta" [(ngModel)]="fechas.hasta"></label>
+        <button class="btn btn-primary" [disabled]="ocupado">Buscar entregas</button>
+      </form>
+      @for (e of entregas; track e.id) {
+        <div class="border rounded p-2 mb-2">
+          <button type="button" class="btn btn-sm btn-outline-primary float-end" [disabled]="ocupado"
+            (click)="abrir(e.formula)">Consultar fórmula {{ e.formula }}</button>
+          <strong>Entrega {{ e.id }}</strong> · {{ e.fecha.replace('T', ' ') }} · {{ e.responsable }} · {{ etiqueta(e.estado) }}
+          @if (e.revertida) { <p class="mb-1">Revertida por {{ e.reversor }} · {{ e.motivo }}</p> }
+          <ul class="mb-1">
+            @for (l of e.lineas; track l.movimiento) {
+              <li>{{ l.nombre }} · {{ l.cantidad }} · lote {{ l.numero }} · movimiento {{ l.movimiento }}</li>
+            }
+          </ul>
+          <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="descargar(e)">Descargar comprobante PDF</button>
+        </div>
+      } @empty { <p>Sin entregas para el intervalo seleccionado.</p> }
+    }
+
+    <nav class="d-flex gap-2 mb-3" aria-label="Páginas de resultados">
+      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || pagina === 0"
+        (click)="buscar(pagina - 1)">Anterior</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary"
+        [disabled]="ocupado || (tab === 'formulas' ? formulas.length : entregas.length) < 50"
+        (click)="buscar(pagina + 1)">Siguiente</button>
+    </nav>
+
+    @if (detalle; as d) {
+      <section class="border rounded p-3" aria-label="Detalle del despacho">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <h3 class="h5">Fórmula {{ d.formula.id }} · {{ etiqueta(d.formula.estado) }}</h3>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="abrir(d.formula.id)">Actualizar detalle</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado" (click)="detalle = null">Cerrar detalle</button>
+          </div>
+        </div>
+        <p>{{ d.formula.mascota }} · {{ d.formula.propietario }} · {{ d.formula.veterinario }}</p>
+        @for (m of d.medicamentos; track m.prescripcion.medicamento) {
+          <fieldset class="border rounded p-2 mb-2" [disabled]="ocupado">
+            <legend class="float-none w-auto px-2 h6">{{ m.prescripcion.nombre }}</legend>
+            <p>{{ m.prescripcion.dosis }} · {{ m.prescripcion.frecuencia }} · {{ m.prescripcion.duracion }} · {{ m.prescripcion.via }}
+              @if (m.prescripcion.indicaciones) { · {{ m.prescripcion.indicaciones }} }
+            </p>
+            <p>Prescritas {{ m.prescripcion.prescrita }} · Entregadas {{ m.prescripcion.entregada }} · Pendientes {{ m.prescripcion.pendiente }} · Disponibles {{ m.disponible }}</p>
+            @if (m.disponible < m.prescripcion.pendiente) { <p class="text-danger">Existencias insuficientes para completar este medicamento.</p> }
+            @if (m.prescripcion.pendiente > 0 && d.formula.estado !== 'CANCELADO' && m.lotes.length) {
+              <label>Unidades para asignar por FEFO
+                <input type="number" class="form-control" min="0" [max]="m.prescripcion.pendiente"
+                  [ngModel]="cantidadSeleccionada(m)" (ngModelChange)="sugerir(m, $event)">
+              </label>
+              <div class="table-responsive mt-2">
+                <table class="table table-sm align-middle">
+                  <thead><tr><th>Lote</th><th>Vencimiento</th><th>Disponibles</th><th>Unidades a entregar</th></tr></thead>
+                  <tbody>
+                    @for (l of m.lotes; track l.id) {
+                      <tr><td>{{ l.numero }}</td><td>{{ l.fechaVence || 'Sin fecha registrada' }}</td><td>{{ l.cantidad }}</td>
+                        <td><input class="form-control" type="number" min="0" [max]="l.cantidad" step="1"
+                          [attr.aria-label]="'Cantidad del lote ' + l.numero" [(ngModel)]="cantidades[l.id]"></td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </fieldset>
+        }
+        @if (d.formula.estado !== 'DESPACHADO' && d.formula.estado !== 'CANCELADO') {
+          <button type="button" class="btn btn-primary" [disabled]="ocupado || !puedePreparar()" (click)="preparar(d)">Preparar entrega</button>
+          <details class="my-2">
+            <summary>Disponibilidad y cancelación</summary>
+            <label class="d-block my-2">Motivo<input #motivo class="form-control" maxlength="255"></label>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado"
+                (click)="cambiar(d, 'disponibilidad', motivo.value)">Marcar pendiente por disponibilidad</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado"
+                (click)="cambiar(d, 'cancelar', motivo.value)">Cancelar despacho</button>
+            </div>
+          </details>
+        }
+        @if (d.preparacion; as plan) {
+          <div class="alert alert-info mt-3">
+            <h4 class="h6">Unidades a descontar al confirmar</h4>
+            <ul>
+              @for (l of plan.lotes; track l.lote) { <li>{{ nombreLote(d, l) }} · {{ l.cantidad }} unidades</li> }
+            </ul>
+            <button type="button" class="btn btn-primary" [disabled]="ocupado" (click)="confirmar(d)">Confirmar entrega</button>
+          </div>
+        }
+        <h4 class="h6 mt-3">Entregas de la fórmula</h4>
+        @for (e of d.entregas; track e.id) {
+          <div class="border rounded p-2 mb-2">
+            <strong>Entrega {{ e.id }}</strong> · {{ e.fecha.replace('T', ' ') }} · {{ e.responsable }} · {{ etiqueta(e.estado) }}
+            <ul class="mb-1">
+              @for (l of e.lineas; track l.movimiento) {
+                <li>{{ l.nombre }} · {{ l.cantidad }} · lote {{ l.numero }} · movimiento {{ l.movimiento }}
+                  @if (l.movimientoReversion) { · reversión {{ l.movimientoReversion }} }
+                </li>
+              }
+            </ul>
+            @if (e.pendiente.length) { <p>Pendiente al confirmar: {{ e.pendiente.join(', ') }}</p> }
+            <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="descargar(e)">Descargar comprobante PDF</button>
+            @if (e.revertida) {
+              <p class="mb-0">Revertida por {{ e.reversor }} · {{ e.revertida.replace('T', ' ') }} · {{ e.motivo }}</p>
+            } @else {
+              <details class="mt-2">
+                <summary>Registrar reversión</summary>
+                <label class="d-block my-2">Motivo de la reversión<input class="form-control" #reversion maxlength="255"></label>
+                <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado" (click)="revertir(e, reversion.value)">Confirmar reversión</button>
+              </details>
+            }
+          </div>
+        } @empty { <p>Sin entregas confirmadas.</p> }
+        <details>
+          <summary>Historial de estados</summary>
+          <ul>
+            @for (h of d.historial; track $index) {
+              <li>{{ h.fecha.replace('T', ' ') }} · {{ h.responsable }} · {{ etiqueta(h.anterior) }} → {{ etiqueta(h.nuevo) }}
+                @if (h.motivo) { · {{ h.motivo }} }
+              </li>
+            } @empty { <li>Sin cambios registrados.</li> }
+          </ul>
+        </details>
+      </section>
+    }
+  </div>
+</section>

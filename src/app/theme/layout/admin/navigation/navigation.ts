@@ -183,6 +183,31 @@ export const NavigationItems: NavigationItem[] = [
         classes: 'nav-item'
       },
 
+      {
+        id: 'reportes',
+        title: 'Reportes',
+        type: 'item',
+        url: '/inicio/reportes',
+        icon: 'feather icon-bar-chart-2',
+        classes: 'nav-item'
+      },
+      {
+        id: 'facturacion',
+        title: 'Facturación',
+        type: 'item',
+        url: '/inicio/facturacion',
+        icon: 'feather icon-file-text',
+        classes: 'nav-item'
+      },
+      {
+        id: 'despacho-medicamentos',
+        title: 'Despacho de Medicamentos',
+        type: 'item',
+        url: '/inicio/despacho',
+        icon: 'feather icon-package',
+        classes: 'nav-item'
+      },
+
       // ====================================================
       // 9. GESTIÓN DE FÓRMULAS MÉDICAS
       // Tabla: formula_medica

@@ -17,6 +17,7 @@
 // ==========================================================
 
 // Permite registrar el servicio en Angular.
+import { environment } from '../../environments/environment';
 import { Injectable } from '@angular/core';
 
 // Permite realizar peticiones HTTP al backend.
@@ -48,7 +49,7 @@ export class AnotacionHistoriaService {
 
   // Ruta principal de la API REST de anotaciones.
   private readonly apiUrl =
-    'http://localhost:8080/clinica/v1/anotacion-historia';
+    `${environment.apiUrlAuth}/anotacion-historia`;
 
   // ========================================================
   // 5. CONSTRUCTOR

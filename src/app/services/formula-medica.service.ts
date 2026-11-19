@@ -19,6 +19,7 @@
 // ==========================================================
 
 // Permite crear servicios en Angular.
+import { environment } from '../../environments/environment';
 import { Injectable } from '@angular/core';
 
 // Permite realizar solicitudes HTTP.
@@ -45,7 +46,7 @@ export class FormulaMedicaService {
 
   // Dirección de Spring Boot en desarrollo local.
   private readonly apiUrl =
-    'http://localhost:8080/clinica/v1/formula-medica';
+    `${environment.apiUrlAuth}/formula-medica`;
 
   // ========================================================
   // 4. CONSTRUCTOR

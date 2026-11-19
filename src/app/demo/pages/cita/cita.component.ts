@@ -1,5 +1,5 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -19,6 +19,9 @@ import { Mascota } from 'src/app/models/mascota';
 import { MedicoService } from 'src/app/services/medico.service';
 import { Medico } from 'src/app/models/medico';
 import { environment } from 'src/environments/environment';
+import { AuthService } from '../../../services/auth.service';
+import { AgendaService, DisponibilidadMedica, errorAgenda, Intervalo, RevisionCita } from '../../../services/agenda.service';
+import { AgendaConfiguracionComponent } from './agenda-configuracion.component';
 
 // ======================================================
 // MODELOS DE CITAS MÉDICAS
@@ -30,6 +33,7 @@ export interface Cita {
   mascotaId: number;
   medicoId: number;
   fechaHora: string;
+  fechaFin: string;
   estado: string;
   motivo: string | null;
 }
@@ -39,6 +43,7 @@ export interface CrearCitaDTO {
   mascotaId: number;
   medicoId: number;
   fechaHora: string;
+  fechaFin: string;
   estado: string;
   motivo: string | null;
 }
@@ -53,7 +58,8 @@ export interface CrearCitaDTO {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    AgendaConfiguracionComponent
   ],
   templateUrl: './cita.component.html',
   styleUrl: './cita.component.scss'
@@ -99,13 +105,64 @@ export class CitaComponent implements OnInit {
   busqueda = '';
   filtroEstado = '';
 
-  readonly estados: string[] = [
-    'pendiente',
-    'programada',
-    'confirmada',
-    'atendida',
-    'cancelada'
-  ];
+  private readonly agenda = inject(AgendaService);
+  readonly esAdmin = ['ADMIN', 'ADMINISTRADOR'].includes((inject(AuthService).obtenerPerfil() ?? '').trim().toUpperCase());
+  readonly estados = ['pendiente', 'confirmada', 'atendida', 'finalizada', 'cancelada'];
+  disponibilidad: DisponibilidadMedica | null = null;
+  medicoConfiguracion: number | null = null;
+  citaHistorial: Cita | null = null;
+  historial: RevisionCita[] = [];
+  errorAgenda = '';
+
+  get estadosFormulario(): string[] {
+    if (this.modoFormulario === 'crear') return ['pendiente', 'confirmada'];
+    return this.esAdmin ? ['pendiente', 'confirmada', 'cancelada', 'atendida'] : ['pendiente', 'confirmada', 'cancelada'];
+  }
+
+  consultarDisponibilidad() {
+    const medico = Number(this.formulario.get('medicoId')?.value);
+    const fecha = String(this.formulario.get('fechaHora')?.value ?? '').slice(0, 10);
+    this.disponibilidad = null;
+    if (!medico || !fecha) {
+      this.mensajeErrorGuardar = 'Selecciona un médico y la fecha de la cita.';
+      return;
+    }
+    this.mensajeErrorGuardar = '';
+    this.agenda.disponibilidad(medico, fecha).subscribe({
+      next: franjas => {
+        if (medico === Number(this.formulario.get('medicoId')?.value)
+            && fecha === String(this.formulario.get('fechaHora')?.value ?? '').slice(0, 10)) this.disponibilidad = franjas;
+      },
+      error: err => { this.mensajeErrorGuardar = errorAgenda(err); }
+    });
+  }
+
+  usarFranja(franja: Intervalo) {
+    const inicio = franja.inicio.slice(0, 16);
+    const sugerido = new Date(new Date(franja.inicio + 'Z').getTime() + 30 * 60_000).toISOString().slice(0, 16);
+    const fin = franja.fin.slice(0, 16);
+    this.formulario.patchValue({ fechaHora: inicio, fechaFin: sugerido < fin ? sugerido : fin });
+    this.disponibilidad = null;
+  }
+
+  verHistorial(cita: Cita) {
+    this.citaHistorial = cita;
+    this.historial = [];
+    this.errorAgenda = '';
+    this.agenda.historial(cita.id).subscribe({
+      next: filas => { if (this.citaHistorial?.id === cita.id) this.historial = filas; },
+      error: err => { this.errorAgenda = errorAgenda(err); }
+    });
+  }
+
+  finalizar(cita: Cita) {
+    if (!confirm('¿Finalizar la cita atendida?')) return;
+    this.errorAgenda = '';
+    this.agenda.cambiar(cita.id, { estado: 'finalizada' }).subscribe({
+      next: () => this.cargarCitas(),
+      error: err => { this.errorAgenda = errorAgenda(err); }
+    });
+  }
 
   // ====================================================
   // 5. PAGINACIÓN
@@ -160,8 +217,10 @@ export class CitaComponent implements OnInit {
         Validators.required
       ],
 
+      fechaFin: ['', Validators.required],
+
       estado: [
-        'programada',
+        'pendiente',
         Validators.required
       ],
 
@@ -551,6 +610,7 @@ export class CitaComponent implements OnInit {
 
   nuevaCita(): void {
 
+    this.disponibilidad = null;
     this.modoFormulario = 'crear';
     this.citaSeleccionadaId = null;
 
@@ -562,7 +622,8 @@ export class CitaComponent implements OnInit {
       mascotaId: null,
       medicoId: null,
       fechaHora: '',
-      estado: 'programada',
+      fechaFin: '',
+      estado: 'pendiente',
       motivo: ''
     });
 
@@ -576,6 +637,7 @@ export class CitaComponent implements OnInit {
 
   editarCita(cita: Cita): void {
 
+    this.disponibilidad = null;
     this.modoFormulario = 'editar';
     this.citaSeleccionadaId = cita.id;
 
@@ -587,7 +649,8 @@ export class CitaComponent implements OnInit {
       mascotaId: cita.mascotaId,
       medicoId: cita.medicoId,
       fechaHora: cita.fechaHora.substring(0, 16),
-      estado: cita.estado,
+      fechaFin: cita.fechaFin.substring(0, 16),
+      estado: cita.estado === 'programada' ? 'pendiente' : cita.estado,
       motivo: cita.motivo ?? ''
     });
 
@@ -664,6 +727,7 @@ export class CitaComponent implements OnInit {
       medicoId: Number(valores.medicoId),
 
       fechaHora: String(valores.fechaHora),
+      fechaFin: String(valores.fechaFin),
 
       estado: String(valores.estado),
 
@@ -723,7 +787,11 @@ export class CitaComponent implements OnInit {
     // VALIDACIÓN 3: FECHA Y HORA
     // ==================================================
 
-    const fecha = new Date(datos.fechaHora);
+    const fecha = new Date(datos.fechaHora + '-05:00');
+    if (!datos.fechaFin || datos.fechaFin <= datos.fechaHora) {
+      this.mostrarErrorFormulario('La hora final debe ser posterior a la inicial.');
+      return;
+    }
 
     if (Number.isNaN(fecha.getTime())) {
 
@@ -826,20 +894,13 @@ export class CitaComponent implements OnInit {
           error
         );
 
-        const mensajeBackend =
-          typeof error.error?.message === 'string'
-            ? error.error.message
-            : typeof error.error?.detail === 'string'
-              ? error.error.detail
-              : '';
+        const mensajeBackend = error.error?.mensaje ?? error.error?.message ?? error.error?.detail ?? '';
 
         // Error HTTP 409: conflicto.
         if (error.status === 409) {
 
           this.mensajeErrorGuardar =
-            'No se pudo guardar la cita porque existe un conflicto. ' +
-            'Comprueba la disponibilidad del veterinario y ' +
-            'selecciona otro horario si es necesario.';
+            mensajeBackend || 'El horario solicitado ya no está disponible.';
 
         }
 

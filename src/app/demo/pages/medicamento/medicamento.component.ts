@@ -1,281 +1,225 @@
-
-/**
- * ==========================================================
- * CLÍNICA VETERINARIA - UNIMINUTO
- * COMPONENTE DE GESTIÓN DE MEDICAMENTOS
- * ==========================================================
- *
- * Funcionalidades:
- *
- * 1. Consultar medicamentos desde Spring Boot.
- * 2. Mostrar los medicamentos registrados.
- * 3. Buscar por ID, nombre, descripción o presentación.
- * 4. Mostrar fechas de compra y vencimiento.
- * 5. Informar si ocurre un error de conexión.
- */
-
-// ==========================================================
-// 1. IMPORTACIONES
-// ==========================================================
-// Permite utilizar *ngIf y *ngFor en el HTML.
 import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { finalize, forkJoin, Observable, of } from 'rxjs';
 import {
-  Component,
-  OnInit
-} from '@angular/core';
-
-// Servicio encargado de comunicarse con Spring Boot.
-import { MedicamentoService } from
-  'src/app/services/medicamento.service';
-
-// Modelo de los medicamentos.
-import { Medicamento } from
-  'src/app/models/medicamento';
-
-// ==========================================================
-// 2. CONFIGURACIÓN DEL COMPONENTE
-// ==========================================================
+  FichaInventario, ImportacionInventario, LoteInventario, MovimientoInventario,
+  NuevoLote, NuevoMovimiento, ProductoInventario, ResumenImportacion
+} from '../../../models/inventario';
+import { AuthService } from '../../../services/auth.service';
+import { InventarioService } from '../../../services/inventario.service';
 
 @Component({
   selector: 'app-medicamento',
-
-  // Habilita *ngIf y *ngFor en este componente.
-  imports: [CommonModule],
-
-  // Archivo HTML del componente.
+  imports: [CommonModule, FormsModule],
   templateUrl: './medicamento.component.html',
-
-  // Archivo de estilos.
-  styleUrls: ['./medicamento.component.scss']
+  styleUrl: './medicamento.component.scss'
 })
 export class MedicamentoComponent implements OnInit {
+  private readonly api = inject(InventarioService);
+  private readonly auth = inject(AuthService);
+  readonly puedeModificar = ['ADMIN', 'ADMINISTRADOR'].includes((this.auth.obtenerPerfil() ?? '').trim().toUpperCase());
+  readonly usuarioId = this.auth.obtenerUsuarioId();
+  readonly columnas = 'codigo,nombre,descripcion,presentacion,tipo,invima,precioCompra,precioVenta,stockMinimo,fechaCompra,fechaIngreso,fechaProximoPedido,fechaVence,activo,numeroLote,cantidad';
+  readonly paginaTamano = 10;
 
-  // ========================================================
-  // 3. VARIABLES
-  // ========================================================
+  fichas: FichaInventario[] = [];
+  lotes: LoteInventario[] = [];
+  movimientos: MovimientoInventario[] = [];
+  historial: ResumenImportacion[] = [];
+  seleccionado: FichaInventario | null = null;
+  producto: ProductoInventario | null = null;
+  editando: number | null = null;
+  lote: NuevoLote | null = null;
+  movimiento: NuevoMovimiento | null = null;
+  loteMovimiento = 0;
+  importacionAbierta = false;
+  archivo: File | null = null;
+  importacion: ImportacionInventario | null = null;
+  busqueda = '';
+  filtro = 'TODOS';
+  pagina = 1;
+  ocupado = false;
+  error = '';
+  aviso = '';
 
-  // Lista original de medicamentos.
-  medicamentos: Medicamento[] = [];
+  ngOnInit() { this.cargar(); }
 
-  // Lista que se mostrará después de aplicar el buscador.
-  medicamentosFiltrados: Medicamento[] = [];
-
-  // Texto que el usuario escribe en el buscador.
-  textoBusqueda = '';
-
-  // Indica si los datos se están consultando.
-  cargando = false;
-
-  // Mensaje para errores de conexión.
-  mensajeError = '';
-
-  // ========================================================
-  // 4. CONSTRUCTOR
-  // ========================================================
-
-  constructor(
-    private readonly medicamentoService: MedicamentoService
-  ) {}
-
-  // ========================================================
-  // 5. INICIALIZACIÓN
-  // ========================================================
-
-  /**
-   * Se ejecuta automáticamente cuando
-   * se abre la pantalla de medicamentos.
-   */
-  ngOnInit(): void {
-
-    // Consultar medicamentos al abrir el componente.
-    this.cargarMedicamentos();
-
+  get filtradas() {
+    const q = this.busqueda.trim().toLowerCase();
+    return this.fichas.filter(f => {
+      const p = f.producto;
+      const coincide = [p.nombre, p.codigo, p.presentacion, p.invima].some(valor => valor?.toLowerCase().includes(q));
+      return coincide && (this.filtro === 'TODOS'
+        || this.filtro === 'ACTIVO' && p.activo
+        || this.filtro === 'INACTIVO' && !p.activo
+        || this.filtro === 'AGOTADO' && f.disponible === 0
+        || this.filtro === 'BAJO' && f.disponible < p.stockMinimo
+        || this.filtro === 'VENCIDO' && f.vencido
+        || this.filtro === 'PROXIMO' && f.proximoVencer);
+    });
   }
 
-  // ========================================================
-  // 6. CONSULTAR MEDICAMENTOS
-  // ========================================================
+  get totalPaginas() { return Math.max(1, Math.ceil(this.filtradas.length / this.paginaTamano)); }
+  get visibles() { return this.filtradas.slice((this.pagina - 1) * this.paginaTamano, this.pagina * this.paginaTamano); }
 
-  cargarMedicamentos(): void {
-
-    // Activar indicador de carga.
-    this.cargando = true;
-
-    // Limpiar posibles errores anteriores.
-    this.mensajeError = '';
-
-    // Llamar al servicio HTTP.
-    this.medicamentoService
-      .listarMedicamentos()
-      .subscribe({
-
-        // Se ejecuta cuando el backend responde.
-        next: (respuesta: Medicamento[]) => {
-
-          // Guardar los medicamentos recibidos.
-          this.medicamentos = respuesta;
-
-          // Aplicar el filtro actual.
-          this.filtrarMedicamentos();
-
-          // Finalizar la carga.
-          this.cargando = false;
-
-          // Mostrar los datos en la consola.
-          console.log(
-            'Medicamentos cargados:',
-            this.medicamentos
-          );
-
-        },
-
-        // Se ejecuta si ocurre algún error.
-        error: (error) => {
-
-          console.error(
-            'Error al consultar medicamentos:',
-            error
-          );
-
-          this.medicamentos = [];
-          this.medicamentosFiltrados = [];
-
-          this.mensajeError =
-            'No fue posible cargar los medicamentos. ' +
-            'Verifica que el backend esté funcionando.';
-
-          this.cargando = false;
-
-        }
-
-      });
-
+  cargar() {
+    this.ejecutar(this.api.listar(), fichas => {
+      this.fichas = fichas;
+      this.pagina = Math.min(this.pagina, this.totalPaginas);
+      if (this.seleccionado) {
+        this.seleccionado = fichas.find(f => f.id === this.seleccionado?.id) ?? null;
+      }
+    });
   }
 
-  // ========================================================
-  // 7. CAPTURAR BÚSQUEDA
-  // ========================================================
-
-  /**
-   * Recibe el texto escrito en el buscador.
-   */
-  buscarMedicamento(evento: Event): void {
-
-    const input = evento.target as HTMLInputElement;
-
-    this.textoBusqueda = input.value;
-
-    // Actualizar la tabla.
-    this.filtrarMedicamentos();
-
+  abrirProducto(ficha?: FichaInventario) {
+    this.editando = ficha?.id ?? null;
+    const hoy = this.hoy();
+    this.producto = ficha ? { ...ficha.producto } : {
+      codigo: '', nombre: '', descripcion: null, presentacion: null, tipo: 'MEDICAMENTO', invima: null,
+      precioCompra: 0, precioVenta: 0, stockMinimo: 0, fechaCompra: hoy, fechaIngreso: hoy,
+      fechaProximoPedido: null, fechaVence: null, activo: true
+    };
   }
 
-  // ========================================================
-  // 8. FILTRAR MEDICAMENTOS
-  // ========================================================
-
-  /**
-   * Filtra los medicamentos por:
-   *
-   * - ID
-   * - Nombre
-   * - Descripción
-   * - Presentación
-   */
-  filtrarMedicamentos(): void {
-
-    const busqueda = this.textoBusqueda
-      .trim()
-      .toLowerCase();
-
-    // Si no hay texto, mostrar todos los registros.
-    if (busqueda === '') {
-
-      this.medicamentosFiltrados = [
-        ...this.medicamentos
-      ];
-
-      return;
-
-    }
-
-    // Buscar coincidencias en los medicamentos.
-    this.medicamentosFiltrados =
-      this.medicamentos.filter((medicamento) => {
-
-        const id = String(medicamento.id);
-
-        const nombre = medicamento.nombre
-          .toLowerCase();
-
-        const descripcion = (
-          medicamento.descripcion ?? ''
-        ).toLowerCase();
-
-        const presentacion = (
-          medicamento.presentacion ?? ''
-        ).toLowerCase();
-
-        return (
-          id.includes(busqueda) ||
-          nombre.includes(busqueda) ||
-          descripcion.includes(busqueda) ||
-          presentacion.includes(busqueda)
-        );
-
-      });
-
+  guardarProducto(p: ProductoInventario) {
+    if (this.editando != null && !confirm('¿Guardar los cambios del producto?')) return;
+    this.ejecutar(this.api.guardar(this.editando, { ...p, fechaVence: p.fechaVence || null,
+      fechaProximoPedido: p.fechaProximoPedido || null }), () => {
+      this.producto = null;
+      this.aviso = 'Producto guardado.';
+      this.cargar();
+    });
   }
 
-  // ========================================================
-  // 9. LIMPIAR BÚSQUEDA
-  // ========================================================
-
-  limpiarBusqueda(): void {
-
-    // Limpiar el texto.
-    this.textoBusqueda = '';
-
-    // Mostrar nuevamente todos los medicamentos.
-    this.filtrarMedicamentos();
-
+  abrirDetalle(ficha: FichaInventario) {
+    this.seleccionado = ficha;
+    this.lote = null;
+    this.movimiento = null;
+    this.lotes = [];
+    this.movimientos = [];
+    this.cargarDetalle(ficha.id);
   }
 
-  // ========================================================
-  // 10. FORMATEAR FECHAS
-  // ========================================================
-
-  /**
-   * Convierte una fecha recibida desde MySQL
-   * al formato día/mes/año.
-   *
-   * Ejemplo:
-   * 2026-06-01 -> 01/06/2026
-   */
-  formatearFecha(fecha: string | null | undefined): string {
-
-    // Verificar que la fecha tenga un valor.
-    if (!fecha) {
-      return 'Sin fecha';
-    }
-
-    // Obtener solamente la fecha, sin la hora.
-    const fechaSinHora = fecha.split('T')[0];
-
-    // Separar año, mes y día.
-    const partes = fechaSinHora.split('-');
-
-    // Si la fecha no tiene el formato esperado,
-    // devolver el valor original.
-    if (partes.length !== 3) {
-      return fecha;
-    }
-
-    const [anio, mes, dia] = partes;
-
-    // Devolver la fecha en formato colombiano.
-    return `${dia}/${mes}/${anio}`;
-
+  private cargarDetalle(id: number) {
+    this.ejecutar(forkJoin({
+      lotes: this.api.lotes(id),
+      movimientos: this.puedeModificar ? this.api.movimientos(id) : of([])
+    }), datos => {
+      this.lotes = datos.lotes;
+      this.movimientos = datos.movimientos;
+    });
   }
 
+  nuevoLote(ficha: FichaInventario) {
+    this.lote = { numero: '', costo: ficha.producto.precioCompra, cantidad: 0,
+      fechaIngreso: this.hoy(), fechaVence: null, referencia: null };
+  }
+
+  guardarLote(ficha: FichaInventario, lote: NuevoLote) {
+    if (!confirm('¿Registrar el lote y su entrada inicial?')) return;
+    this.ejecutar(this.api.registrarLote(ficha.id, { ...lote, fechaVence: lote.fechaVence || null }), () => {
+      this.lote = null;
+      this.aviso = 'Lote registrado.';
+      this.cargar();
+      this.cargarDetalle(ficha.id);
+    });
+  }
+
+  nuevoMovimiento(lote: LoteInventario) {
+    this.loteMovimiento = lote.id;
+    this.movimiento = { tipo: 'ENTRADA', cantidad: 1, motivo: '', referencia: null };
+  }
+
+  guardarMovimiento(ficha: FichaInventario, movimiento: NuevoMovimiento) {
+    if (!confirm('¿Confirmar el movimiento? Quedará registrado en el historial.')) return;
+    this.ejecutar(this.api.registrarMovimiento(ficha.id, this.loteMovimiento, movimiento), () => {
+      this.movimiento = null;
+      this.aviso = 'Movimiento registrado.';
+      this.cargar();
+      this.cargarDetalle(ficha.id);
+    });
+  }
+
+  abrirImportacion() {
+    this.importacionAbierta = true;
+    this.actualizarHistorial();
+  }
+
+  seleccionarArchivo(evento: Event) {
+    this.archivo = (evento.target as HTMLInputElement).files?.[0] ?? null;
+    this.importacion = null;
+  }
+
+  previsualizar() {
+    if (!this.archivo) return;
+    this.ejecutar(this.api.previsualizar(this.archivo), datos => {
+      this.importacion = datos;
+      this.actualizarHistorial();
+    });
+  }
+
+  confirmar(id: number) {
+    if (!confirm('¿Importar los registros válidos?')) return;
+    this.ejecutar(this.api.confirmar(id), resultado => {
+      this.importacion = resultado;
+      this.aviso = 'Importación confirmada.';
+      this.actualizarHistorial();
+      this.cargar();
+    });
+  }
+
+  detalleImportacion(id: number) {
+    this.ejecutar(this.api.detalle(id), datos => { this.importacion = datos; });
+  }
+
+  descargarPlantilla() {
+    const hoy = this.hoy();
+    const ejemplo = ['VT000001', 'Utensilio de ejemplo', '', '', 'UTENSILIO', '', '0', '0', '0', hoy, hoy, '', '', 'true', '', '0'].join(',');
+    this.descargarCsv('plantilla-inventario.csv', this.columnas + '\n' + ejemplo + '\n');
+  }
+
+  descargarErrores(carga: ImportacionInventario) {
+    const proteger = (valor: string) => {
+      const texto = /^[=+@-]/.test(valor.trimStart()) ? "'" + valor : valor;
+      return '"' + texto.replaceAll('"', '""') + '"';
+    };
+    const filas = carga.filas.filter(fila => fila.errores.length > 0)
+      .map(fila => [String(fila.numero), fila.producto?.codigo ?? '', fila.errores.join(' · ')]
+        .map(proteger).join(','));
+    this.descargarCsv('errores-importacion-' + carga.resumen.id + '.csv',
+      ['fila,codigo,error', ...filas].join('\n'));
+  }
+
+  private descargarCsv(nombre: string, contenido: string) {
+    const url = URL.createObjectURL(new Blob([contenido], { type: 'text/csv;charset=utf-8' }));
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = nombre;
+    enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  private actualizarHistorial() {
+    this.ejecutar(this.api.historial(), historial => { this.historial = historial; });
+  }
+
+  private solicitudes = 0;
+
+  private ejecutar<T>(operacion: Observable<T>, exito: (valor: T) => void) {
+    this.solicitudes++;
+    this.ocupado = true;
+    this.error = '';
+    operacion.pipe(finalize(() => { this.ocupado = --this.solicitudes > 0; })).subscribe({
+      next: exito,
+      error: respuesta => {
+        this.error = respuesta.error?.mensaje ?? 'No se pudo completar la operación.';
+      }
+    });
+  }
+
+  private hoy() {
+    return new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Bogota' }).format(new Date());
+  }
 }

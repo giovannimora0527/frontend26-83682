@@ -1,5 +1,5 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -10,6 +10,9 @@ import {
   Validators
 } from '@angular/forms';
 
+import { AuthService } from '../../../services/auth.service';
+import { ClinicaService, descargarClinica, mensajeClinica } from '../../../services/clinica.service';
+import { FormulasClinicasComponent } from './formulas-clinicas.component';
 import { FormulaMedica } from '../../../models/formula-medica';
 import { FormulaMedicaService } from '../../../services/formula-medica.service';
 
@@ -19,12 +22,26 @@ import { FormulaMedicaService } from '../../../services/formula-medica.service';
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule, FormulasClinicasComponent
   ],
   templateUrl: './formula.component.html',
   styleUrls: ['./formula.component.scss']
 })
 export class FormulaComponent implements OnInit {
+  private readonly clinica = inject(ClinicaService);
+  readonly esMedico = (inject(AuthService).obtenerPerfil() ?? '').normalize('NFD')
+    .replace(/\p{M}/gu, '').trim().toUpperCase() === 'MEDICO';
+  errorPdf = '';
+
+  descargarHistorica(id: number | undefined) {
+    if (!id) return;
+    this.errorPdf = '';
+    this.clinica.formulaPdf(id, true).subscribe({
+      next: archivo => descargarClinica(archivo, 'formula-historica-' + id + '.pdf'),
+      error: async e => { this.errorPdf = await mensajeClinica(e); }
+    });
+  }
+
 
   // ========================================================
   // 1. LISTADO Y BÚSQUEDA

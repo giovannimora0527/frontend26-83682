@@ -1,0 +1,138 @@
+
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
+
+  <div class="card shadow border-0"
+       style="width: 100%; max-width: 430px;">
+
+    <div class="card-body p-4 p-md-5">
+
+      <div class="text-center mb-4">
+
+        <h3 class="fw-bold text-primary">
+          Clínica Veterinaria
+        </h3>
+
+        <p class="text-muted">
+          UNIMINUTO
+        </p>
+
+        <h5>Iniciar sesión</h5>
+
+        <p class="text-muted small">
+          Ingresa tus credenciales para continuar.
+        </p>
+
+      </div>
+
+      <div
+        *ngIf="mensajeError"
+        class="alert alert-danger"
+        role="alert"
+      >
+        {{ mensajeError }}
+      </div>
+
+      <form
+        #loginForm="ngForm"
+        (ngSubmit)="iniciarSesion()"
+      >
+
+        <!-- USUARIO -->
+        <div class="mb-3">
+
+          <label
+            for="username"
+            class="form-label"
+          >
+            Usuario
+          </label>
+
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control"
+            placeholder="Ingresa tu usuario"
+            [(ngModel)]="username"
+            autocomplete="username"
+            required
+            [disabled]="cargando"
+          />
+
+        </div>
+
+        <!-- CONTRASEÑA -->
+        <div class="mb-3">
+
+          <label
+            for="password"
+            class="form-label"
+          >
+            Contraseña
+          </label>
+
+          <input
+            [type]="mostrarPassword ? 'text' : 'password'"
+            id="password"
+            name="password"
+            class="form-control"
+            placeholder="Ingresa tu contraseña"
+            [(ngModel)]="password"
+            autocomplete="current-password"
+            required
+            [disabled]="cargando"
+          />
+
+          <div class="form-check mt-2">
+
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="mostrarPassword"
+              [(ngModel)]="mostrarPassword"
+              name="mostrarPassword"
+            />
+
+            <label
+              class="form-check-label"
+              for="mostrarPassword"
+            >
+              Mostrar contraseña
+            </label>
+
+          </div>
+
+        </div>
+
+        <!-- BOTÓN -->
+        <button
+          type="submit"
+          class="btn btn-primary w-100 py-2"
+          [disabled]="loginForm.invalid || cargando"
+        >
+
+          <span *ngIf="!cargando">
+            Iniciar sesión
+          </span>
+
+          <span *ngIf="cargando">
+            Verificando credenciales...
+          </span>
+
+        </button>
+
+      </form>
+
+      <div class="text-center mt-4">
+
+        <small class="text-muted">
+          Sistema de Gestión Veterinaria
+        </small>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

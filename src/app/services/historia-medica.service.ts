@@ -17,6 +17,7 @@
 // ==========================================================
 
 // Permite registrar el servicio en Angular.
+import { environment } from '../../environments/environment';
 import { Injectable } from '@angular/core';
 
 // Permite realizar solicitudes HTTP al backend.
@@ -47,7 +48,7 @@ export class HistoriaMedicaService {
   // ========================================================
 
   private readonly apiUrl =
-    'http://localhost:8080/clinica/v1/historia-medica';
+    `${environment.apiUrlAuth}/historia-medica`;
 
   // ========================================================
   // 5. CONSTRUCTOR

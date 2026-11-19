@@ -19,6 +19,7 @@
 // ==========================================================
 
 // Permite registrar el servicio en Angular.
+import { environment } from '../../environments/environment';
 import { Injectable } from '@angular/core';
 
 // Permite realizar peticiones HTTP.
@@ -50,7 +51,7 @@ export class MedicamentoService {
    * Angular utiliza el puerto 4200.
    */
   private readonly apiUrl =
-    'http://localhost:8080/clinica/v1/medicamento';
+    `${environment.apiUrlAuth}/medicamento`;
 
   // ========================================================
   // 4. CONSTRUCTOR

@@ -1,0 +1,25 @@
+.inventory-panel {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .5rem;
+}
+
+.inventory-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .75rem;
+}
+
+.inventory-wide {
+  grid-column: 1 / -1;
+}
+
+.inventory-preview {
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.badge {
+  margin: .15rem;
+}

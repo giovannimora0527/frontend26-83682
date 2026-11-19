@@ -15,6 +15,10 @@
 
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { LoginComponent } from './demo/pages/login/login.component';
+import { menuPermissionGuard } from './guards/menu-permission.guard';
+import { authGuard } from './guards/auth.guard';
+
 
 // ==========================================================
 // 2. COMPONENTE PRINCIPAL
@@ -29,7 +33,7 @@ import { AdminComponent } from './theme/layout/admin/admin.component';
 import { UsuarioComponent } from './demo/pages/usuario/usuario.component';
 import { MascotaComponent } from './demo/pages/mascota/mascota.component';
 import { MedicoComponent } from './demo/pages/medico/medico.component';
-import { CitaComponent } from './demo/pages/cita/cita.component';
+import { CitaEntradaComponent } from './demo/pages/cita/cita-entrada.component';
 
 // ==========================================================
 // 4. NUEVOS COMPONENTES DE GESTIÓN
@@ -57,6 +61,15 @@ import { FormulaComponent } from './demo/pages/formula/formula.component';
 
 export const routes: Routes = [
 
+{
+  path: 'login',
+  component: LoginComponent,
+  data: {
+    title: 'Iniciar sesión'
+  }
+},
+
+
   // Redirigir desde la raíz de la aplicación.
   {
     path: '',
@@ -64,13 +77,22 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
 
-  // Todas las pantallas comparten el panel administrativo.
-  {
-    path: 'inicio',
-    component: AdminComponent,
-    data: { title: 'Inicio' },
 
-    children: [
+
+
+
+  // Todas las pantallas comparten el panel administrativo.
+
+{
+  path: 'inicio',
+  component: AdminComponent,
+  canActivate: [authGuard],
+  data: { title: 'Inicio' },
+    canActivateChild: [menuPermissionGuard],
+
+
+  children: [
+
 
       // Tabla: usuario.
       {
@@ -114,7 +136,23 @@ export const routes: Routes = [
         data: { title: 'Gestión de Especializaciones' }
       },
 
-      // Tabla: medicamento.
+      // Despacho de medicamentos.
+      {
+        path: 'reportes',
+        loadComponent: () => import('./demo/pages/reportes/reportes.component').then(m => m.ReportesComponent),
+        data: { title: 'Reportes' }
+      },
+      {
+        path: 'facturacion',
+        loadComponent: () => import('./demo/pages/facturacion/facturacion.component').then(m => m.FacturacionComponent),
+        data: { title: 'Facturación' }
+      },
+      {
+        path: 'despacho',
+        loadComponent: () => import('./demo/pages/despacho/despacho.component').then(m => m.DespachoComponent),
+        data: { title: 'Despacho de Medicamentos' }
+      },
+
       {
         path: 'medicamentos',
         component: MedicamentoComponent,
@@ -133,7 +171,7 @@ export const routes: Routes = [
       // Se conserva el componente que ya funciona.
       {
         path: 'citas',
-        component: CitaComponent,
+        component: CitaEntradaComponent,
         data: { title: 'Gestión de Citas' }
       },
 
