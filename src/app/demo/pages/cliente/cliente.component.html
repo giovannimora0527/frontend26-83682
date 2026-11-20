@@ -15,10 +15,48 @@
 
       <div class="card-body">
 
-        <p class="text-muted">
-          Consulta los clientes registrados
-          en la base de datos de la clínica.
-        </p>
+        <button type="button" class="btn btn-primary mb-3" [disabled]="guardando" (click)="abrir()">Nuevo cliente</button>
+        @if(errorOperacion) { <p class="alert alert-danger" role="alert">{{ errorOperacion }}</p> }
+        @if(formulario; as datos) {
+          <form #clienteForm="ngForm" (ngSubmit)="guardar()" class="border rounded p-3 mb-3">
+            <h2 class="h6">{{ editando ? 'Editar cliente' : 'Registrar cliente' }}</h2>
+            <div class="row g-2">
+              <label class="col-sm-6 col-lg-4">Tipo de documento
+                <input class="form-control" name="tipoDocumento" type="text" maxlength="10" required [(ngModel)]="datos.tipoDocumento">
+              </label>
+              <label class="col-sm-6 col-lg-4">Número de documento
+                <input class="form-control" name="numeroDocumento" type="text" maxlength="20" required [(ngModel)]="datos.numeroDocumento">
+              </label>
+              <label class="col-sm-6 col-lg-4">Nombres
+                <input class="form-control" name="nombres" type="text" maxlength="100" required [(ngModel)]="datos.nombres">
+              </label>
+              <label class="col-sm-6 col-lg-4">Apellidos
+                <input class="form-control" name="apellidos" type="text" maxlength="100" required [(ngModel)]="datos.apellidos">
+              </label>
+              <label class="col-sm-6 col-lg-4">Fecha de nacimiento
+                <input class="form-control" name="fechaNacimiento" type="date"  required [(ngModel)]="datos.fechaNacimiento">
+              </label>
+              <label class="col-sm-6 col-lg-4">Género
+                <input class="form-control" name="genero" type="text" maxlength="1"  [(ngModel)]="datos.genero">
+              </label>
+              <label class="col-sm-6 col-lg-4">Teléfono
+                <input class="form-control" name="telefono" type="tel" maxlength="20"  [(ngModel)]="datos.telefono">
+              </label>
+              <label class="col-sm-6 col-lg-4">Dirección
+                <input class="form-control" name="direccion" type="text" maxlength="1000"  [(ngModel)]="datos.direccion">
+              </label>
+            </div>
+            <button class="btn btn-primary mt-3 me-2" [disabled]="guardando || clienteForm.invalid">Guardar cliente</button>
+            <button type="button" class="btn btn-outline-secondary mt-3" [disabled]="guardando" (click)="formulario=null">Cancelar</button>
+          </form>
+        }
+        @if(porArchivar; as cliente) {
+          <div class="alert alert-warning">
+            Archivar a {{ cliente.nombres }} {{ cliente.apellidos }} conserva sus mascotas y citas.
+            <button type="button" class="btn btn-danger ms-2" [disabled]="guardando" (click)="archivar()">Confirmar archivo</button>
+            <button type="button" class="btn btn-outline-secondary ms-2" [disabled]="guardando" (click)="porArchivar=undefined">Cancelar</button>
+          </div>
+        }
 
         <!-- Buscar y limpiar -->
         <div class="row mb-4">
@@ -80,7 +118,7 @@
               <th>Tipo documento</th>
               <th>Número documento</th>
               <th>Teléfono</th>
-              <th>Dirección</th>
+              <th>Dirección</th><th>Estado</th><th>Acciones</th>
             </tr>
             </thead>
 
@@ -115,13 +153,20 @@
               <td>
                 {{ cliente.direccion || '-' }}
               </td>
+              <td>{{ cliente.activo === false ? 'Archivado' : 'Activo' }}</td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" [disabled]="guardando" (click)="abrir(cliente)">Editar</button>
+                @if(puedeArchivar && cliente.activo !== false) {
+                  <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="guardando" (click)="porArchivar=cliente">Archivar</button>
+                }
+              </td>
 
             </tr>
 
             <!-- Sin resultados -->
             <tr *ngIf="clientesFiltrados.length === 0">
               <td
-                colspan="7"
+                colspan="9"
                 class="text-center text-muted py-4"
               >
                 No se encontraron clientes.

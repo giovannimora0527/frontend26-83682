@@ -12,6 +12,7 @@ export interface EventoMedico extends Intervalo {
   estado: string;
   medico: string;
   mascota: string | null;
+  mascotaId?: number;
   propietario: string;
   motivo: string | null;
 }
@@ -22,6 +23,13 @@ export interface RevisionCita {
   fecha: string;
   anterior: Partial<EventoMedico> | null;
   actual: Partial<EventoMedico>;
+}
+
+export interface CitaAnterior extends Intervalo {
+  id: number;
+  medico: string;
+  estado: string;
+  atencionId: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -63,6 +71,11 @@ export class AgendaService {
 
   historial(id: number) {
     return this.http.get<RevisionCita[]>(this.api + '/' + id + '/historial');
+  }
+
+  historialMascota(id: number, pagina: number) {
+    return this.http.get<{ citas: CitaAnterior[]; hayMas: boolean }>(
+      environment.apiUrlAuth + '/cita/mascotas/' + id + '/historial', { params: { pagina } });
   }
 
   private medico(medico: number | null) {

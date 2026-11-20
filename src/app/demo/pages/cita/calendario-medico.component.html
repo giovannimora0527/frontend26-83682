@@ -58,6 +58,12 @@
         </div>
         <p>{{ detalle.inicio.replace('T',' ') }} a {{ detalle.fin.replace('T',' ') }} · {{ detalle.estado }}</p>
         <button type="button" class="btn btn-outline-primary mb-2" (click)="atencionId = detalle.id">Ver atención clínica</button>
+        @if(detalle.mascotaId; as paciente) {
+          <button type="button" class="btn btn-outline-secondary mb-2" (click)="mascotaHistorial=mascotaHistorial===paciente ? null : paciente">Historial de mascota</button>
+          @if(mascotaHistorial === paciente) {
+            <app-historial-mascota [mascotaId]="paciente" />
+          }
+        }
         <p><strong>Propietario</strong> {{ detalle.propietario || '—' }}<br><strong>Motivo</strong> {{ detalle.motivo || '—' }}</p>
         @if (reservada(detalle)) {
           <div class="d-flex flex-wrap align-items-end gap-2">

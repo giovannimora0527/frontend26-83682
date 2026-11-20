@@ -1,3 +1,5 @@
+import { AuthService } from '../../../services/auth.service';
+import { finalize } from 'rxjs';
 
 /**
  * CLÍNICA VETERINARIA - UNIMINUTO
@@ -45,7 +47,7 @@ export class ClienteComponent implements OnInit {
   errorCarga: string = '';
 
   constructor(
-    private readonly clienteService: ClienteService
+    private readonly clienteService: ClienteService, private readonly sesion: AuthService
   ) {}
 
   /**
@@ -74,10 +76,7 @@ export class ClienteComponent implements OnInit {
 
         this.cargando = false;
 
-        console.log(
-          'Clientes cargados:',
-          this.clientes
-        );
+
       },
 
       error: (error) => {
@@ -138,5 +137,60 @@ export class ClienteComponent implements OnInit {
    */
   limpiarBusqueda(): void {
     this.textoBusqueda = '';
+  }
+  formulario: ReturnType<ClienteComponent['datos']> | null = null;
+  editando?: number;
+  porArchivar?: Cliente;
+  guardando = false;
+  errorOperacion = '';
+
+  get puedeArchivar() {
+    return ['ADMIN','ADMINISTRADOR'].includes(this.sesion.obtenerPerfil()?.trim().toUpperCase() ?? '');
+  }
+
+  datos(c?: Cliente) {
+    return {tipoDocumento:c?.tipoDocumento ?? '',numeroDocumento:c?.numeroDocumento ?? '',
+      nombres:c?.nombres ?? '',apellidos:c?.apellidos ?? '',
+      fechaNacimiento:String(c?.fechaNacimiento ?? '').slice(0,10),genero:c?.genero ?? '',
+      telefono:c?.telefono ?? '',direccion:c?.direccion ?? ''};
+  }
+
+  abrir(cliente?: Cliente) {
+    this.errorOperacion = '';
+    this.editando = cliente?.clienteId;
+    if (!this.editando) {
+      this.formulario = this.datos();
+      return;
+    }
+    this.guardando = true;
+    this.clienteService.consultar(this.editando).pipe(finalize(() => this.guardando = false)).subscribe({
+      next: detalle => this.formulario = this.datos(detalle),
+      error: error => this.mostrarError(error)
+    });
+  }
+
+  guardar() {
+    if (!this.formulario || this.guardando) return;
+    this.errorOperacion = '';
+    this.guardando = true;
+    this.clienteService.guardar(this.formulario,this.editando).pipe(finalize(() => this.guardando = false)).subscribe({
+      next: () => { this.formulario = null; this.cargarClientes(); },
+      error: error => this.mostrarError(error)
+    });
+  }
+
+  archivar() {
+    const id = this.porArchivar?.clienteId;
+    if (!id || this.guardando) return;
+    this.errorOperacion = '';
+    this.guardando = true;
+    this.clienteService.archivar(id).pipe(finalize(() => this.guardando = false)).subscribe({
+      next: () => { this.porArchivar = undefined; this.cargarClientes(); },
+      error: error => this.mostrarError(error)
+    });
+  }
+
+  private mostrarError(error: {error?: {mensaje?: string}}) {
+    this.errorOperacion = error.error?.mensaje ?? 'No fue posible completar la operación.';
   }
 }

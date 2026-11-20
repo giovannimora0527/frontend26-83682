@@ -44,9 +44,11 @@ export class ReportesComponent {
   constructor() { this.limpiar(); }
 
   get esInventario() { return this.catalogo.find(r=>r.id===this.tipo)?.grupo==='Inventario'; }
+  get existenciaHistorica() { return this.tipo==='EXISTENCIAS' && !!(this.filtros.desde || this.filtros.hasta); }
+
   get estados() {
     if(this.tipo==='FACTURAS') return ['PENDIENTE_PAGO','PAGO_PARCIAL','PAGADA','ANULADA'];
-    if(this.tipo==='EXISTENCIAS') return ['agotado','minimo','vencido','proximo'];
+    if(this.tipo==='EXISTENCIAS' && !this.existenciaHistorica) return ['agotado','minimo','vencido','proximo'];
     if(this.tipo==='MOVIMIENTOS') return ['ENTRADA','SALIDA','AJUSTE'];
     return ['CITAS','CITAS_OPERATIVAS','CONSULTAS','ATENCIONES'].includes(this.tipo)
       ? ['pendiente','confirmada','cancelada','atendida','finalizada'] : [];
@@ -71,6 +73,7 @@ export class ReportesComponent {
     const { agrupacion,...filtros }=this.filtros;
     const parametros=Object.fromEntries(Object.entries(filtros).filter(([,v])=>v!==null && v!=='' && v!==undefined));
     if(this.tipo==='FINANCIERO') parametros['agrupacion']=agrupacion;
+    if(this.existenciaHistorica) delete parametros['estado'];
     const consulta={tipo:this.tipo,parametros};
     this.resultado=null;
     this.consulta=null;

@@ -1,3 +1,4 @@
+import { HistorialMascotaComponent } from './historial-mascota.component';
 
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -59,12 +60,13 @@ export interface CrearCitaDTO {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    AgendaConfiguracionComponent
+    AgendaConfiguracionComponent, HistorialMascotaComponent
   ],
   templateUrl: './cita.component.html',
   styleUrl: './cita.component.scss'
 })
 export class CitaComponent implements OnInit {
+  mascotaHistorial: number | null = null;
 
   // ====================================================
   // 1. CONFIGURACIÓN DEL BACKEND

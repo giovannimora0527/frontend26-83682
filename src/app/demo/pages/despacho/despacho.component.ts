@@ -1,3 +1,4 @@
+import { hoyBogota } from '../../../services/agenda.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -28,6 +29,14 @@ export class DespachoComponent implements OnInit {
   aviso = '';
   cantidades: Record<number, number | null> = {};
   private intento: { clave: string; firma: string } | null = null;
+
+  proximoAVencer(fechaVence: string | null) {
+    if (!fechaVence) return false;
+    const hoy = hoyBogota();
+    const limite = new Date(hoy + 'T00:00:00Z');
+    limite.setUTCDate(limite.getUTCDate() + 30);
+    return fechaVence >= hoy && fechaVence <= limite.toISOString().slice(0, 10);
+  }
 
   ngOnInit() { void this.buscar(); }
 

@@ -1,3 +1,4 @@
+import { HistorialMascotaComponent } from './historial-mascota.component';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AgendaService, CambioCita, errorAgenda, EventoMedico, hoyBogota, RevisionCita } from '../../../services/agenda.service';
@@ -9,11 +10,12 @@ interface DiaCalendario { fecha: string; dia: number; nombre: string; otroMes: b
 
 @Component({
   selector: 'app-calendario-medico',
-  imports: [FormsModule, AgendaConfiguracionComponent, AtencionClinicaComponent],
+  imports: [HistorialMascotaComponent, FormsModule, AgendaConfiguracionComponent, AtencionClinicaComponent],
   templateUrl: './calendario-medico.component.html',
   styleUrl: './calendario-medico.component.scss'
 })
 export class CalendarioMedicoComponent implements OnInit {
+  mascotaHistorial: number | null = null;
   private readonly agenda = inject(AgendaService);
   private readonly formatoDia = new Intl.DateTimeFormat('es-CO', { weekday: 'short', timeZone: 'UTC' });
   private readonly formatoMes = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' });

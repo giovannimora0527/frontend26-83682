@@ -94,7 +94,11 @@
                   <thead><tr><th>Lote</th><th>Vencimiento</th><th>Disponibles</th><th>Unidades a entregar</th></tr></thead>
                   <tbody>
                     @for (l of m.lotes; track l.id) {
-                      <tr><td>{{ l.numero }}</td><td>{{ l.fechaVence || 'Sin fecha registrada' }}</td><td>{{ l.cantidad }}</td>
+                      <tr><td>{{ l.numero }}</td><td>{{ l.fechaVence || 'Sin fecha registrada' }}
+                        @if (proximoAVencer(l.fechaVence)) {
+                          <span class="badge bg-warning text-dark d-inline-block ms-1">Próximo a vencer</span>
+                        }
+                      </td><td>{{ l.cantidad }}</td>
                         <td><input class="form-control" type="number" min="0" [max]="l.cantidad" step="1"
                           [attr.aria-label]="'Cantidad del lote ' + l.numero" [(ngModel)]="cantidades[l.id]"></td></tr>
                     }

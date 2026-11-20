@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -14,7 +15,7 @@ export class ClienteService {
   private api = 'cliente';
 
   constructor(
-    private backendService: BackendService
+    private backendService: BackendService, private http: HttpClient
   ) {}
 
 
@@ -26,4 +27,16 @@ listarClientes(): Observable<Cliente[]> {
   );
 }
 
+  consultar(id: number) {
+    return this.http.get<Cliente>(environment.apiUrlAuth + '/cliente/' + id);
+  }
+
+  guardar(datos: object, id?: number) {
+    return id ? this.backendService.put<Cliente>(environment.apiUrlAuth, this.api, String(id), datos)
+      : this.http.post<Cliente>(environment.apiUrlAuth + '/cliente', datos);
+  }
+
+  archivar(id: number) {
+    return this.http.delete<void>(environment.apiUrlAuth + '/cliente/' + id);
+  }
 }

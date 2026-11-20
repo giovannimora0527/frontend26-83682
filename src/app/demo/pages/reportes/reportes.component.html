@@ -13,13 +13,14 @@
           }
         </select>
       </label>
-      @if(tipo!=='EXISTENCIAS') {
         <label>{{ tipo==='LOTES' ? 'Vencimiento desde' : 'Fecha inicial' }}
-          <input class="form-control" name="desde" type="date" [(ngModel)]="filtros.desde" [required]="tipo!=='LOTES'">
+          <input class="form-control" name="desde" type="date" [(ngModel)]="filtros.desde" [required]="!esInventario || tipo==='MOVIMIENTOS' || tipo==='DISPENSACIONES' || existenciaHistorica">
         </label>
         <label>{{ tipo==='LOTES' ? 'Vencimiento hasta' : 'Fecha final' }}
-          <input class="form-control" name="hasta" type="date" [(ngModel)]="filtros.hasta" [required]="tipo!=='LOTES'">
+          <input class="form-control" name="hasta" type="date" [(ngModel)]="filtros.hasta" [required]="!esInventario || tipo==='MOVIMIENTOS' || tipo==='DISPENSACIONES' || existenciaHistorica">
         </label>
+      @if(tipo==='EXISTENCIAS') {
+        <small class="align-self-center">Sin fechas se muestra el saldo actual. Con ambas fechas se muestran apertura y cierre por lote.</small>
       }
       @if(esInventario) {
         <label>ID medicamento<input class="form-control" name="medicamento" inputmode="numeric" pattern="[1-9][0-9]*" [(ngModel)]="filtros.medicamento"></label>

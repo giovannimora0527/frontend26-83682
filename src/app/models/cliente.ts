@@ -8,4 +8,6 @@ export class Cliente {
     apellidos?: string;
     telefono?: string;
     direccion?: string;
+    genero?: string;
+    activo?: boolean;
 }

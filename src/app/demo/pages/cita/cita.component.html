@@ -1,3 +1,7 @@
+@if(mascotaHistorial; as paciente) {
+  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="mascotaHistorial=null">Cerrar historial de mascota</button>
+  <app-historial-mascota [mascotaId]="paciente" />
+}
 
 <!-- ====================================================== -->
 <!-- CLÍNICA VETERINARIA - UNIMINUTO                      -->
@@ -237,7 +241,8 @@
               <!-- MASCOTA -->
 
               <td class="text-center">
-                {{ cita.mascotaId }}
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                  (click)="mascotaHistorial = cita.mascotaId" [attr.aria-label]="'Historial de mascota '+cita.mascotaId">{{ cita.mascotaId }}</button>
               </td>
 
               <!-- MÉDICO -->
