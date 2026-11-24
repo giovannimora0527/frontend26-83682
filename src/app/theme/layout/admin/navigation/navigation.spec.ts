@@ -4,7 +4,7 @@ describe('getNavigationItems', () => {
   let previousToken: string | null;
 
   function storeMenus(codes: string[], inactiveCodes: string[] = []): void {
-    const menus = codes.map((code) => ({ activo: !inactiveCodes.includes(code), code, name: 'token-name' }));
+    const menus = codes.map((code) => ({ activo: !inactiveCodes.includes(code), code, title: 'token-title', url: '/token-url', icon: 'token-icon' }));
     const payload = {
       sub: '1',
       username: 'test',
@@ -47,7 +47,7 @@ describe('getNavigationItems', () => {
   });
 
   it('includes the sixteen contract menus when authorized', () => {
-    const codes = ['clientes', 'mascotas', 'medicos', 'especializaciones', 'citas', 'calendario', 'atencion', 'historias', 'formulas',
+    const codes = ['clientes', 'mascotas', 'medicos', 'especializaciones', 'cita', 'calendario', 'atencion', 'historias', 'formulas',
       'inventario', 'carga-inventario', 'despacho', 'tarifas', 'facturacion', 'reportes', 'usuarios'];
     storeMenus(codes);
     expect(codigos().sort()).toEqual([...codes].sort());
@@ -55,9 +55,9 @@ describe('getNavigationItems', () => {
   });
 
   it('excludes inactive menus and removes empty groups', () => {
-    storeMenus(['citas', 'clientes'], ['citas']);
+    storeMenus(['cita', 'clientes'], ['cita']);
     expect(codigos()).toEqual(['clientes']);
-    storeMenus(['citas'], ['citas']);
+    storeMenus(['cita'], ['cita']);
     expect(getNavigationItems()).toEqual([]);
     storeMenus([]);
     expect(getNavigationItems()).toEqual([]);
@@ -65,7 +65,7 @@ describe('getNavigationItems', () => {
 
   it('does not mutate the catalog or reuse previous permissions', () => {
     const original = JSON.stringify(NavigationItems);
-    storeMenus(['citas']);
+    storeMenus(['cita']);
     const first = getNavigationItems();
     first[0].children[0].title = 'changed';
     storeMenus(['clientes']);

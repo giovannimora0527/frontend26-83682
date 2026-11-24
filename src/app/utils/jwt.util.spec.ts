@@ -1,7 +1,7 @@
 import { getJwtMenus, getJwtPayload, JwtMenu, JwtPayload } from './jwt.util';
 
 describe('JWT utilities', () => {
-  const menu: JwtMenu = { activo: true, code: 'citas', name: 'Gestión de citas' };
+  const menu: JwtMenu = { activo: true, code: 'cita', title: 'Gestión de citas', url: '/inicio/citas', icon: 'icon-calendar' };
   let payload: JwtPayload;
   let previousToken: string | null;
 

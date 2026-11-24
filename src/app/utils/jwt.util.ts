@@ -12,8 +12,10 @@ export interface JwtPayload {
 
 export interface JwtMenu {
   code: string;
-  name: string;
   activo: boolean;
+  title?: string;
+  url?: string;
+  icon?: string;
 }
 
 export function getJwtPayload(): JwtPayload | null {
@@ -82,7 +84,6 @@ function isJwtMenu(value: unknown): value is JwtMenu {
   return (
     isRecord(value) &&
     typeof value['code'] === 'string' &&
-    typeof value['name'] === 'string' &&
     typeof value['activo'] === 'boolean'
   );
 }

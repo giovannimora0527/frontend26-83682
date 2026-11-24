@@ -16,8 +16,8 @@ describe('menuGuard', () => {
     alerta = spyOn(Swal, 'fire');
     sessionStorage.setItem('token', crearTokenPrueba({
       menus: JSON.stringify([
-        { code: 'despacho', name: 'Despacho', activo: true },
-        { code: 'tarifas', name: 'Tarifas', activo: false }
+        { code: 'despacho', title: 'Despacho', activo: true },
+        { code: 'tarifas', title: 'Tarifas', activo: false }
       ])
     }));
   });

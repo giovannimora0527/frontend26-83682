@@ -1,4 +1,5 @@
 import { Estado, EstadoCita, Rol } from '../models/estados';
+import { normalizarTexto } from './utils/tabla.util';
 
 export interface EstadoUi {
   etiqueta: string;
@@ -50,9 +51,23 @@ export const ESTADOS_UI: Record<Estado, EstadoUi> = {
   DESCARTADA: { etiqueta: 'Descartada', color: GRIS }
 };
 
+/** Nombres de los perfiles reales. La lógica usa siempre el código. */
 export const ETIQUETAS_ROL: Record<Rol, string> = {
   ADMINISTRADOR: 'Administrador',
-  SECRETARIA: 'Secretaría',
-  MEDICO: 'Médico',
-  DESPACHO_MEDICO: 'Despacho médico'
+  SECRETARIA: 'Recepcion',
+  MEDICO: 'Medico',
+  DESPACHO_MEDICO: 'Despacho Medico'
 };
+
+/** Código del rol a partir del código o del nombre del perfil ("Recepcion" → SECRETARIA). */
+export function codigoRol(valor: string | null | undefined): Rol | null {
+  const buscado = normalizarTexto(valor ?? '').trim();
+  const roles = Object.keys(ETIQUETAS_ROL) as Rol[];
+  return roles.find((rol) => [rol, ETIQUETAS_ROL[rol]].some((texto) => normalizarTexto(texto) === buscado)) ?? null;
+}
+
+/** Nombre del perfil para mostrar; si no se reconoce, devuelve el valor recibido. */
+export function nombreRol(valor: string | null | undefined): string {
+  const rol = codigoRol(valor);
+  return rol ? ETIQUETAS_ROL[rol] : (valor ?? '');
+}

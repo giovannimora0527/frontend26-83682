@@ -46,7 +46,7 @@ El build queda en `dist/` (no en `dist/<proyecto>/browser`), porque el proyecto 
 
 ## Fase 2: infraestructura
 
-- JWT: `medicoId` opcional y menús con la forma de C3 (`code`, `name`, `activo`).
+- JWT: `medicoId` opcional y menús con `code` y `activo` obligatorios.
 - `AuthService`: `guardarSesion`, `obtenerToken`, `obtenerUsuario`, `tieneRol`, `tieneMenu`, `estaVencido`, `cerrarSesion`. `SesionService` avisa 2 minutos antes del vencimiento, cierra la sesión y retira los modales abiertos.
 - `menuGuard` en las 16 rutas de C4 y directiva `*appTieneRol`. Los módulos que aún no existen muestran "en construcción".
 - Menú en cuatro secciones; la bienvenida ofrece accesos solo a los módulos autorizados (los datos por rol van en la fase 9).
@@ -61,3 +61,10 @@ El contrato no define el JSON de respuesta de: atención (`/atencion/cita/{citaI
 ### Resuelto por el backend (commit 4363b46)
 
 Los claims `rol` (código), `medicoId` y `menus` (con `name`) ya cumplen C3.
+
+## Corrección del contrato (datos reales del profesor)
+
+- El menú de citas tiene código `cita`; la ruta sigue siendo `/inicio/citas`.
+- `medicamentos` lo reemplaza `inventario`.
+- Los menús del JWT traen `code`, `title`, `url`, `icon` y `activo`. El filtro usa solo `code`. Los títulos e iconos salen de `navigation.ts`, porque los de la base son clases de Feather incompletas (`icon-calendar`, sin `feather`).
+- La interfaz muestra el nombre del perfil (Administrador, Recepcion, Medico, Despacho Medico) y la lógica usa el código (`codigoRol` y `nombreRol` en `shared/estados-ui.ts`).

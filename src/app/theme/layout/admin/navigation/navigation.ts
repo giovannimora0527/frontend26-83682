@@ -16,12 +16,12 @@ export interface NavigationItem {
 
   children?: NavigationItem[];
 }
-/** Opciones del contrato (C4): el id es el código del menú y define la ruta. */
-const opcion = (id: string, title: string, icon: string): NavigationItem => ({
+/** Opciones del contrato (C4): el id es el código del menú; la ruta coincide con él salvo en citas. */
+const opcion = (id: string, title: string, icon: string, path = id): NavigationItem => ({
   id,
   title,
   type: 'item',
-  url: `/inicio/${id}`,
+  url: `/inicio/${path}`,
   icon,
   classes: 'nav-item'
 });
@@ -46,7 +46,7 @@ export const NavigationItems: NavigationItem[] = [
     type: 'group',
     icon: 'icon-calendar',
     children: [
-      opcion('citas', 'Citas', 'bi bi-calendar'),
+      opcion('cita', 'Citas', 'bi bi-calendar', 'citas'),
       opcion('calendario', 'Mi calendario', 'bi bi-calendar-week'),
       opcion('atencion', 'Atención médica', 'fa-solid fa-stethoscope'),
       opcion('historias', 'Historias clínicas', 'fa-solid fa-book-medical'),

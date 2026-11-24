@@ -35,14 +35,14 @@ describe('AuthService', () => {
     sessionStorage.setItem('token', crearTokenPrueba({
       rol: 'MEDICO',
       menus: JSON.stringify([
-        { code: 'calendario', name: 'Calendario', activo: true },
-        { code: 'citas', name: 'Citas', activo: false }
+        { code: 'calendario', title: 'Calendario', activo: true },
+        { code: 'cita', title: 'Citas', activo: false }
       ])
     }));
     expect(service.tieneRol('ADMINISTRADOR', 'MEDICO')).toBeTrue();
     expect(service.tieneRol('SECRETARIA')).toBeFalse();
     expect(service.tieneMenu('calendario')).toBeTrue();
-    expect(service.tieneMenu('citas')).toBeFalse();
+    expect(service.tieneMenu('cita')).toBeFalse();
     sessionStorage.setItem('token', 'ilegible');
     expect(service.tieneRol('MEDICO')).toBeFalse();
     expect(service.tieneMenu('calendario')).toBeFalse();

@@ -14,9 +14,9 @@ import { LoginComponent } from './demo/pages/login/login.component';
 import { authGuard } from './guards/auth.guard';
 import { menuGuard } from './guards/menu.guard';
 
-/** Ruta hija de /inicio: su path es el código del menú que la autoriza. */
-const ruta = (menu: string, title: string, component: Type<unknown>): Route => ({
-  path: menu,
+/** Ruta hija de /inicio autorizada por el menú indicado; su path coincide con el código salvo en citas. */
+const ruta = (menu: string, title: string, component: Type<unknown>, path = menu): Route => ({
+  path,
   component,
   canActivate: [menuGuard],
   data: { title, menu }
@@ -28,7 +28,7 @@ const modulos: Routes = [
   ruta('medicos', 'Médicos', MedicoComponent),
   ruta('especializaciones', 'Especializaciones', EspecializacionComponent),
   ruta('tarifas', 'Tarifas', EnConstruccionComponent),
-  ruta('citas', 'Citas', CitaComponent),
+  ruta('cita', 'Citas', CitaComponent, 'citas'),
   ruta('calendario', 'Mi calendario', EnConstruccionComponent),
   ruta('atencion', 'Atención médica', EnConstruccionComponent),
   ruta('historias', 'Historias clínicas', HistoriaComponent),
