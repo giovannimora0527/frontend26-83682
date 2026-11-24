@@ -57,10 +57,11 @@
                                     <span class="badge" [class.bg-success]="medico.estado === true"
                                         [class.bg-secondary]="medico.estado !== true">{{ obtenerEstado(medico) }}</span>
                                 </td>
-                                <td class="text-center">
-                                    <button class="btn btn-outline-info d-inline-flex 
-                                    align-items-center justify-content-center" (click)="abrirEdicion(medico)">
+                                <td class="text-center text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="abrirEdicion(medico)">
                                         <i class="fa fa-edit"></i>&nbsp;Editar</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary mb-0" (click)="abrirHorarios(medico)">
+                                        <i class="fa fa-clock" aria-hidden="true"></i>&nbsp;Horarios</button>
                                 </td>
                             </tr>
                         </tbody>
@@ -138,13 +139,27 @@
                                     <option [ngValue]="null" disabled>
                                         {{ cargandoEspecializaciones ? 'Cargando especializaciones...' : 'Selecciona una especialización' }}
                                     </option>
-                                    <option *ngFor="let especializacion of listEspecializaciones" [ngValue]="especializacion.id">
+                                    <option *ngFor="let especializacion of especializacionesDisponibles" [ngValue]="especializacion.id">
                                         {{ especializacion.nombre }}
                                     </option>
                                 </select>
                                 <div class="invalid-feedback" id="error-especializacion">Selecciona una especialización.</div>
                                 <p *ngIf="!cargandoEspecializaciones && !errorEspecializaciones && listEspecializaciones.length === 0"
                                     class="text-muted">No hay especializaciones disponibles.</p>
+                            </div>
+                            <div class="col-md-6" *ngIf="puedeVincularUsuario">
+                                <label for="medico-usuario" class="form-label">Usuario del sistema (opcional)</label>
+                                <select id="medico-usuario" class="form-select" formControlName="usuarioId">
+                                    <option [ngValue]="null" [disabled]="!!medicoSelected?.usuarioId">Sin usuario vinculado</option>
+                                    <option *ngFor="let usuario of usuariosDisponibles" [ngValue]="usuario.id">
+                                        {{ usuario.username }} ({{ usuario.email }})
+                                    </option>
+                                </select>
+                                <div class="form-text">Solo usuarios con perfil Medico que no estén vinculados a otro médico.</div>
+                                <div class="text-danger" *ngIf="errorUsuarios" role="alert">
+                                    {{ errorUsuarios }}
+                                    <button type="button" class="btn btn-link" (click)="listarUsuarios()">Reintentar</button>
+                                </div>
                             </div>
                         </div>
                     </fieldset>

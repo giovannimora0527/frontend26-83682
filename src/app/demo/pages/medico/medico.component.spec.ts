@@ -5,6 +5,8 @@ import { MedicoService } from './service/medico.service';
 import { EspecializacionService } from '../especializacion/service/especializacion.service';
 import { Medico } from 'src/app/models/medico';
 
+import { UsuarioService } from '../usuario/service/usuario.service';
+import { AuthService } from '../login/service/auth.service';
 import { MedicoComponent } from './medico.component';
 
 describe('MedicoComponent', () => {
@@ -27,6 +29,17 @@ describe('MedicoComponent', () => {
       imports: [MedicoComponent],
       providers: [
         { provide: MedicoService, useValue: medicoService },
+        { provide: AuthService, useValue: { tieneRol: () => true } },
+        {
+          provide: UsuarioService, useValue: {
+            listarUsuarios: () => of([
+              { id: 10, username: 'medico1', rol: 'Medico', activo: true },
+              { id: 11, username: 'medico2', rol: 'MEDICO', activo: true },
+              { id: 12, username: 'inactivo', rol: 'Medico', activo: false },
+              { id: 13, username: 'admin', rol: 'Administrador', activo: true }
+            ])
+          }
+        },
         { provide: EspecializacionService, useValue: { listar: () => of([{ id: 3, nombre: 'Cirugia' }]) } }
       ]
     })
@@ -45,7 +58,7 @@ describe('MedicoComponent', () => {
     component.form.setValue({
       nombres: ' Carlos ', apellidos: ' Martinez ', tipoDocumento: 'CC',
       numeroDocumento: '12345', telefono: '3001112233', registroProfesional: 'RP-1003',
-      especializacionId: 3
+      especializacionId: 3, usuarioId: null
     });
   }
 
@@ -192,5 +205,26 @@ describe('MedicoComponent', () => {
     expect(component.respuestaError).toContain('sin identificador');
     expect(medicoService.crearMedico).not.toHaveBeenCalled();
     expect(medicoService.actualizarMedico).not.toHaveBeenCalled();
+  });
+
+  it('offers only free active MEDICO users plus the current one and submits the selection', () => {
+    spyOn(component, 'openModal');
+    component.listMedicos = [{ ...medico, usuarioId: 10 }, { ...medico, id: 4 }];
+    component.abrirEdicion(component.listMedicos[1]);
+    expect(component.usuariosDisponibles.map(u => u.id)).toEqual([11]);
+    component.form.controls.usuarioId.setValue(11);
+    component.guardarMedico();
+    expect(medicoService.actualizarMedico).toHaveBeenCalledWith(jasmine.objectContaining({ id: 4, usuarioId: 11 }));
+    component.abrirEdicion({ ...medico, usuarioId: 10 });
+    expect(component.usuariosDisponibles.map(u => u.id)).toEqual([10, 11]);
+  });
+
+  it('hides inactive specializations except the current one', () => {
+    spyOn(component, 'openModal');
+    component.listEspecializaciones = [{ id: 3, activo: false }, { id: 4, activo: false }, { id: 5, activo: true }];
+    component.nuevoMedico('C');
+    expect(component.especializacionesDisponibles.map(e => e.id)).toEqual([5]);
+    component.abrirEdicion(medico);
+    expect(component.especializacionesDisponibles.map(e => e.id)).toEqual([3, 5]);
   });
 });

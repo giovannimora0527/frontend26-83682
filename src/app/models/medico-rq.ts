@@ -7,4 +7,5 @@ export class MedicoRq {
     telefono!: string;
     registroProfesional!: string;
     especializacionId!: number;
+    usuarioId?: number;
 }

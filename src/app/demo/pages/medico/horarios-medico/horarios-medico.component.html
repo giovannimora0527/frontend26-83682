@@ -1,0 +1,65 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="horariosTitulo">Horarios de {{ medico.nombres }} {{ medico.apellidos }}</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+</div>
+<form class="modal-body" id="formHorarios" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  @if (respuestaError) {
+    <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+  }
+  @if (cargando) {
+    <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando horarios...</p>
+  } @else if (errorCarga) {
+    <div class="alert alert-danger" role="alert">
+      {{ errorCarga }} <button type="button" class="btn btn-link mb-0" (click)="cargar()">Reintentar</button>
+    </div>
+  } @else {
+    <fieldset formArrayName="dias" [disabled]="enviando">
+      @for (dia of dias; track dia; let d = $index) {
+        <section class="border-bottom pb-2 mb-2" [formArrayName]="d">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="h6 mb-0">{{ dia }}</h3>
+            <button type="button" class="btn btn-sm btn-outline-primary mb-0" [attr.aria-label]="'Agregar bloque el ' + dia" (click)="agregar(d)">
+              <i class="fa fa-plus" aria-hidden="true"></i> Agregar bloque
+            </button>
+          </div>
+          @for (bloque of bloques(d).controls; track bloque; let i = $index) {
+            <div class="row g-2 align-items-center mb-2" [formGroupName]="i">
+              <div class="col-6 col-md-3">
+                <input type="time" class="form-control" formControlName="horaInicio" [attr.aria-label]="dia + ', hora de inicio'"
+                  [class.is-invalid]="bloque.touched && bloque.invalid" />
+              </div>
+              <div class="col-6 col-md-3">
+                <input type="time" class="form-control" formControlName="horaFin" [attr.aria-label]="dia + ', hora de fin'"
+                  [class.is-invalid]="bloque.touched && bloque.invalid" />
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-check mb-0"><input type="checkbox" class="form-check-input" formControlName="activo" /> Activo</label>
+              </div>
+              <div class="col-6 col-md-3 text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger mb-0" [attr.aria-label]="'Quitar bloque del ' + dia" (click)="quitar(d, i)">
+                  <i class="fa fa-trash" aria-hidden="true"></i> Quitar
+                </button>
+              </div>
+              @if (bloque.hasError('horasEnOrden')) {
+                <div class="col-12 text-danger small" role="alert">La hora de fin debe ser posterior a la de inicio.</div>
+              } @else if (bloque.touched && bloque.invalid) {
+                <div class="col-12 text-danger small" role="alert">Ingresa la hora de inicio y la de fin.</div>
+              }
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Sin atención</p>
+          }
+          @if (bloques(d).hasError('cruce')) {
+            <div class="text-danger small" role="alert">Los bloques del {{ dia }} se cruzan.</div>
+          }
+        </section>
+      }
+    </fieldset>
+  }
+</form>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+  <button type="submit" form="formHorarios" class="btn btn-primary" [disabled]="enviando || cargando || !!errorCarga">
+    {{ enviando ? 'Guardando...' : 'Guardar horarios' }}
+  </button>
+</div>

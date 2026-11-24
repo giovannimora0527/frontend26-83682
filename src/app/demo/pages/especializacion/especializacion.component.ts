@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -7,6 +9,7 @@ import { Especializacion } from 'src/app/models/especializacion';
 
 import Swal from 'sweetalert2';
 
+import { mensajeError } from 'src/app/shared/utils/http.util';
 import { EspecializacionService } from './service/especializacion.service';
 
 type ColumnaOrden = 'nombre' | 'descripcion' | 'codigoEspecializacion';
@@ -20,6 +23,12 @@ type WindowBootstrap = Window & { bootstrap: { Modal: new (element: Element) => 
   styleUrl: './especializacion.component.scss'
 })
 export class EspecializacionComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  soloActivas = false;
+  cambiandoEstado = false;
+  cargando = false;
+  errorListado = '';
+
   // Variables para el modal.
   modalInstance: ModalBootstrap | null = null;
   titleModal: string = "";
@@ -58,13 +67,52 @@ export class EspecializacionComponent {
   }
 
   listar() {
-    this.especializacionService.listar().subscribe({
+    this.cargando = true;
+    this.errorListado = '';
+    this.especializacionService.listar().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.cargando = false)
+    ).subscribe({
       next: (data) => {
         this.listEspecializaciones = data;
+        this.paginaActual = Math.min(this.paginaActual, this.totalPaginas || 1);
       },
       error: (err) => {
-        console.error('Error al listar especializaciones', err);
+        this.errorListado = mensajeError(err, 'No fue posible cargar las especializaciones.');
       }
+    });
+  }
+
+  filtrarActivas(event: Event): void {
+    this.soloActivas = (event.target as HTMLInputElement).checked;
+    this.paginaActual = 1;
+  }
+
+  async cambiarEstado(especializacion: Especializacion, event: Event): Promise<void> {
+    // El interruptor conserva el valor real hasta que el backend confirme el cambio.
+    (event.target as HTMLInputElement).checked = especializacion.activo !== false;
+    if (this.cambiandoEstado || especializacion.id === undefined) {
+      return;
+    }
+    const activo = especializacion.activo === false;
+    this.cambiandoEstado = true;
+    const { isConfirmed } = await Swal.fire({
+      title: activo ? '¿Activar especialización?' : '¿Inactivar especialización?',
+      text: activo
+        ? `${especializacion.nombre} volverá a estar disponible.`
+        : `${especializacion.nombre} dejará de ofrecerse a nuevos médicos y servicios.`,
+      icon: 'warning', showCancelButton: true, confirmButtonText: activo ? 'Activar' : 'Inactivar', cancelButtonText: 'Cancelar'
+    });
+    if (!isConfirmed) {
+      this.cambiandoEstado = false;
+      return;
+    }
+    this.especializacionService.cambiarEstado(especializacion.id, activo).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.cambiandoEstado = false)
+    ).subscribe({
+      next: () => this.listar(),
+      error: (error) => void Swal.fire('No se pudo cambiar el estado', mensajeError(error, 'Intenta nuevamente.'), 'error')
     });
   }
 
@@ -80,6 +128,9 @@ export class EspecializacionComponent {
   get especializacionesFiltradas(): Especializacion[] {
     const termino = this.normalizarTexto(this.terminoBusqueda.trim());
     const filtradas = this.listEspecializaciones.filter((especializacion) => {
+      if (this.soloActivas && especializacion.activo === false) {
+        return false;
+      }
       if (!termino) {
         return true;
       }
@@ -182,6 +233,7 @@ export class EspecializacionComponent {
   }
 
   abrirEdicion(especializacion: Especializacion) {
+    this.resetFormulario();
     this.especializacionSelected = especializacion;
     this.modoFormulario = 'E';
     this.form.patchValue({
@@ -205,6 +257,7 @@ export class EspecializacionComponent {
     const valores = this.form.getRawValue();
     const especializacion: Especializacion = {
       id: this.especializacionSelected?.id,
+      ...(this.especializacionSelected ? { activo: this.especializacionSelected.activo } : {}),
       nombre: valores.nombre,
       descripcion: valores.descripcion,
       codigoEspecializacion: valores.codigoEspecializacion ?? null
@@ -229,8 +282,7 @@ export class EspecializacionComponent {
       },
       error: (error) => {
         this.enviando = false;
-        console.error('Error al guardar la especialización:', error);
-        Swal.fire('Error', error.message, 'error');
+        this.respuestaError = mensajeError(error, 'No fue posible guardar la especialización.');
       }
     });
   }

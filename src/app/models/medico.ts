@@ -11,4 +11,5 @@ export class Medico {
     especializacionId?: number;
     especializacion?: Especializacion;
     estado?: boolean;
+    usuarioId?: number | null;
 }

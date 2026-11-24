@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Medico } from 'src/app/models/medico';
+import { Horario } from 'src/app/models/horario';
 import { MedicoRq } from 'src/app/models/medico-rq';
 import { BackendService } from 'src/app/services/backend.service';
 import { environment } from 'src/environments/environment';
@@ -27,6 +28,15 @@ export class MedicoService {
 
   actualizarMedico(medico: MedicoRq & { id: number }): Observable<unknown> {
     return this.backendService.post(environment.apiUrlAuth, this.api, 'actualizar', medico);
+  }
+
+  listarHorarios(medicoId: number): Observable<Horario[]> {
+    return this.backendService.get(environment.apiUrlAuth, this.api, `${medicoId}/horarios`);
+  }
+
+  /** Reemplaza la lista completa de horarios del médico. */
+  guardarHorarios(medicoId: number, horarios: Horario[]): Observable<unknown> {
+    return this.backendService.put(environment.apiUrlAuth, this.api, `${medicoId}/horarios`, horarios);
   }
 
   listarMedicosDisponiblesPorFecha(fechaInicio: Date, fechaFin: Date): Observable<Medico[]> {

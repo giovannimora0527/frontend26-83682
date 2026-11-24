@@ -1,1 +1,210 @@
-<p>cliente works!</p>
+<div class="card">
+  <div class="card-header">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-9">
+        <input class="form-control" type="search" placeholder="Buscar por documento, nombre, correo o teléfono" aria-label="Buscar cliente"
+          [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+      </div>
+      <div class="col-md-3 text-md-end">
+        <button type="button" class="btn btn-outline-primary mb-0" (click)="nuevoCliente(formulario)">
+          <i class="fa fa-plus" aria-hidden="true"></i> Nuevo cliente
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="card-body" [attr.aria-busy]="cargando">
+    @if (errorListado) {
+      <div class="alert alert-danger" role="alert">
+        {{ errorListado }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button>
+      </div>
+    } @else if (cargando) {
+      <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando clientes...</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              @for (columna of columnas; track columna.clave) {
+                <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+                  <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+                </th>
+              }
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cliente of tabla.visibles; track cliente.id) {
+              <tr>
+                <td>{{ cliente.tipoDocumento }} {{ cliente.numeroDocumento }}</td>
+                <td>{{ nombre(cliente) }}</td>
+                <td>{{ cliente.telefono || 'No informado' }}</td>
+                <td>{{ cliente.correo || 'No informado' }}</td>
+                <td>{{ cliente.direccion || 'No informada' }}</td>
+                <td class="text-nowrap">
+                  <button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="abrirEdicion(cliente, formulario)">
+                    <i class="fa fa-edit" aria-hidden="true"></i> Editar
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary mb-0" (click)="consultar(cliente, 'mascotas', detalle)">
+                    <i class="fa fa-paw" aria-hidden="true"></i> Mascotas
+                  </button>
+                  @if (puedeVerFacturas) {
+                    <button type="button" class="btn btn-sm btn-outline-secondary mb-0" (click)="consultar(cliente, 'facturas', detalle)">
+                      <i class="fa fa-file-invoice-dollar" aria-hidden="true"></i> Facturas
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center">
+                  {{ tabla.items.length ? 'No se encontraron clientes' : 'No hay clientes registrados' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-paginacion [tabla]="tabla" />
+    }
+  </div>
+</div>
+
+<ng-template #formulario let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="clienteTitulo">{{ modoFormulario === 'C' ? 'Crear cliente' : 'Editar cliente' }}</h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+  </div>
+  <form class="modal-body" id="formCliente" [formGroup]="form" (ngSubmit)="guardarCliente()" novalidate>
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+    }
+    <fieldset [disabled]="enviando">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="cliente-tipo" class="form-label">Tipo de documento</label>
+          <select id="cliente-tipo" class="form-select" formControlName="tipoDocumento"
+            [class.is-invalid]="esInvalido(form.controls.tipoDocumento)">
+            <option value="" disabled>Selecciona un tipo</option>
+            @for (tipo of opcionesTipo; track tipo) {
+              <option [value]="tipo">{{ tipo }}</option>
+            }
+          </select>
+          <div class="invalid-feedback">{{ form.controls.tipoDocumento.errors?.['servidor'] ?? 'Selecciona el tipo de documento.' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="cliente-documento" class="form-label">Número de documento</label>
+          <input id="cliente-documento" type="text" class="form-control" formControlName="numeroDocumento" maxlength="20"
+            [class.is-invalid]="esInvalido(form.controls.numeroDocumento)" [attr.aria-describedby]="'cliente-documento-error'" />
+          <div class="invalid-feedback" id="cliente-documento-error">{{ form.controls.numeroDocumento.errors?.['servidor'] ?? 'Ingresa entre 3 y 20 letras o números.' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="cliente-nombres" class="form-label">Nombres</label>
+          <input id="cliente-nombres" type="text" class="form-control" formControlName="nombres" maxlength="100"
+            [class.is-invalid]="esInvalido(form.controls.nombres)" [attr.aria-describedby]="'cliente-nombres-error'" />
+          <div class="invalid-feedback" id="cliente-nombres-error">{{ form.controls.nombres.errors?.['servidor'] ?? 'Ingresa los nombres (máximo 100 caracteres).' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="cliente-apellidos" class="form-label">Apellidos</label>
+          <input id="cliente-apellidos" type="text" class="form-control" formControlName="apellidos" maxlength="100"
+            [class.is-invalid]="esInvalido(form.controls.apellidos)" [attr.aria-describedby]="'cliente-apellidos-error'" />
+          <div class="invalid-feedback" id="cliente-apellidos-error">{{ form.controls.apellidos.errors?.['servidor'] ?? 'Ingresa los apellidos (máximo 100 caracteres).' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="cliente-nacimiento" class="form-label">Fecha de nacimiento</label>
+          <input id="cliente-nacimiento" type="date" class="form-control" formControlName="fechaNacimiento" [max]="hoy"
+            [class.is-invalid]="esInvalido(form.controls.fechaNacimiento)" [attr.aria-describedby]="'cliente-nacimiento-error'" />
+          <div class="invalid-feedback" id="cliente-nacimiento-error">{{ form.controls.fechaNacimiento.errors?.['servidor'] ?? 'Ingresa una fecha que no sea futura.' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="cliente-genero" class="form-label">Género (opcional)</label>
+          <select id="cliente-genero" class="form-select" formControlName="genero">
+            <option value="">No informado</option>
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+            <option value="O">Otro</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="cliente-telefono" class="form-label">Teléfono</label>
+          <input id="cliente-telefono" type="tel" class="form-control" formControlName="telefono" maxlength="15"
+            [class.is-invalid]="esInvalido(form.controls.telefono)" [attr.aria-describedby]="'cliente-telefono-error'" />
+          <div class="invalid-feedback" id="cliente-telefono-error">{{ form.controls.telefono.errors?.['servidor'] ?? 'Ingresa entre 7 y 15 dígitos.' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="cliente-correo" class="form-label">Correo (opcional)</label>
+          <input id="cliente-correo" type="email" class="form-control" formControlName="correo" maxlength="255"
+            [class.is-invalid]="esInvalido(form.controls.correo)" [attr.aria-describedby]="'cliente-correo-error'" />
+          <div class="invalid-feedback" id="cliente-correo-error">{{ form.controls.correo.errors?.['servidor'] ?? 'Ingresa un correo válido.' }}</div>
+        </div>
+        <div class="col-12">
+          <label for="cliente-direccion" class="form-label">Dirección (opcional)</label>
+          <input id="cliente-direccion" type="text" class="form-control" formControlName="direccion" maxlength="255"
+            [class.is-invalid]="esInvalido(form.controls.direccion)" [attr.aria-describedby]="'cliente-direccion-error'" />
+          <div class="invalid-feedback" id="cliente-direccion-error">{{ form.controls.direccion.errors?.['servidor'] ?? 'Máximo 255 caracteres.' }}</div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+    <button type="submit" form="formCliente" class="btn btn-primary" [disabled]="enviando">
+      {{ enviando ? 'Guardando...' : modoFormulario === 'C' ? 'Guardar cliente' : 'Actualizar cliente' }}
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #detalle let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="consultaTitulo">
+      {{ consulta === 'mascotas' ? 'Mascotas' : 'Facturas' }} de {{ nombre(clienteSelected) }}
+    </h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body" [attr.aria-busy]="cargandoConsulta">
+    @if (cargandoConsulta) {
+      <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando...</p>
+    } @else if (errorConsulta) {
+      <div class="alert alert-danger" role="alert">{{ errorConsulta }}</div>
+    } @else if (consulta === 'mascotas') {
+      <div class="table-responsive">
+        <table class="table">
+          <thead><tr><th scope="col">Nombre</th><th scope="col">Especie</th><th scope="col">Raza</th><th scope="col">Edad</th><th scope="col">Registro</th></tr></thead>
+          <tbody>
+            @for (mascota of mascotas; track mascota.mascotaId) {
+              <tr>
+                <td>{{ mascota.nombreMascota ?? mascota.nombre }}</td>
+                <td>{{ mascota.raza?.especie }}</td>
+                <td>{{ mascota.raza?.nombre }}</td>
+                <td>{{ mascota.edad }}</td>
+                <td>{{ mascota.fechaRegistro | date: 'dd/MM/yyyy' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="text-center">El cliente no tiene mascotas registradas</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table">
+          <thead><tr><th scope="col">Número</th><th scope="col">Fecha</th><th scope="col">Mascota</th><th scope="col">Total</th><th scope="col">Saldo</th><th scope="col">Estado</th></tr></thead>
+          <tbody>
+            @for (factura of facturas; track factura.id) {
+              <tr>
+                <td>{{ factura.numero }}</td>
+                <td>{{ factura.fecha | fechaHora }}</td>
+                <td>{{ factura.mascotaNombre }}</td>
+                <td>{{ factura.total | moneda }}</td>
+                <td>{{ factura.saldo | moneda }}</td>
+                <td><app-badge-estado [estado]="factura.estado" /></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="text-center">El cliente no tiene facturas</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+  <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button></div>
+</ng-template>

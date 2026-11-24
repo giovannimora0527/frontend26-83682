@@ -68,3 +68,27 @@ Los claims `rol` (código), `medicoId` y `menus` (con `name`) ya cumplen C3.
 - `medicamentos` lo reemplaza `inventario`.
 - Los menús del JWT traen `code`, `title`, `url`, `icon` y `activo`. El filtro usa solo `code`. Los títulos e iconos salen de `navigation.ts`, porque los de la base son clases de Feather incompletas (`icon-calendar`, sin `feather`).
 - La interfaz muestra el nombre del perfil (Administrador, Recepcion, Medico, Despacho Medico) y la lógica usa el código (`codigoRol` y `nombreRol` en `shared/estados-ui.ts`).
+
+## Fase 3: módulos base
+
+- **Clientes**: listado, creación y edición; consulta de mascotas y facturas. El documento duplicado (409) se muestra junto al campo.
+- **Usuarios**: listado, creación, edición y activación. Nadie puede inactivar su propia cuenta desde la pantalla. La contraseña admite hasta 72 bytes (límite de BCrypt en el backend).
+- **Médicos**: horarios por día (`PUT /medico/{id}/horarios`) y usuario del sistema. El select de usuarios solo lo ve ADMINISTRADOR, porque `/usuario/listar-ordenado` es solo suyo; SECRETARIA conserva el vínculo existente.
+- **Especializaciones**: activar e inactivar con confirmación y filtro "solo activas". Las inactivas no se ofrecen a médicos nuevos.
+- El build de producción ya no descarga la fuente de Google al compilar (fallaba sin Internet); la carga el navegador.
+
+### Diferencias con el enunciado, según los DTO del backend
+
+| Tema | Enunciado | Backend | Frontend |
+|---|---|---|---|
+| Cliente | sin fecha de nacimiento | `fechaNacimiento` obligatoria, `genero` opcional | incluye ambos; correo y dirección opcionales |
+| Usuario | campo "nombre" | `UsuarioRq` no lo tiene | no se muestra, porque no se guardaría |
+| Perfil | `/perfil/listar` | la entidad usa `perfilId` | acepta `id` o `perfilId` |
+| Vínculo médico-usuario | opcional | no se puede quitar (sin `usuarioId` conserva el actual) | se puede cambiar, no quitar |
+
+### Pendiente en el backend (revisado sobre 4363b46 y su árbol de trabajo)
+
+- No existen todavía: `PATCH /usuario/{id}/estado`, `GET /perfil/listar`, `GET/PUT /medico/{id}/horarios`, `PATCH /especializacion/{id}/estado` y `GET /factura/cliente/{id}`. Sin `/perfil/listar` no se pueden crear ni editar usuarios.
+- `db/03_datos_iniciales.sql` usa el código de menú `citas`; debe ser `cita`.
+- Los duplicados (409) no traen `detalles`: el campo se deduce del mensaje. Conviene agregar `detalles`.
+- La entidad `Cita` pasa a `fechaInicio`, `fechaFin` y estados en mayúsculas, y `/formula-medica/guardar` y `/actualizar` cambian. Citas, Historias y Fórmulas se adaptan en las fases 5 y 6; hasta entonces no funcionan del todo con ese backend.

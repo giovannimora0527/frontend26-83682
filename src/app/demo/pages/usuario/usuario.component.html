@@ -1,3 +1,137 @@
-<div class="container">
-  <p>Usuario Component Funciona</p>
+<div class="card">
+  <div class="card-header">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-9">
+        <input class="form-control" type="search" placeholder="Buscar por usuario, correo o perfil" aria-label="Buscar usuario"
+          [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+      </div>
+      <div class="col-md-3 text-md-end">
+        <button type="button" class="btn btn-outline-primary mb-0" (click)="nuevoUsuario(formulario)">
+          <i class="fa fa-plus" aria-hidden="true"></i> Nuevo usuario
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="card-body" [attr.aria-busy]="cargando">
+    @if (errorListado) {
+      <div class="alert alert-danger" role="alert">
+        {{ errorListado }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button>
+      </div>
+    } @else if (cargando) {
+      <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando usuarios...</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              @for (columna of columnas; track columna.clave) {
+                <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+                  <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+                </th>
+              }
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (usuario of tabla.visibles; track usuario.id) {
+              <tr>
+                <td>{{ usuario.username }}</td>
+                <td>{{ usuario.email }}</td>
+                <td>{{ nombreRol(usuario.rol) }}</td>
+                <td>{{ usuario.fechaCreacion | fechaHora }}</td>
+                <td>
+                  <span class="badge" [class.bg-success]="usuario.activo" [class.bg-secondary]="!usuario.activo">
+                    {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="text-nowrap">
+                  <button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="abrirEdicion(usuario, formulario)">
+                    <i class="fa fa-edit" aria-hidden="true"></i> Editar
+                  </button>
+                  @if (!esUsuarioActual(usuario)) {
+                    <button type="button" class="btn btn-sm mb-0" [class.btn-outline-danger]="usuario.activo"
+                      [class.btn-outline-success]="!usuario.activo" [disabled]="cambiandoEstadoId !== null" (click)="cambiarEstado(usuario)">
+                      {{ usuario.activo ? 'Inactivar' : 'Activar' }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center">
+                  {{ tabla.items.length ? 'No se encontraron usuarios' : 'No hay usuarios registrados' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-paginacion [tabla]="tabla" />
+    }
+  </div>
 </div>
+
+<ng-template #formulario let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="usuarioTitulo">{{ modoFormulario === 'C' ? 'Crear usuario' : 'Editar usuario' }}</h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+  </div>
+  <form class="modal-body" id="formUsuario" [formGroup]="form" (ngSubmit)="guardarUsuario()" novalidate>
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+    }
+    @if (errorPerfiles) {
+      <div class="alert alert-danger" role="alert">
+        {{ errorPerfiles }} <button type="button" class="btn btn-link mb-0" (click)="listarPerfiles()">Reintentar</button>
+      </div>
+    }
+    <fieldset [disabled]="enviando">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="usuario-username" class="form-label">Nombre de usuario</label>
+          <input id="usuario-username" type="text" class="form-control" formControlName="username" maxlength="50" autocomplete="off"
+            [class.is-invalid]="esInvalido(form.controls.username)" [attr.aria-describedby]="'usuario-username-error'" />
+          <div class="invalid-feedback" id="usuario-username-error">{{ form.controls.username.errors?.['servidor'] ?? 'Ingresa un usuario sin espacios (máximo 50 caracteres).' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="usuario-email" class="form-label">Correo</label>
+          <input id="usuario-email" type="email" class="form-control" formControlName="email" maxlength="255" autocomplete="off"
+            [class.is-invalid]="esInvalido(form.controls.email)" [attr.aria-describedby]="'usuario-email-error'" />
+          <div class="invalid-feedback" id="usuario-email-error">{{ form.controls.email.errors?.['servidor'] ?? 'Ingresa un correo válido.' }}</div>
+        </div>
+        <div class="col-12">
+          <label for="usuario-perfil" class="form-label">Perfil</label>
+          <select id="usuario-perfil" class="form-select" formControlName="perfilId" [class.is-invalid]="esInvalido(form.controls.perfilId)">
+            <option [ngValue]="null" disabled>{{ cargandoPerfiles ? 'Cargando perfiles...' : 'Selecciona un perfil' }}</option>
+            @for (perfil of perfiles; track perfil.id) {
+              <option [ngValue]="perfil.id">{{ perfil.nombre }}</option>
+            }
+          </select>
+          <div class="invalid-feedback">{{ form.controls.perfilId.errors?.['servidor'] ?? 'Selecciona un perfil.' }}</div>
+          @if (esPerfilMedico) {
+            <div class="alert alert-info mt-2 mb-0">Recuerda: vincula este usuario a un médico en el módulo Médicos.</div>
+          }
+        </div>
+        <div class="col-md-6">
+          <label for="usuario-password" class="form-label">Contraseña{{ modoFormulario === 'E' ? ' (opcional)' : '' }}</label>
+          <input id="usuario-password" type="password" class="form-control" formControlName="password" autocomplete="new-password"
+            [class.is-invalid]="esInvalido(form.controls.password)" [attr.aria-describedby]="'usuario-password-error'" />
+          <div class="invalid-feedback" id="usuario-password-error">{{ form.controls.password.errors?.['servidor'] ?? 'Mínimo 8 caracteres con mayúscula, minúscula, número y símbolo (máximo 72 bytes).' }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="usuario-confirmacion" class="form-label">Confirmar contraseña</label>
+          <input id="usuario-confirmacion" type="password" class="form-control" formControlName="confirmacion" autocomplete="new-password"
+            [class.is-invalid]="form.hasError('clavesDistintas') && (form.controls.confirmacion.touched || form.controls.confirmacion.dirty)"
+            aria-describedby="usuario-confirmacion-error" />
+          <div class="invalid-feedback" id="usuario-confirmacion-error">Las contraseñas no coinciden.</div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+    <button type="submit" form="formUsuario" class="btn btn-primary" [disabled]="enviando">
+      {{ enviando ? 'Guardando...' : modoFormulario === 'C' ? 'Guardar usuario' : 'Actualizar usuario' }}
+    </button>
+  </div>
+</ng-template>

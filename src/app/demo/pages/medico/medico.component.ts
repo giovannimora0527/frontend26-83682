@@ -11,6 +11,13 @@ import { MedicoService } from './service/medico.service';
 import { MedicoRq } from 'src/app/models/medico-rq';
 import { Especializacion } from 'src/app/models/especializacion';
 import { EspecializacionService } from '../especializacion/service/especializacion.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AuthService } from '../login/service/auth.service';
+import { UsuarioService } from '../usuario/service/usuario.service';
+import { Usuario } from 'src/app/models/usuario';
+import { codigoRol } from 'src/app/shared/estados-ui';
+import { mensajeError } from 'src/app/shared/utils/http.util';
+import { HorariosMedicoComponent } from './horarios-medico/horarios-medico.component';
 
 @Component({
   selector: 'app-medico',
@@ -21,6 +28,14 @@ import { EspecializacionService } from '../especializacion/service/especializaci
 export class MedicoComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly modalService = inject(NgbModal);
+  private readonly usuarioService = inject(UsuarioService);
+  private modalHorarios?: NgbModalRef;
+
+  /** El listado de usuarios solo lo puede consultar ADMINISTRADOR; los demás conservan el vínculo actual. */
+  readonly puedeVincularUsuario = inject(AuthService).tieneRol('ADMINISTRADOR');
+  listUsuarios: Usuario[] = [];
+  errorUsuarios = '';
 
   readonly form = this.formBuilder.nonNullable.group({
     nombres: ['', [Validators.required, Validators.pattern(/\S/)]],
@@ -29,7 +44,8 @@ export class MedicoComponent {
     numeroDocumento: ['', [Validators.required, Validators.pattern(/\S/)]],
     telefono: ['', [Validators.required, Validators.pattern(/\S/)]],
     registroProfesional: ['', [Validators.required, Validators.pattern(/\S/)]],
-    especializacionId: this.formBuilder.control<number | null>(null, Validators.required)
+    especializacionId: this.formBuilder.control<number | null>(null, Validators.required),
+    usuarioId: this.formBuilder.control<number | null>(null)
   });
 
   readonly campos = [
@@ -67,9 +83,43 @@ export class MedicoComponent {
 
   constructor(private readonly medicoService: MedicoService,
     private readonly especializacionService: EspecializacionService) {
-    this.destroyRef.onDestroy(() => this.modalInstance?.dispose());
+    this.destroyRef.onDestroy(() => {
+      this.modalInstance?.dispose();
+      this.modalHorarios?.dismiss();
+    });
+    if (this.puedeVincularUsuario) {
+      this.listarUsuarios();
+    }
     this.listar();
     this.listarEspecializaciones();
+  }
+
+  listarUsuarios(): void {
+    this.errorUsuarios = '';
+    this.usuarioService.listarUsuarios().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: usuarios => this.listUsuarios = usuarios.filter(({ rol }) => codigoRol(rol) === 'MEDICO'),
+      error: error => this.errorUsuarios = mensajeError(error, 'No fue posible cargar los usuarios.')
+    });
+  }
+
+  /** Usuarios con perfil MEDICO activos y libres, más el que ya tiene el médico en edición. */
+  get usuariosDisponibles(): Usuario[] {
+    const actual = this.medicoSelected?.usuarioId;
+    const ocupados = new Set(this.listMedicos.map(({ usuarioId }) => usuarioId));
+    return this.listUsuarios.filter(({ id, activo }) => id === actual || (activo && !ocupados.has(id)));
+  }
+
+  /** Especializaciones activas, más la que ya tiene el médico en edición. */
+  get especializacionesDisponibles(): Especializacion[] {
+    const actual = this.medicoSelected?.especializacionId ?? this.medicoSelected?.especializacion?.id;
+    return this.listEspecializaciones.filter(({ id, activo }) => activo !== false || id === actual);
+  }
+
+  abrirHorarios(medico: Medico): void {
+    this.modalHorarios = this.modalService.open(HorariosMedicoComponent, {
+      size: 'lg', backdrop: 'static', keyboard: false, scrollable: true, ariaLabelledBy: 'horariosTitulo'
+    });
+    this.modalHorarios.componentInstance.medico = medico;
   }
 
   listarEspecializaciones(): void {
@@ -208,7 +258,8 @@ export class MedicoComponent {
       numeroDocumento: medico.numeroDocumento,
       telefono: medico.telefono,
       registroProfesional: medico.registroProfesional,
-      especializacionId: medico.especializacionId ?? medico.especializacion?.id ?? null
+      especializacionId: medico.especializacionId ?? medico.especializacion?.id ?? null,
+      usuarioId: medico.usuarioId ?? null
     });
     this.modoFormulario = 'E';
     this.openModal(this.modoFormulario);
@@ -234,7 +285,7 @@ export class MedicoComponent {
       return;
     }
     if (this.errorEspecializaciones || this.cargandoEspecializaciones ||
-        !this.listEspecializaciones.some(item => item.id === valores.especializacionId)) {
+        !this.especializacionesDisponibles.some(item => item.id === valores.especializacionId)) {
       this.respuestaError = 'Selecciona una especialización disponible.';
       return;
     }
@@ -247,6 +298,9 @@ export class MedicoComponent {
       registroProfesional: valores.registroProfesional.trim(),
       especializacionId: valores.especializacionId
     };
+    if (valores.usuarioId !== null) {
+      datos.usuarioId = valores.usuarioId;
+    }
     const id = this.medicoSelected?.id;
     if (this.modoFormulario === 'E' && id == null) {
       this.respuestaError = 'No se puede actualizar un médico sin identificador.';
@@ -269,7 +323,7 @@ export class MedicoComponent {
           ? 'El médico fue creado correctamente.' : 'El médico fue actualizado correctamente.', 'success');
       },
       error: error => {
-        this.respuestaError = 'No fue posible guardar el médico. Revisa los datos e inténtalo de nuevo.';
+        this.respuestaError = mensajeError(error, 'No fue posible guardar el médico. Revisa los datos e inténtalo de nuevo.');
         console.error('Error al guardar el médico:', error);
       }
     });

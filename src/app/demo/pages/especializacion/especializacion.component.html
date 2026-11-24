@@ -5,6 +5,10 @@
                 <div class="col col-md-9">
                     <input class="form-control" placeholder="Buscar especialización" type="text"
                         (input)="actualizarBusqueda($event)" />
+                    <div class="form-check mt-2 mb-0">
+                        <input id="soloActivas" type="checkbox" class="form-check-input" (change)="filtrarActivas($event)" />
+                        <label for="soloActivas" class="form-check-label">Solo activas</label>
+                    </div>
                 </div>
                 <div class="col col-md-3 text-end">
                     <button
@@ -17,7 +21,10 @@
                 </div>
             </div>
         </div>
-        <div class="card-body">
+        <div class="card-body" [attr.aria-busy]="cargando">
+            <div class="alert alert-danger" *ngIf="errorListado" role="alert">
+                {{ errorListado }} <button type="button" class="btn btn-link" (click)="listar()">Reintentar</button>
+            </div>
             <div class="row">
                 <div class="table table-responsive table-condensed col col-md-12">
                     <table class="table table-stripped table-condensed table-responsive">
@@ -50,24 +57,34 @@
                                             aria-hidden="true"></i>
                                     </button>
                                 </th>                                  
+                                <th class="text-center">Estado</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody *ngIf="listEspecializaciones.length === 0">
+                        <tbody *ngIf="listEspecializaciones.length === 0 && !errorListado">
                             <tr>
-                                <td colspan="7" class="text-center">No hay especializaciones registradas</td>
+                                <td colspan="5" class="text-center">{{ cargando ? 'Cargando especializaciones...' : 'No hay especializaciones registradas' }}</td>
                             </tr>
                         </tbody>
                         <tbody *ngIf="listEspecializaciones.length > 0 && especializacionesFiltradas.length === 0">
                             <tr>
-                                <td colspan="7" class="text-center">No se encontraron especializaciones</td>
+                                <td colspan="5" class="text-center">No se encontraron especializaciones</td>
                             </tr>
                         </tbody>
                         <tbody *ngIf="especializacionesFiltradas.length > 0">
-                            <tr *ngFor="let especializacion of especializacionesPaginadas">
+                            <tr *ngFor="let especializacion of especializacionesPaginadas" [class.opacity-50]="especializacion.activo === false">
                                 <td class="text-justify">{{ especializacion.nombre }}</td>
                                 <td class="text-justify">{{ especializacion.descripcion }}</td>
                                 <td class="text-justify">{{ especializacion.codigoEspecializacion }}</td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-inline-block mb-0">
+                                        <input type="checkbox" role="switch" class="form-check-input" [id]="'activa-' + especializacion.id"
+                                            [checked]="especializacion.activo !== false" [disabled]="cambiandoEstado"
+                                            (change)="cambiarEstado(especializacion, $event)" />
+                                        <label class="form-check-label" [for]="'activa-' + especializacion.id">
+                                            {{ especializacion.activo === false ? 'Inactiva' : 'Activa' }}</label>
+                                    </div>
+                                </td>
                                 <td class="text-center">
                                     <button class="btn btn-outline-info d-inline-flex 
                                     align-items-center justify-content-center" (click)="abrirEdicion(especializacion)"
