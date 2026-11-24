@@ -1,0 +1,93 @@
+<section class="card">
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div><h2 class="mb-1">Calendario médico</h2><span class="text-muted">Hora de Bogotá</span></div>
+    <button type="button" class="btn btn-outline-primary" (click)="verHorario = !verHorario">{{ verHorario ? 'Cerrar horarios' : 'Mis horarios y ausencias' }}</button>
+  </div>
+  <div class="card-body">
+    @if (verHorario) { <app-agenda-configuracion [medico]="null" /> }
+    @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+    @if (aviso) { <div class="alert alert-success" role="status">{{ aviso }}</div> }
+    <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+      <div class="btn-group" role="group" aria-label="Vista del calendario">
+        @for (opcion of vistas; track opcion.id) {
+          <button type="button" class="btn btn-outline-primary" [class.active]="vista === opcion.id"
+            [attr.aria-pressed]="vista === opcion.id" (click)="seleccionarVista(opcion.id)">{{ opcion.nombre }}</button>
+        }
+      </div>
+      <button type="button" class="btn btn-outline-secondary" (click)="navegar(-1)" aria-label="Período anterior">‹</button>
+      <button type="button" class="btn btn-outline-secondary" (click)="seleccionarFecha(hoy)">Hoy</button>
+      <button type="button" class="btn btn-outline-secondary" (click)="navegar(1)" aria-label="Período siguiente">›</button>
+      <label>Fecha del calendario <input type="date" class="form-control" [ngModel]="fecha" (ngModelChange)="seleccionarFecha($event)"></label>
+      <label>Estado
+        <select class="form-select text-capitalize" [(ngModel)]="estado" (ngModelChange)="cargar()">
+          <option value="">Todos</option>
+          @for (opcion of estados; track opcion) { <option [value]="opcion">{{ opcion }}</option> }
+        </select>
+      </label>
+    </div>
+    <h3 class="h5 text-capitalize">{{ titulo }}</h3>
+    @if (cargando) { <p role="status">Consultando citas…</p> }
+    <div class="calendario-scroll">
+      <div class="calendario" [class.calendario-dia]="vista === 'dia'">
+        @for (dia of dias; track dia.fecha) {
+          <section class="calendario-celda" [class.calendario-otro]="dia.otroMes" [class.calendario-hoy]="dia.fecha === hoy" [attr.aria-label]="dia.fecha">
+            <div class="calendario-fecha">{{ dia.nombre }} {{ dia.dia }}</div>
+            @for (cita of dia.citas; track cita.id) {
+              <button type="button" class="evento" [attr.data-estado]="cita.estado" (click)="seleccionar(cita)">
+                <span>{{ cita.inicio.slice(11,16) }}–{{ cita.fin.slice(11,16) }} · {{ cita.estado }}</span>
+                <strong>{{ cita.mascota || 'Mascota no disponible' }}</strong>
+                @if (cita.motivo) { <small>{{ cita.motivo }}</small> }
+              </button>
+            } @empty {
+              @if (vista === 'dia' && !cargando) { <p class="text-muted m-2">Sin citas para esta fecha.</p> }
+            }
+          </section>
+        }
+      </div>
+    </div>
+    <div class="d-flex flex-wrap align-items-end gap-2 mt-3">
+      <label>Exportar desde <input type="date" class="form-control" [(ngModel)]="exportarDesde"></label>
+      <label>Exportar hasta <input type="date" class="form-control" [(ngModel)]="exportarHasta"></label>
+      <button type="button" class="btn btn-outline-primary" (click)="descargar()">Exportar Excel</button>
+    </div>
+    @if (evento; as detalle) {
+      <section class="border rounded p-3 mt-3" aria-label="Detalle de la cita">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="h5">Cita de {{ detalle.mascota }}</h3>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="evento = null">Cerrar detalle</button>
+        </div>
+        <p>{{ detalle.inicio.replace('T',' ') }} a {{ detalle.fin.replace('T',' ') }} · {{ detalle.estado }}</p>
+        <button type="button" class="btn btn-outline-primary mb-2" (click)="atencionId = detalle.id">Ver atención clínica</button>
+        @if(detalle.mascotaId; as paciente) {
+          <button type="button" class="btn btn-outline-secondary mb-2" (click)="mascotaHistorial=mascotaHistorial===paciente ? null : paciente">Historial de mascota</button>
+          @if(mascotaHistorial === paciente) {
+            <app-historial-mascota [mascotaId]="paciente" />
+          }
+        }
+        <p><strong>Propietario</strong> {{ detalle.propietario || '—' }}<br><strong>Motivo</strong> {{ detalle.motivo || '—' }}</p>
+        @if (reservada(detalle)) {
+          <div class="d-flex flex-wrap align-items-end gap-2">
+            <label>Nuevo inicio <input type="datetime-local" class="form-control" [(ngModel)]="inicio"></label>
+            <label>Nuevo fin <input type="datetime-local" class="form-control" [(ngModel)]="fin"></label>
+            <button type="button" class="btn btn-outline-primary" [disabled]="guardando || !inicio || !fin || fin <= inicio" (click)="cambiar(detalle, {inicio, fin})">Reprogramar</button>
+            <button type="button" class="btn btn-primary" [disabled]="guardando" (click)="cambiar(detalle, {estado:'atendida'})">Marcar atendida</button>
+            <button type="button" class="btn btn-outline-danger" [disabled]="guardando" (click)="cambiar(detalle, {estado:'cancelada'})">Cancelar cita</button>
+          </div>
+        } @else if (detalle.estado === 'atendida') {
+          <button type="button" class="btn btn-primary" [disabled]="guardando" (click)="cambiar(detalle, {estado:'finalizada'})">Finalizar cita</button>
+        }
+        <details class="mt-3">
+          <summary>Historial de cambios</summary>
+          <ul class="mt-2 mb-0">
+            @for (cambio of historial; track cambio.id) {
+              <li>{{ cambio.fecha.replace('T',' ') }} · {{ cambio.anterior?.estado || 'Creada' }} → {{ cambio.actual.estado }} · {{ cambio.actual.inicio?.replace('T',' ') }}</li>
+            } @empty { <li>Sin cambios registrados.</li> }
+          </ul>
+        </details>
+      </section>
+    }
+    @for (id of atencionId === null ? [] : [atencionId]; track id) {
+      <app-atencion-clinica [citaId]="id" (cierre)="atencionId = null" (actualizada)="cargar()" />
+    }
+  </div>
+</section>

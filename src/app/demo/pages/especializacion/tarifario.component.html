@@ -1,0 +1,74 @@
+<section class="card">
+  <header class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
+    <h2 class="h5 mb-0">Especialidades, servicios y tarifas</h2>
+    <button class="btn btn-primary" type="button" (click)="editar()">Nueva especialidad</button>
+  </header>
+  <div class="card-body">
+    @if (error) { <p role="alert" class="alert alert-danger">{{ error }}</p> }
+    @if (aviso) { <p role="status" class="alert alert-success">{{ aviso }}</p> }
+    @if (edicion; as e) {
+      <form #form="ngForm" class="border rounded p-3 mb-3" (ngSubmit)="guardar(e)">
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+          <label>Código <input class="form-control" name="codigo" [(ngModel)]="e.codigo" maxlength="10" required></label>
+          <label>Nombre <input class="form-control" name="nombre" [(ngModel)]="e.nombre" maxlength="100" required></label>
+          <label>Descripción <input class="form-control" name="descripcion" [(ngModel)]="e.descripcion" maxlength="4000"></label>
+          <label><input class="form-check-input me-1" name="activo" type="checkbox" [(ngModel)]="e.activo">Activa</label>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2" [disabled]="ocupado || form.invalid">Guardar especialidad</button>
+        <button type="button" class="btn btn-link mt-2" (click)="edicion = null">Cancelar</button>
+      </form>
+    }
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Código</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+          @for (e of especialidades; track e.id) {
+            <tr><td>{{ e.codigo }}</td><td>{{ e.nombre }}</td><td>{{ e.activo ? 'Activa' : 'Inactiva' }}</td>
+              <td><button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="editar(e)">Editar</button>
+                <button class="btn btn-sm btn-outline-primary" type="button" (click)="ver(e)">Servicios</button></td></tr>
+          } @empty { <tr><td colspan="4">No hay especialidades registradas.</td></tr> }
+        </tbody>
+      </table>
+    </div>
+    @if (especialidad; as e) {
+      <section class="border rounded p-3">
+        <h3 class="h6">Servicios de {{ e.nombre }}</h3>
+        @if (e.activo) {
+          <form #alta="ngForm" class="d-flex flex-wrap gap-2 align-items-end" (ngSubmit)="agregarServicio(e)">
+            <label>Nombre del servicio <input class="form-control" name="servicio" [(ngModel)]="nombreServicio" maxlength="100" required></label>
+            <button type="submit" class="btn btn-outline-primary" [disabled]="ocupado || alta.invalid">Agregar servicio</button>
+          </form>
+        }
+        <div class="d-flex flex-wrap gap-2 my-3">
+          @for (s of servicios; track s.id) {
+            <button type="button" class="btn btn-outline-secondary" (click)="verTarifas(s)">{{ s.nombre }}</button>
+          } @empty { <p>No hay servicios.</p> }
+        </div>
+        @if (servicio; as s) {
+          <h4 class="h6">Historial de tarifas de {{ s.nombre }}</h4>
+          @if (e.activo) { <button type="button" class="btn btn-outline-primary mb-2" (click)="nuevaTarifa()">Nueva vigencia</button> }
+          @if (tarifa; as t) {
+            <form #precio="ngForm" class="border rounded p-2 mb-2" (ngSubmit)="registrar(s,t)">
+              <div class="d-flex flex-wrap gap-2">
+                <label>Valor COP <input class="form-control" type="number" name="valor" min="0" step=".01" [(ngModel)]="t.valor" required></label>
+                <label>IVA % <input class="form-control" type="number" name="iva" min="0" max="100" step=".01" [(ngModel)]="t.iva" required></label>
+                <label>Otros impuestos % <input class="form-control" type="number" name="impuesto" min="0" max="100" step=".01" [(ngModel)]="t.impuesto" required></label>
+                <label>Desde <input class="form-control" type="date" name="desde" [(ngModel)]="t.desde" required></label>
+                <label>Hasta <input class="form-control" type="date" name="hasta" [(ngModel)]="t.hasta"></label>
+              </div>
+              <p class="small text-muted mt-2">Si la vigencia anterior cruza la nueva, termina el día anterior. Los valores ya aplicados se conservan.</p>
+              <button type="submit" class="btn btn-primary" [disabled]="ocupado || precio.invalid">Guardar tarifa</button>
+            </form>
+          }
+          <div class="table-responsive"><table class="table table-sm">
+            <thead><tr><th>Valor</th><th>IVA</th><th>Otros impuestos</th><th>Desde</th><th>Hasta</th><th>Registrada por</th></tr></thead>
+            <tbody>@for (t of historial; track t.id) {
+              <tr><td>{{ t.valor | currency:'COP' }}</td><td>{{ t.iva }} %</td><td>{{ t.impuesto }} %</td>
+                <td>{{ t.desde }}</td><td>{{ t.hasta || 'Abierta' }}</td><td>{{ t.usuarioId }} · {{ t.fecha | date:'short' }}</td></tr>
+            } @empty { <tr><td colspan="6">Sin tarifas registradas.</td></tr> }</tbody>
+          </table></div>
+        }
+      </section>
+    }
+  </div>
+</section>

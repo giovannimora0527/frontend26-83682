@@ -1,0 +1,151 @@
+<section class="card">
+  <header class="card-header"><h2 class="h5 mb-0">Facturación</h2></header>
+  <div class="card-body">
+    <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Opciones de facturación">
+      <button class="btn btn-outline-primary" [class.active]="vista==='listado'" [disabled]="ocupado" (click)="cambiar('listado')">Facturas emitidas</button>
+      <button class="btn btn-outline-primary" [class.active]="vista==='emision'" [disabled]="ocupado" (click)="cambiar('emision')">Nueva factura</button>
+    </nav>
+    @if (error) {<p class="alert alert-danger" role="alert">{{ error }}</p>}
+    @if (aviso) {<p class="alert alert-success" role="status">{{ aviso }}</p>}
+    @if (ocupado) {<p role="status">Procesando…</p>}
+
+    @if (vista==='listado') {
+      <form class="d-flex flex-wrap align-items-end gap-2 mb-3" (ngSubmit)="buscar()">
+        <label>Desde<input type="date" class="form-control" name="desde" [(ngModel)]="filtros.desde"></label>
+        <label>Hasta<input type="date" class="form-control" name="hasta" [(ngModel)]="filtros.hasta"></label>
+        <label>Propietario<input class="form-control" name="propietario" [(ngModel)]="filtros.propietario"></label>
+        <label>Mascota<input class="form-control" name="mascota" [(ngModel)]="filtros.mascota"></label>
+        <label>Estado<select class="form-select" name="estado" [(ngModel)]="filtros.estado">
+          <option value="">Todos</option>
+          @for(e of estados;track e){<option [value]="e">{{ etiqueta(e) }}</option>}
+        </select></label>
+        <button class="btn btn-primary" [disabled]="ocupado">Buscar facturas</button>
+      </form>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Factura</th><th>Fecha</th><th>Propietario</th><th>Mascota</th><th>Estado</th><th>Total COP</th><th>Saldo COP</th></tr></thead>
+          <tbody>
+            @for(f of facturas;track f.id){
+              <tr><td><button class="btn btn-sm btn-outline-primary text-break" [disabled]="ocupado" (click)="abrir(f.id)">{{ f.numero }}</button></td>
+                <td>{{ f.emitida | slice:0:10 }}</td><td>{{ f.propietario }}</td><td>{{ f.mascota }}</td>
+                <td>{{ etiqueta(f.estado) }}</td><td>{{ f.total }}</td><td>{{ f.saldo }}</td></tr>
+            } @empty {<tr><td colspan="7">Sin facturas para los filtros seleccionados.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <h3 class="h6">Atenciones por facturar</h3>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Atención</th><th>Cita</th><th>Propietario</th><th>Mascota</th><th>Veterinario</th></tr></thead>
+          <tbody>
+            @for(a of atenciones;track a.id) {
+              <tr><td><button class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="seleccionar(a)">Revisar atención {{ a.id }}</button></td>
+                <td>{{ a.cita }}</td><td>{{ a.propietario }}</td><td>{{ a.mascota }}</td><td>{{ a.veterinario }}</td></tr>
+            } @empty {<tr><td colspan="5">Sin atenciones pendientes de facturar.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="d-flex gap-2 mb-3" aria-label="Paginación">
+      <button class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || pagina===0" (click)="buscar(pagina-1)">Anterior</button>
+      <button class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || (vista==='listado' ? facturas.length : atenciones.length)<50"
+        (click)="buscar(pagina+1)">Siguiente</button>
+    </nav>
+
+    @if(origen;as o){
+      <section class="border rounded p-3 mb-3">
+        <h3 class="h5">Vista previa · Atención {{ o.id }}</h3>
+        <p>{{ o.propietario }} · {{ o.mascota }} · {{ o.veterinario }} · {{ o.especialidad }}</p>
+        @if(admin){
+          <form class="d-flex flex-wrap align-items-end gap-2 mb-3" (ngSubmit)="revisar()">
+            <label>Descuento (%)<input class="form-control" name="descuento" inputmode="decimal" maxlength="6" [(ngModel)]="descuento" (ngModelChange)="previa=null"></label>
+            <label>Motivo del descuento<input class="form-control" name="motivo" maxlength="255" [(ngModel)]="motivoDescuento" (ngModelChange)="previa=null"></label>
+            <button class="btn btn-outline-primary" [disabled]="ocupado">Recalcular</button>
+          </form>
+        } @else {
+          <button class="btn btn-sm btn-outline-secondary mb-3" [disabled]="ocupado" (click)="revisar()">Actualizar vista previa</button>
+        }
+        @if(previa;as p){
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead><tr><th>Concepto</th><th>Cantidad</th><th>Unitario COP</th><th>Subtotal</th><th>Descuento</th><th>IVA</th><th>Otros</th><th>Total COP</th></tr></thead>
+              <tbody>
+                @for(l of p.lineas;track l.origen.servicio ? 's'+l.origen.servicio : 'm'+l.origen.movimiento){
+                  <tr><td>{{ l.origen.servicio ? 'Servicio' : 'Medicamento entregado' }} · {{ l.origen.nombre }}</td>
+                    <td>{{ l.origen.cantidad }}</td><td>{{ l.origen.precio }}</td><td>{{ l.importes.subtotal }}</td>
+                    <td>{{ l.importes.descuento }}</td><td>{{ l.importes.iva }}</td><td>{{ l.importes.otros }}</td><td>{{ l.importes.total }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p>Subtotal {{ p.importes.subtotal }} · Descuento {{ p.importes.descuento }} · IVA {{ p.importes.iva }} · Otros impuestos {{ p.importes.otros }}</p>
+          <p><strong>Total COP {{ p.importes.total }}</strong></p>
+          <button class="btn btn-primary" [disabled]="ocupado" (click)="emitir()">Emitir factura</button>
+        }
+      </section>
+    }
+
+    @if(detalle;as d){
+      <section class="border rounded p-3">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <h3 class="h5 text-break">Factura {{ d.factura.numero }}</h3>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-secondary" [disabled]="ocupado" (click)="abrir(d.factura.id)">Actualizar factura</button>
+            <button class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="pdf(d.factura.id)">Descargar factura PDF</button>
+          </div>
+        </div>
+        <p>{{ d.factura.propietario }} · {{ d.factura.mascota }} · {{ d.factura.veterinario }} · {{ d.factura.especialidad }}</p>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead><tr><th>Concepto</th><th>Cantidad</th><th>Unitario COP</th><th>Subtotal</th><th>Descuento</th><th>IVA</th><th>Otros</th><th>Total COP</th></tr></thead>
+            <tbody>
+              @for(l of d.lineas;track l.id){
+                <tr><td>{{ l.servicio_id ? 'Servicio' : 'Medicamento entregado' }} · {{ l.concepto }}</td>
+                  <td>{{ l.cantidad }}</td><td>{{ l.precio_unitario }}</td><td>{{ l.subtotal }}</td>
+                  <td>{{ l.descuento }}</td><td>{{ l.iva }}</td><td>{{ l.otros_impuestos }}</td><td>{{ l.total }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p>Subtotal {{ d.factura.subtotal }} · Descuento {{ d.factura.descuento }} · IVA {{ d.factura.iva }} · Otros impuestos {{ d.factura.otros_impuestos }}</p>
+        <p><strong>Total COP {{ d.factura.total }} · Pagado {{ d.factura.pagado }} · Saldo {{ d.factura.saldo }} · {{ etiqueta(d.factura.estado) }}</strong></p>
+        @if(d.factura.estado==='PENDIENTE_PAGO' || d.factura.estado==='PAGO_PARCIAL'){
+          <form class="d-flex flex-wrap align-items-end gap-2 mb-3" (ngSubmit)="pagar()">
+            <label>Importe COP<input class="form-control" name="importe" inputmode="decimal" maxlength="20" [(ngModel)]="abono.importe" required></label>
+            <label>Método<select class="form-select" name="metodo" [(ngModel)]="abono.metodo">
+              @for(m of metodos;track m){<option [value]="m">{{ etiqueta(m) }}</option>}
+            </select></label>
+            <label>Referencia<input class="form-control" name="referencia" maxlength="100" [(ngModel)]="abono.referencia"></label>
+            <button type="button" class="btn btn-outline-secondary" [disabled]="ocupado" (click)="abono.importe='' + d.factura.saldo">Usar saldo total</button>
+            <button class="btn btn-primary" [disabled]="ocupado">Registrar pago</button>
+          </form>
+        }
+        @if(admin && !d.pagos.length && d.factura.estado!=='ANULADA'){
+          <details class="mb-3"><summary>Anular factura</summary>
+            <form class="d-flex flex-wrap align-items-end gap-2 mt-2" (ngSubmit)="anular()">
+              <label>Motivo de anulación<input class="form-control" name="anulacion" maxlength="255" [(ngModel)]="motivoAnulacion" required></label>
+              <button class="btn btn-outline-danger" [disabled]="ocupado || !motivoAnulacion.trim()">Confirmar anulación</button>
+            </form>
+          </details>
+        }
+        <h4 class="h6">Historial de pagos</h4>
+        <ul>
+          @for(p of d.pagos;track p.id){
+            <li>Pago {{ p.id }} · COP {{ p.importe }} · {{ etiqueta(p.metodo) }} · {{ p.fecha }} · {{ p.responsable }}
+              @if(p.referencia){ · Ref. {{ p.referencia }} }
+            </li>
+          } @empty {<li>Sin pagos registrados.</li>}
+        </ul>
+        <h4 class="h6">Historial de estados</h4>
+        <ul>
+          @for(h of d.historial;track h.id){
+            <li>{{ h.fecha }} · {{ h.responsable }} · {{ h.anterior ? etiqueta(h.anterior)+' → ' : '' }}{{ etiqueta(h.nuevo) }}
+              @if(h.motivo){ · {{ h.motivo }} }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+</section>

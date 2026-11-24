@@ -1,0 +1,93 @@
+<section class="card">
+  <header class="card-header"><h2 class="h5 mb-0">Reportes</h2></header>
+  <div class="card-body">
+    <form class="d-flex flex-wrap align-items-end gap-2 mb-3" (ngSubmit)="consultar()">
+      <label>Reporte
+        <select class="form-select" name="tipo" [(ngModel)]="tipo" (ngModelChange)="limpiar()" [disabled]="ocupado">
+          @for(grupo of grupos;track grupo) {
+            <optgroup [label]="grupo">
+              @for(r of catalogo;track r.id) {
+                @if(r.grupo===grupo) { <option [value]="r.id">{{ r.nombre }}</option> }
+              }
+            </optgroup>
+          }
+        </select>
+      </label>
+        <label>{{ tipo==='LOTES' ? 'Vencimiento desde' : 'Fecha inicial' }}
+          <input class="form-control" name="desde" type="date" [(ngModel)]="filtros.desde" [required]="!esInventario || tipo==='MOVIMIENTOS' || tipo==='DISPENSACIONES' || existenciaHistorica">
+        </label>
+        <label>{{ tipo==='LOTES' ? 'Vencimiento hasta' : 'Fecha final' }}
+          <input class="form-control" name="hasta" type="date" [(ngModel)]="filtros.hasta" [required]="!esInventario || tipo==='MOVIMIENTOS' || tipo==='DISPENSACIONES' || existenciaHistorica">
+        </label>
+      @if(tipo==='EXISTENCIAS') {
+        <small class="align-self-center">Sin fechas se muestra el saldo actual. Con ambas fechas se muestran apertura y cierre por lote.</small>
+      }
+      @if(esInventario) {
+        <label>ID medicamento<input class="form-control" name="medicamento" inputmode="numeric" pattern="[1-9][0-9]*" [(ngModel)]="filtros.medicamento"></label>
+        @if(tipo!=='EXISTENCIAS') {
+          <label>ID lote<input class="form-control" name="lote" inputmode="numeric" pattern="[1-9][0-9]*" [(ngModel)]="filtros.lote"></label>
+        }
+      } @else {
+        <label>ID médico<input class="form-control" name="medico" inputmode="numeric" pattern="[1-9][0-9]*" [(ngModel)]="filtros.medico"></label>
+        <label>ID especialidad<input class="form-control" name="especialidad" inputmode="numeric" pattern="[1-9][0-9]*" [(ngModel)]="filtros.especialidad"></label>
+      }
+      @if(tipo==='CITAS' || tipo==='CONSULTAS' || tipo==='ATENCIONES') {
+        <label>ID propietario<input class="form-control" name="propietario" inputmode="numeric" pattern="[1-9][0-9]*" [(ngModel)]="filtros.propietario"></label>
+        <label>ID mascota<input class="form-control" name="mascota" inputmode="numeric" pattern="[1-9][0-9]*" [(ngModel)]="filtros.mascota"></label>
+      }
+      @if(estados.length) {
+        <label>Estado o tipo<select class="form-select" name="estado" [(ngModel)]="filtros.estado">
+          <option value="">Todos</option>
+          @for(e of estados;track e) {
+            <option [value]="e">{{ e.replaceAll('_',' ').toLowerCase() }}</option>
+          }
+        </select></label>
+      }
+      @if(tipo==='FINANCIERO') {
+        <label>Agrupar por<select class="form-select" name="agrupacion" [(ngModel)]="filtros.agrupacion">
+          <option value="DIA">Día</option><option value="MES">Mes</option><option value="ANIO">Año</option>
+        </select></label>
+      }
+      <button class="btn btn-primary" [disabled]="ocupado">Consultar</button>
+      <button type="button" class="btn btn-outline-secondary" [disabled]="ocupado" (click)="limpiar()">Limpiar filtros</button>
+    </form>
+    @if(error) { <p class="alert alert-danger" role="alert">{{ error }}</p> }
+    @if(ocupado) { <p role="status">Procesando…</p> }
+    @if(resultado; as r) {
+      <div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-2">
+        <div><h3 class="h5 mb-1">{{ r.titulo }}</h3><small>Generado (Bogotá) · {{ r.generado.replace('T',' ').slice(0,19) }}</small></div>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline-primary" [disabled]="ocupado" (click)="exportar('pdf')">Descargar PDF</button>
+          <button type="button" class="btn btn-outline-primary" [disabled]="ocupado" (click)="exportar('excel')">Descargar Excel</button>
+        </div>
+      </div>
+      <p class="small mb-2">
+        @for(f of entradas(r.filtros);track f[0]) { <span class="me-3">{{ f[0] }} · {{ f[1] }}</span> }
+      </p>
+      <dl class="d-flex flex-wrap gap-2" aria-label="Totales del reporte">
+        @for(t of entradas(r.totales);track t[0]) {
+          <div class="border rounded p-2"><dt>{{ etiqueta(t[0]) }}</dt><dd class="mb-0">{{ total(t[0],t[1]) }}</dd></div>
+        }
+      </dl>
+      @if(r.registros===0) {
+        <p role="status">No hubo resultados para los filtros seleccionados.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead><tr>@for(c of r.columnas;track c.clave) { <th scope="col">{{ c.titulo }}</th> }</tr></thead>
+            <tbody>
+              @for(f of r.filas;track $index) {
+                <tr>@for(c of r.columnas;track c.clave) { <td>{{ valor(f[c.clave],c) }}</td> }</tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <nav class="d-flex flex-wrap gap-2 align-items-center" aria-label="Páginas del reporte">
+          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || r.pagina===0" (click)="cambiarPagina(r.pagina-1)">Anterior</button>
+          <span>Página {{ r.pagina+1 }} · {{ r.registros }} registros</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || (r.pagina+1)*50>=r.registros" (click)="cambiarPagina(r.pagina+1)">Siguiente</button>
+        </nav>
+      }
+    }
+  </div>
+</section>

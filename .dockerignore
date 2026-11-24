@@ -1,0 +1,10 @@
+*
+!Dockerfile
+!nginx.conf.template
+!package.json
+!package-lock.json
+!angular.json
+!tsconfig.json
+!tsconfig.app.json
+!src/
+!src/**

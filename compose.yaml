@@ -1,0 +1,22 @@
+services:
+  frontend:
+    build: .
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-18080}:80"
+    environment:
+      BACKEND_UPSTREAM: "${BACKEND_UPSTREAM:-backend:8080}"
+    networks:
+      - backend
+    restart: unless-stopped
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  backend:
+    external: true
+    name: "${BACKEND_NETWORK:-backend2026-83682_default}"

@@ -1,0 +1,48 @@
+<section class="border rounded p-3 mb-3" aria-label="Configuración de disponibilidad">
+  <h3 class="h5">Disponibilidad semanal</h3>
+  @if (error) { <p class="alert alert-danger" role="alert">{{ error }}</p> }
+  @if (aviso) { <p class="alert alert-success" role="status">{{ aviso }}</p> }
+  @if (ocupado) { <p role="status">Procesando disponibilidad…</p> }
+  @if (datos; as horario) {
+    <div class="mb-2">
+      <span class="me-2">{{ horario.activo ? 'Médico activo' : 'Médico inactivo' }}</span>
+      @if (medico !== null) {
+        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado" (click)="alternarActividad()">
+          {{ horario.activo ? 'Inactivar médico' : 'Activar médico' }}
+        </button>
+      }
+    </div>
+    <form #semanal="ngForm" (ngSubmit)="guardar()">
+      @for (f of horario.horarios; track $index) {
+        <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+          <label>Día
+            <select class="form-select" [(ngModel)]="f.dia" [name]="'dia'+$index">
+              @for (dia of dias; track $index) { <option [ngValue]="$index+1">{{ dia }}</option> }
+            </select>
+          </label>
+          <label>Desde <input class="form-control" type="time" [name]="'inicio'+$index" [(ngModel)]="f.inicio" required></label>
+          <label>Hasta <input class="form-control" type="time" [name]="'fin'+$index" [(ngModel)]="f.fin" required></label>
+          <button type="button" class="btn btn-outline-secondary" (click)="horario.horarios.splice($index,1)">Retirar franja</button>
+        </div>
+      } @empty { <p>No hay horarios configurados.</p> }
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary" (click)="agregar()">Agregar franja</button>
+        <button type="submit" class="btn btn-primary" [disabled]="ocupado || semanal.invalid">Guardar horarios</button>
+      </div>
+    </form>
+    <h4 class="h6 mt-4">Ausencias</h4>
+    <form #excepcion="ngForm" class="d-flex gap-2 align-items-end flex-wrap" (ngSubmit)="registrar()">
+      <label>Inicio de ausencia <input class="form-control" type="datetime-local" name="desde" [(ngModel)]="ausencia.inicio" required></label>
+      <label>Fin de ausencia <input class="form-control" type="datetime-local" name="hasta" [(ngModel)]="ausencia.fin" required></label>
+      <label>Motivo de ausencia <input class="form-control" name="motivoAusencia" [(ngModel)]="ausencia.motivo" maxlength="255" required></label>
+      <button type="submit" class="btn btn-primary" [disabled]="ocupado || excepcion.invalid">Registrar ausencia</button>
+    </form>
+    @if (horario.ausencias.length) {
+      <ul class="mt-2 mb-0">
+        @for (a of horario.ausencias; track a.id) {
+          <li>{{ a.inicio.replace('T',' ') }} a {{ a.fin.replace('T',' ') }} · {{ a.motivo }}</li>
+        }
+      </ul>
+    }
+  }
+</section>
