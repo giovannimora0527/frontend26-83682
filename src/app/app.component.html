@@ -1,2 +1,4 @@
 <router-outlet><app-spinner></app-spinner></router-outlet>
-<app-footer />
+@if (!enLogin) {
+  <app-footer />
+}

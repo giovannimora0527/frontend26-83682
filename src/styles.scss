@@ -25,14 +25,21 @@
 
 /* Mis estilos personalizados que pueden usar todos los componentes */
 
+.clinic-home__actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, max-content));
+	gap: 1rem 1.5rem;
+	margin-top: 2rem;
+}
+
 .clinic-home__action {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.65rem;
-	margin-top: 2rem;
 	padding: 0.8rem 1.1rem;
 	border-radius: 4px;
-	background: var(--clinic-teal);
+	background: #1a7fd6;
+	box-shadow: 0 6px 14px rgba(26, 92, 192, 0.25);
 	color: #ffffff;
 	font-weight: 600;
 	text-decoration: none;
@@ -41,7 +48,13 @@
 
 .clinic-home__action:hover,
 .clinic-home__action:focus-visible {
-	background: #05626d;
+	background: #1450a8;
 	color: #ffffff;
 	transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+	.clinic-home__actions {
+		grid-template-columns: 1fr;
+	}
 }

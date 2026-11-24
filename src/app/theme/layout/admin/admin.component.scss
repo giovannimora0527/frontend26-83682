@@ -1,8 +1,8 @@
 .clinic-home {
 	--clinic-ink: #17324d;
 	--clinic-muted: #647789;
-	--clinic-teal: #087e8b;
-	--clinic-mint: #e7f4f1;
+	--clinic-teal: #1a5cc0;
+	--clinic-mint: #e8f0fd;
 	--clinic-line: #d9e5e6;
 	display: grid;
 	grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.65fr);
@@ -12,7 +12,7 @@
 	padding: 3.25rem clamp(1.25rem, 4vw, 4.5rem);
 	border: 1px solid var(--clinic-line);
 	border-radius: 8px;
-	background: linear-gradient(135deg, #ffffff 0%, #f3f8f7 100%);
+	background: linear-gradient(135deg, #ffffff 0%, #f2f6fd 100%);
 	color: var(--clinic-ink);
 }
 
@@ -53,8 +53,8 @@
 	flex-direction: column;
 	gap: 0.65rem;
 	padding: 2rem;
-	border-left: 3px solid var(--clinic-teal);
-	background: #12385a;
+	border-left: 3px solid #04a9f5;
+	background: #123f82;
 	box-shadow: 0 14px 28px rgba(18, 56, 90, 0.16);
 	color: #ffffff;
 }
@@ -90,7 +90,7 @@
 }
 
 .clinic-home__panel span {
-	color: #8ed8d1;
+	color: #7fc4ff;
 	font-size: 0.8rem;
 	font-weight: 700;
 	text-transform: uppercase;

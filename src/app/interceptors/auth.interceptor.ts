@@ -9,7 +9,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const base = new URL(environment.apiUrlAuth, document.baseURI);
   const url = new URL(request.url, document.baseURI);
   if (base.origin !== url.origin || !url.pathname.startsWith(base.pathname + '/')
-      || url.pathname === base.pathname + '/auth/login') {
+      || ['login', 'verificar', 'reenviar', 'recuperar', 'restablecer']
+        .some(ruta => url.pathname === base.pathname + '/auth/' + ruta)) {
     return next(request);
   }
 

@@ -29,12 +29,29 @@ export class AdminComponent {
   private readonly menuService = inject(MenuService);
 
   readonly auth = inject(AuthService);
-  readonly puedeGestionarUsuarios = toSignal(
+  /** Accesos rápidos de la página de inicio, según los menús permitidos al perfil. */
+  private static readonly ACCESOS: { code: string; texto: string; icono: string }[] = [
+    { code: 'mascotas', texto: 'Gestionar mascotas', icono: 'feather icon-heart' },
+    { code: 'historias', texto: 'Gestionar historias médicas', icono: 'feather icon-file-text' },
+    { code: 'usuarios', texto: 'Gestionar usuarios', icono: 'feather icon-users' },
+    { code: 'cita', texto: 'Gestionar citas', icono: 'feather icon-calendar' },
+    { code: 'clientes', texto: 'Gestionar clientes', icono: 'feather icon-user-check' },
+    { code: 'medicamentos', texto: 'Gestionar medicamentos', icono: 'feather icon-package' },
+    { code: 'formulas', texto: 'Gestionar fórmulas', icono: 'feather icon-clipboard' },
+    { code: 'despacho', texto: 'Despachar fórmulas', icono: 'feather icon-truck' },
+    { code: 'facturacion', texto: 'Facturación', icono: 'feather icon-dollar-sign' },
+    { code: 'reportes', texto: 'Reportes', icono: 'feather icon-bar-chart-2' }
+  ];
+
+  readonly accesos = toSignal(
     this.menuService.obtenerMenusPropios().pipe(
-      map(menus => menus.some(menu => menu.url === '/inicio/usuarios')),
-      catchError(() => of(false))
+      map(menus => AdminComponent.ACCESOS
+        .map(a => ({ ...a, url: menus.find(m => m.code === a.code)?.url }))
+        .filter((a): a is { code: string; texto: string; icono: string; url: string } => !!a.url)
+        .slice(0, 6)),
+      catchError(() => of([]))
     ),
-    { initialValue: false }
+    { initialValue: [] as { code: string; texto: string; icono: string; url: string }[] }
   );
 
   private readonly router = inject(Router);

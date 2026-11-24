@@ -17,6 +17,11 @@ export class AppComponent implements OnInit {
 
   title = 'Clínica Veterinaria Uniminuto';
 
+  /** La pantalla de inicio de sesión ocupa toda la ventana y no muestra el pie de página general. */
+  get enLogin(): boolean {
+    return this.router.url.startsWith('/login');
+  }
+
   // life cycle hook
   ngOnInit() {
     this.router.events.subscribe((evt) => {

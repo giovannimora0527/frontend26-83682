@@ -1,138 +1,134 @@
+<main class="acceso">
 
-<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
-
-  <div class="card shadow border-0"
-       style="width: 100%; max-width: 430px;">
-
-    <div class="card-body p-4 p-md-5">
-
-      <div class="text-center mb-4">
-
-        <h3 class="fw-bold text-primary">
-          Clínica Veterinaria
-        </h3>
-
-        <p class="text-muted">
-          UNIMINUTO
-        </p>
-
-        <h5>Iniciar sesión</h5>
-
-        <p class="text-muted small">
-          Ingresa tus credenciales para continuar.
-        </p>
-
-      </div>
-
-      <div
-        *ngIf="mensajeError"
-        class="alert alert-danger"
-        role="alert"
-      >
-        {{ mensajeError }}
-      </div>
-
-      <form
-        #loginForm="ngForm"
-        (ngSubmit)="iniciarSesion()"
-      >
-
-        <!-- USUARIO -->
-        <div class="mb-3">
-
-          <label
-            for="username"
-            class="form-label"
-          >
-            Usuario
-          </label>
-
-          <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-control"
-            placeholder="Ingresa tu usuario"
-            [(ngModel)]="username"
-            autocomplete="username"
-            required
-            [disabled]="cargando"
-          />
-
-        </div>
-
-        <!-- CONTRASEÑA -->
-        <div class="mb-3">
-
-          <label
-            for="password"
-            class="form-label"
-          >
-            Contraseña
-          </label>
-
-          <input
-            [type]="mostrarPassword ? 'text' : 'password'"
-            id="password"
-            name="password"
-            class="form-control"
-            placeholder="Ingresa tu contraseña"
-            [(ngModel)]="password"
-            autocomplete="current-password"
-            required
-            [disabled]="cargando"
-          />
-
-          <div class="form-check mt-2">
-
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="mostrarPassword"
-              [(ngModel)]="mostrarPassword"
-              name="mostrarPassword"
-            />
-
-            <label
-              class="form-check-label"
-              for="mostrarPassword"
-            >
-              Mostrar contraseña
-            </label>
-
-          </div>
-
-        </div>
-
-        <!-- BOTÓN -->
-        <button
-          type="submit"
-          class="btn btn-primary w-100 py-2"
-          [disabled]="loginForm.invalid || cargando"
-        >
-
-          <span *ngIf="!cargando">
-            Iniciar sesión
-          </span>
-
-          <span *ngIf="cargando">
-            Verificando credenciales...
-          </span>
-
-        </button>
-
-      </form>
-
-      <div class="text-center mt-4">
-
-        <small class="text-muted">
-          Sistema de Gestión Veterinaria
-        </small>
-
-      </div>
-
+  <!-- PANEL IZQUIERDO: IMAGEN Y MENSAJE -->
+  <section class="acceso__hero" [style.background-image]="imagenFondo" aria-label="Clínica Veterinaria Uniminuto">
+    <div class="acceso__hero-texto">
+      <h1>Cuidamos a quienes más quieres</h1>
+      <p>Atención veterinaria con amor, experiencia y compromiso para la salud de tu mascota.</p>
+      <ul class="acceso__chips">
+        <li><i class="feather icon-shield" aria-hidden="true"></i> Consultas y controles</li>
+        <li><i class="feather icon-shield" aria-hidden="true"></i> Vacunación y prevención</li>
+        <li><i class="feather icon-file-text" aria-hidden="true"></i> Historia clínica digital</li>
+      </ul>
     </div>
+  </section>
 
+  <!-- PANEL DERECHO: FORMULARIOS -->
+  <section class="acceso__panel">
+    <div class="acceso__caja">
+
+      <div class="acceso__logo">
+        <img src="assets/images/logo_mascotas.png" alt="Logo Clínica Veterinaria Uniminuto" />
+      </div>
+
+      @switch (paso) {
+
+        <!-- PASO 1: USUARIO Y CONTRASEÑA -->
+        @case ('credenciales') {
+          <h2>Iniciar sesión</h2>
+          <p class="acceso__sub">Ingresa tus credenciales para continuar</p>
+          <ng-container [ngTemplateOutlet]="mensajes" />
+
+          <form (ngSubmit)="iniciarSesion()" novalidate>
+            <label for="username">Usuario</label>
+            <input id="username" name="username" type="text" class="acceso__input" [(ngModel)]="username"
+              autocomplete="username" [disabled]="cargando" required />
+
+            <label for="password">Contraseña</label>
+            <div class="acceso__clave">
+              <input id="password" name="password" class="acceso__input" [type]="mostrarPassword ? 'text' : 'password'"
+                [(ngModel)]="password" autocomplete="current-password" [disabled]="cargando" required />
+              <button type="button" class="acceso__ojo" (click)="mostrarPassword = !mostrarPassword"
+                [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                <i class="feather" [class.icon-eye]="!mostrarPassword" [class.icon-eye-off]="mostrarPassword"></i>
+              </button>
+            </div>
+
+            <div class="acceso__olvido">
+              <button type="button" class="acceso__enlace" (click)="abrirRecuperacion()">¿Olvidaste tu contraseña?</button>
+            </div>
+
+            <button type="submit" class="acceso__boton acceso__boton--oscuro" [disabled]="cargando">
+              {{ cargando ? 'Verificando credenciales…' : 'Ingresar' }}
+            </button>
+          </form>
+        }
+
+        <!-- PASO 2: CÓDIGO DE VERIFICACIÓN -->
+        @case ('verificacion') {
+          <h2>Verificación</h2>
+          <p class="acceso__sub">Ingresa el código de 6 caracteres enviado a tu correo electrónico
+            @if (correo) { <strong>{{ correo }}</strong> }</p>
+          <ng-container [ngTemplateOutlet]="mensajes" />
+
+          <form (ngSubmit)="verificar()" novalidate>
+            <input name="codigo" class="acceso__codigo" [(ngModel)]="codigo" maxlength="6" autocomplete="one-time-code"
+              aria-label="Código de verificación" [disabled]="cargando" autofocus />
+            <button type="submit" class="acceso__boton" [disabled]="cargando || codigo.trim().length !== 6">
+              {{ cargando ? 'Verificando…' : 'Verificar' }}
+            </button>
+          </form>
+          <ng-container [ngTemplateOutlet]="acciones" />
+        }
+
+        <!-- RECUPERAR CONTRASEÑA: SOLICITUD -->
+        @case ('recuperar') {
+          <h2>Recuperar contraseña</h2>
+          <p class="acceso__sub">Ingresa tu usuario o tu correo y te enviaremos un código de 6 caracteres</p>
+          <ng-container [ngTemplateOutlet]="mensajes" />
+
+          <form (ngSubmit)="solicitarRecuperacion()" novalidate>
+            <label for="usuarioRecuperar">Usuario o correo electrónico</label>
+            <input id="usuarioRecuperar" name="usuarioRecuperar" type="text" class="acceso__input"
+              [(ngModel)]="usuarioRecuperar" [disabled]="cargando" required />
+            <button type="submit" class="acceso__boton acceso__boton--oscuro" [disabled]="cargando">
+              {{ cargando ? 'Enviando…' : 'Enviar código' }}
+            </button>
+          </form>
+          <div class="acceso__acciones">
+            <button type="button" class="acceso__enlace" (click)="volver()">Volver</button>
+          </div>
+        }
+
+        <!-- RECUPERAR CONTRASEÑA: CÓDIGO Y NUEVA CLAVE -->
+        @case ('restablecer') {
+          <h2>Nueva contraseña</h2>
+          <p class="acceso__sub">Si los datos son correctos, recibirás un código de 6 caracteres en tu correo
+            @if (correo) { <strong>{{ correo }}</strong> }</p>
+          <ng-container [ngTemplateOutlet]="mensajes" />
+
+          <form (ngSubmit)="restablecer()" novalidate>
+            <input name="codigo" class="acceso__codigo" [(ngModel)]="codigo" maxlength="6" aria-label="Código de verificación"
+              [disabled]="cargando" />
+            <label for="nuevaClave">Nueva contraseña</label>
+            <input id="nuevaClave" name="nuevaClave" type="password" class="acceso__input" [(ngModel)]="nuevaClave"
+              autocomplete="new-password" [disabled]="cargando" />
+            <label for="confirmarClave">Confirmar contraseña</label>
+            <input id="confirmarClave" name="confirmarClave" type="password" class="acceso__input"
+              [(ngModel)]="confirmarClave" autocomplete="new-password" [disabled]="cargando" />
+            <button type="submit" class="acceso__boton" [disabled]="cargando">
+              {{ cargando ? 'Guardando…' : 'Cambiar contraseña' }}
+            </button>
+          </form>
+          <ng-container [ngTemplateOutlet]="acciones" />
+        }
+      }
+
+      <p class="acceso__pie">© Clínica Veterinaria Uniminuto</p>
+    </div>
+  </section>
+</main>
+
+<ng-template #mensajes>
+  @if (mensajeError) { <div class="alert alert-danger py-2 small" role="alert">{{ mensajeError }}</div> }
+  @if (mensajeInfo) { <div class="alert alert-success py-2 small" role="status">{{ mensajeInfo }}</div> }
+</ng-template>
+
+<ng-template #acciones>
+  <div class="acceso__acciones">
+    <button type="button" class="acceso__enlace" (click)="volver()">Volver</button>
+    <button type="button" class="acceso__enlace" (click)="reenviar()" [disabled]="cargando || segundosReenvio > 0">
+      {{ segundosReenvio > 0 ? 'Reenviar código (' + segundosReenvio + ' s)' : 'Reenviar código' }}
+    </button>
   </div>
-
-</div>
+</ng-template>
