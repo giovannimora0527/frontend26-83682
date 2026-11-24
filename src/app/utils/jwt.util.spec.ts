@@ -1,16 +1,7 @@
 import { getJwtMenus, getJwtPayload, JwtMenu, JwtPayload } from './jwt.util';
 
 describe('JWT utilities', () => {
-  const menu: JwtMenu = {
-    activo: true,
-    code: 'cita',
-    fechaCreacion: '2026-01-01T00:00:00',
-    fechaModificacion: null,
-    icon: 'bi bi-calendar',
-    menuId: 1,
-    title: 'Gesti\u00f3n de citas',
-    url: '/inicio/citas'
-  };
+  const menu: JwtMenu = { activo: true, code: 'citas', name: 'Gestión de citas' };
   let payload: JwtPayload;
   let previousToken: string | null;
 
@@ -30,8 +21,9 @@ describe('JWT utilities', () => {
       sub: '1',
       username: 'test',
       email: 'test@example.com',
-      rol: 'Administrador',
+      rol: 'MEDICO',
       menus: JSON.stringify([menu]),
+      medicoId: 2,
       iat: 1793066869,
       exp: 1793070469
     };
@@ -84,7 +76,7 @@ describe('JWT utilities', () => {
   });
 
   it('rejects missing claims and wrong claim types', () => {
-    for (const value of [null, [], {}, { ...payload, exp: '123' }, { ...payload, menus: [] }]) {
+    for (const value of [null, [], {}, { ...payload, exp: '123' }, { ...payload, menus: [] }, { ...payload, medicoId: '2' }]) {
       storePayload(value);
       expect(() => getJwtPayload()).toThrowError('El contenido del token JWT es invalido');
     }
@@ -95,5 +87,12 @@ describe('JWT utilities', () => {
       storePayload({ ...payload, menus });
       expect(() => getJwtMenus()).toThrow();
     }
+  });
+
+  it('treats a missing medicoId as null for the other roles', () => {
+    const sinMedico: Partial<JwtPayload> = { ...payload };
+    delete sinMedico.medicoId;
+    storePayload(sinMedico);
+    expect(getJwtPayload()?.medicoId).toBeNull();
   });
 });

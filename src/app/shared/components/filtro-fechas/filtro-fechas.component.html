@@ -1,0 +1,32 @@
+<div class="row g-2 align-items-end">
+  <div class="col-6 col-md-auto">
+    <label class="form-label mb-1" [for]="id + '-desde'">Desde</label>
+    <input
+      type="date"
+      class="form-control"
+      [id]="id + '-desde'"
+      [ngModel]="desde"
+      (ngModelChange)="desde = $event ?? ''; emitir()"
+      [class.is-invalid]="error"
+      [attr.aria-describedby]="id + '-error'"
+    />
+  </div>
+  <div class="col-6 col-md-auto">
+    <label class="form-label mb-1" [for]="id + '-hasta'">Hasta</label>
+    <input
+      type="date"
+      class="form-control"
+      [id]="id + '-hasta'"
+      [ngModel]="hasta"
+      (ngModelChange)="hasta = $event ?? ''; emitir()"
+      [class.is-invalid]="error"
+      [attr.aria-describedby]="id + '-error'"
+    />
+  </div>
+  <div class="col-12 col-md d-flex flex-wrap gap-1">
+    @for (atajo of atajos; track atajo.clave) {
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-0 me-0" (click)="aplicar(atajo.clave)">{{ atajo.titulo }}</button>
+    }
+  </div>
+</div>
+<div class="text-danger small" role="alert" [id]="id + '-error'">{{ error }}</div>

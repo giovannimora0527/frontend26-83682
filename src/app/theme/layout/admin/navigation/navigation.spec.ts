@@ -4,16 +4,7 @@ describe('getNavigationItems', () => {
   let previousToken: string | null;
 
   function storeMenus(codes: string[], inactiveCodes: string[] = []): void {
-    const menus = codes.map((code, index) => ({
-      activo: !inactiveCodes.includes(code),
-      code,
-      fechaCreacion: '2026-01-01T00:00:00',
-      fechaModificacion: null,
-      icon: 'token-icon',
-      menuId: index + 1,
-      title: 'token-title',
-      url: '/token-url'
-    }));
+    const menus = codes.map((code) => ({ activo: !inactiveCodes.includes(code), code, name: 'token-name' }));
     const payload = {
       sub: '1',
       username: 'test',
@@ -44,25 +35,29 @@ describe('getNavigationItems', () => {
     expect(getNavigationItems()).toEqual([]);
   });
 
+  const codigos = () => getNavigationItems().flatMap((grupo) => grupo.children?.map((item) => item.id) ?? []);
+
   it('filters by code, preserves catalog order and local menu metadata', () => {
-    storeMenus(['usuarios', 'cita', 'unknown']);
+    storeMenus(['despacho', 'usuarios', 'clientes', 'unknown']);
     const result = getNavigationItems();
-    expect(result.length).toBe(1);
-    expect(result[0].children?.map((item) => item.id)).toEqual(['cita', 'usuarios']);
+    expect(result.map((grupo) => grupo.title)).toEqual(['Administración', 'Farmacia']);
+    expect(codigos()).toEqual(['usuarios', 'clientes', 'despacho']);
     expect(result[0].children?.[0]).toEqual(NavigationItems[0].children?.[0]);
-    expect(result[0].children?.[1].url).toBe('/inicio/usuarios');
+    expect(result[1].children?.[0].url).toBe('/inicio/despacho');
   });
 
-  it('includes all nine system menus when authorized', () => {
-    const codes = ['cita', 'clientes', 'especializaciones', 'formulas', 'historias', 'mascotas', 'medicamentos', 'medicos', 'usuarios'];
+  it('includes the sixteen contract menus when authorized', () => {
+    const codes = ['clientes', 'mascotas', 'medicos', 'especializaciones', 'citas', 'calendario', 'atencion', 'historias', 'formulas',
+      'inventario', 'carga-inventario', 'despacho', 'tarifas', 'facturacion', 'reportes', 'usuarios'];
     storeMenus(codes);
-    expect(getNavigationItems()[0].children?.map((item) => item.id)).toEqual(codes);
+    expect(codigos().sort()).toEqual([...codes].sort());
+    expect(getNavigationItems().map((grupo) => grupo.title)).toEqual(['Administración', 'Agenda y atención', 'Farmacia', 'Finanzas']);
   });
 
   it('excludes inactive menus and removes empty groups', () => {
-    storeMenus(['cita', 'clientes'], ['cita']);
-    expect(getNavigationItems()[0].children?.map((item) => item.id)).toEqual(['clientes']);
-    storeMenus(['cita'], ['cita']);
+    storeMenus(['citas', 'clientes'], ['citas']);
+    expect(codigos()).toEqual(['clientes']);
+    storeMenus(['citas'], ['citas']);
     expect(getNavigationItems()).toEqual([]);
     storeMenus([]);
     expect(getNavigationItems()).toEqual([]);
@@ -70,11 +65,11 @@ describe('getNavigationItems', () => {
 
   it('does not mutate the catalog or reuse previous permissions', () => {
     const original = JSON.stringify(NavigationItems);
-    storeMenus(['cita']);
+    storeMenus(['citas']);
     const first = getNavigationItems();
     first[0].children[0].title = 'changed';
     storeMenus(['clientes']);
-    expect(getNavigationItems()[0].children?.map((item) => item.id)).toEqual(['clientes']);
+    expect(codigos()).toEqual(['clientes']);
     expect(JSON.stringify(NavigationItems)).toBe(original);
   });
 
@@ -92,10 +87,10 @@ describe('getNavigationItems', () => {
       { id: 'empty', title: 'Empty', type: 'collapse', children: [catalog[1]] }
     ];
     try {
-      storeMenus(['cita']);
+      storeMenus(['usuarios']);
       const result = getNavigationItems()[0].children;
       expect(result.length).toBe(1);
-      expect(result[0].children?.map((item) => item.id)).toEqual(['cita']);
+      expect(result[0].children?.map((item) => item.id)).toEqual(['usuarios']);
     } finally {
       NavigationItems[0].children = catalog;
     }

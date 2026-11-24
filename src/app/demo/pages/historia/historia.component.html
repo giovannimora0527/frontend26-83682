@@ -190,15 +190,15 @@
                                     <dt class="col-sm-4">Fecha de creación de la fórmula</dt>
                                     <dd class="col-sm-8">{{ (formula.fechaCreacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                     <dt class="col-sm-4">Última actualización de la fórmula</dt>
-                                    <dd class="col-sm-8">{{ ((formula.fechaActualizacionRegistro ?? formula.fecha_actualizacion_registro) | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
+                                    <dd class="col-sm-8">{{ (formula.fechaActualizacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                     <dt class="col-sm-4">Fecha de compra del medicamento</dt>
-                                    <dd class="col-sm-8">{{ ((formula.medicamento.fechaCompra ?? formula.medicamento.fecha_compra) | date:'yyyy-MM-dd') || 'No informado' }}</dd>
+                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaCompra | date:'yyyy-MM-dd') || 'No informado' }}</dd>
                                     <dt class="col-sm-4">Fecha de vencimiento del medicamento</dt>
-                                    <dd class="col-sm-8">{{ ((formula.medicamento.fechaVence ?? formula.medicamento.fecha_vence) | date:'yyyy-MM-dd') || 'No informado' }}</dd>
+                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaVence | date:'yyyy-MM-dd') || 'No informado' }}</dd>
                                     <dt class="col-sm-4">Registro del medicamento</dt>
-                                    <dd class="col-sm-8">{{ ((formula.medicamento.fechaCreacionRegistro ?? formula.medicamento.fecha_creacion_registro) | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
+                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaCreacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                     <dt class="col-sm-4">Modificación del medicamento</dt>
-                                    <dd class="col-sm-8">{{ ((formula.medicamento.fechaModificacionRegistro ?? formula.medicamento.fecha_modificacion_registro) | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
+                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaModificacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                     <dt class="col-sm-4">Cita de la fórmula</dt>
                                     <dd class="col-sm-8">{{ formula.cita.id ?? 'No informado' }} — {{ (formula.cita.fechaHora | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                 </dl>

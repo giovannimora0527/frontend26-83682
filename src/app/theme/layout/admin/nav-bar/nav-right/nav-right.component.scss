@@ -1,0 +1,24 @@
+.sesion {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 70px;
+}
+
+.sesion__usuario {
+  display: grid;
+  line-height: 1.25;
+  text-align: right;
+}
+
+@media (max-width: 991px) {
+  .sesion {
+    justify-content: space-between;
+    padding-right: 3rem;
+  }
+
+  .sesion__usuario {
+    color: #fff;
+    text-align: left;
+  }
+}

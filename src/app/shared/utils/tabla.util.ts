@@ -41,3 +41,71 @@ export function paginar<T>(lista: readonly T[], pagina: number, tamano: number):
   const actual = Math.max(1, Math.min(pagina, totalPaginas || 1));
   return { items: lista.slice((actual - 1) * tamano, actual * tamano), pagina: actual, totalPaginas };
 }
+
+export type Columnas<T> = Record<string, (item: T) => ValorCelda>;
+
+/** Estado de una tabla con búsqueda, orden por columna y paginación en el navegador. */
+export class Tabla<T> {
+  private datos: readonly T[] = [];
+  private textoBusqueda = '';
+  private paginaPedida = 1;
+  private tamanoPagina: number;
+  direccion: Direccion = 'asc';
+
+  constructor(
+    private readonly columnas: Columnas<T>,
+    public columna: string,
+    tamano = 10
+  ) {
+    this.tamanoPagina = tamano;
+  }
+
+  get items(): readonly T[] {
+    return this.datos;
+  }
+  set items(valor: readonly T[]) {
+    this.datos = valor;
+  }
+
+  get termino(): string {
+    return this.textoBusqueda;
+  }
+  set termino(valor: string) {
+    this.textoBusqueda = valor;
+    this.paginaPedida = 1;
+  }
+
+  get tamano(): number {
+    return this.tamanoPagina;
+  }
+  set tamano(valor: number) {
+    this.tamanoPagina = valor;
+    this.paginaPedida = 1;
+  }
+
+  get filtradas(): T[] {
+    const valores = Object.values(this.columnas);
+    return filtrar(this.datos, this.textoBusqueda, (item) => valores.map((valor) => valor(item)));
+  }
+
+  get visibles(): T[] {
+    return paginar(ordenar(this.filtradas, this.columnas[this.columna], this.direccion), this.paginaPedida, this.tamanoPagina).items;
+  }
+
+  get pagina(): number {
+    return paginar(this.filtradas, this.paginaPedida, this.tamanoPagina).pagina;
+  }
+  set pagina(valor: number) {
+    this.paginaPedida = valor;
+  }
+
+  ordenarPor(columna: string): void {
+    this.direccion = this.columna === columna && this.direccion === 'asc' ? 'desc' : 'asc';
+    this.columna = columna;
+    this.paginaPedida = 1;
+  }
+
+  ariaSort(columna: string): 'ascending' | 'descending' | 'none' {
+    return this.columna !== columna ? 'none' : this.direccion === 'asc' ? 'ascending' : 'descending';
+  }
+}

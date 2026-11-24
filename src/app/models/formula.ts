@@ -9,7 +9,6 @@ export class Formula {
 	indicaciones?: string | null;
 	fechaCreacionRegistro?: Date | string;
 	fechaActualizacionRegistro?: Date | string | null;
-	fecha_actualizacion_registro?: Date | null;
 	frecuencia!: string;
 	duracion!: string;
 	citaId?: number;

@@ -16,88 +16,65 @@ export interface NavigationItem {
 
   children?: NavigationItem[];
 }
+/** Opciones del contrato (C4): el id es el código del menú y define la ruta. */
+const opcion = (id: string, title: string, icon: string): NavigationItem => ({
+  id,
+  title,
+  type: 'item',
+  url: `/inicio/${id}`,
+  icon,
+  classes: 'nav-item'
+});
+
 export const NavigationItems: NavigationItem[] = [
   {
-    id: 'navigation',
-    title: 'Inicio',
+    id: 'administracion',
+    title: 'Administración',
     type: 'group',
-    icon: 'icon-navigation',
+    icon: 'icon-settings',
     children: [
-      {
-        id: 'cita',
-        title: 'Gestión de Citas',
-        type: 'item',
-        url: '/inicio/citas',
-        icon: 'bi bi-calendar',
-        classes: 'nav-item'
-      },
-      {
-        id: 'clientes',
-        title: 'Gestión de Clientes',
-        type: 'item',
-        url: '/inicio/clientes',
-        icon: 'bi bi-person-check',
-        classes: 'nav-item'
-      },
-      {
-        id: 'especializaciones',
-        title: 'Gestión de Especializaciones',
-        type: 'item',
-        url: '/inicio/especializaciones',
-        icon: 'fa-solid fa-user-graduate',
-        classes: 'nav-item'
-      },
-      {
-        id: 'formulas',
-        title: 'Gestión de Formulas',
-        type: 'item',
-        url: '/inicio/formulas',
-        icon: 'fa-solid fa-clipboard-list',
-        classes: 'nav-item'
-      },
-      {
-        id: 'historias',
-        title: 'Gestión de Historias',
-        type: 'item',
-        url: '/inicio/historias',
-        icon: 'fa-solid fa-book-medical',
-        classes: 'nav-item'
-      },
-      {
-        id: 'mascotas',
-        title: 'Gestión de Mascotas',
-        type: 'item',
-        url: '/inicio/mascotas',
-        icon: 'fa-solid fa-paw',
-        classes: 'nav-item'
-      },
-      {
-        id: 'medicamentos',
-        title: 'Gestión de Medicamentos',
-        type: 'item',
-        url: '/inicio/medicamentos',
-        icon: 'fa-solid fa-capsules',
-        classes: 'nav-item'
-      },
-      {
-        id: 'medicos',
-        title: 'Gestión de Medicos',
-        type: 'item',
-        url: '/inicio/medicos',
-        icon: 'fa-solid fa-user-doctor',
-        classes: 'nav-item'
-      },
-      {
-        id: 'usuarios',
-        title: 'Gestión de Usuarios',
-        type: 'item',
-        url: '/inicio/usuarios',
-        icon: 'feather icon-users',
-        classes: 'nav-item'
-      },
-      /* ---------- Nuevos menus aqui -------------  */
+      opcion('usuarios', 'Usuarios', 'feather icon-users'),
+      opcion('clientes', 'Clientes', 'bi bi-person-check'),
+      opcion('medicos', 'Médicos', 'fa-solid fa-user-doctor'),
+      opcion('especializaciones', 'Especializaciones', 'fa-solid fa-user-graduate'),
+      opcion('tarifas', 'Tarifas', 'fa-solid fa-tags')
     ]
   },
+  {
+    id: 'agenda',
+    title: 'Agenda y atención',
+    type: 'group',
+    icon: 'icon-calendar',
+    children: [
+      opcion('citas', 'Citas', 'bi bi-calendar'),
+      opcion('calendario', 'Mi calendario', 'bi bi-calendar-week'),
+      opcion('atencion', 'Atención médica', 'fa-solid fa-stethoscope'),
+      opcion('historias', 'Historias clínicas', 'fa-solid fa-book-medical'),
+      opcion('formulas', 'Fórmulas médicas', 'fa-solid fa-clipboard-list'),
+      opcion('mascotas', 'Mascotas', 'fa-solid fa-paw')
+    ]
+  },
+  {
+    id: 'farmacia',
+    title: 'Farmacia',
+    type: 'group',
+    icon: 'icon-package',
+    children: [
+      opcion('inventario', 'Inventario', 'fa-solid fa-boxes-stacked'),
+      opcion('carga-inventario', 'Carga masiva', 'fa-solid fa-file-arrow-up'),
+      opcion('despacho', 'Despacho', 'fa-solid fa-prescription-bottle-medical')
+    ]
+  },
+  {
+    id: 'finanzas',
+    title: 'Finanzas',
+    type: 'group',
+    icon: 'icon-dollar-sign',
+    children: [
+      opcion('facturacion', 'Facturación', 'fa-solid fa-file-invoice-dollar'),
+      opcion('reportes', 'Reportes', 'fa-solid fa-chart-column')
+    ]
+  }
 ];
 
 export function getNavigationItems(): NavigationItem[] {

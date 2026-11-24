@@ -4,19 +4,16 @@ export interface JwtPayload {
   email: string;
   rol: string;
   menus: string;
+  /** Solo tiene valor si el rol es MEDICO. */
+  medicoId?: number | null;
   iat: number;
   exp: number;
 }
 
 export interface JwtMenu {
-  activo: boolean;
   code: string;
-  fechaCreacion: string;
-  fechaModificacion: string | null;
-  icon: string;
-  menuId: number;
-  title: string;
-  url: string;
+  name: string;
+  activo: boolean;
 }
 
 export function getJwtPayload(): JwtPayload | null {
@@ -41,6 +38,7 @@ export function getJwtPayload(): JwtPayload | null {
     typeof payload['email'] !== 'string' ||
     typeof payload['rol'] !== 'string' ||
     typeof payload['menus'] !== 'string' ||
+    !esMedicoIdValido(payload['medicoId']) ||
     typeof payload['iat'] !== 'number' ||
     typeof payload['exp'] !== 'number'
   ) {
@@ -53,6 +51,7 @@ export function getJwtPayload(): JwtPayload | null {
     email: payload['email'],
     rol: payload['rol'],
     menus: payload['menus'],
+    medicoId: payload['medicoId'] ?? null,
     iat: payload['iat'],
     exp: payload['exp']
   };
@@ -71,6 +70,10 @@ export function getJwtMenus(): JwtMenu[] {
   return menus;
 }
 
+function esMedicoIdValido(value: unknown): value is number | null | undefined {
+  return value === undefined || value === null || typeof value === 'number';
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -78,13 +81,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isJwtMenu(value: unknown): value is JwtMenu {
   return (
     isRecord(value) &&
-    typeof value['activo'] === 'boolean' &&
     typeof value['code'] === 'string' &&
-    typeof value['fechaCreacion'] === 'string' &&
-    (value['fechaModificacion'] === null || typeof value['fechaModificacion'] === 'string') &&
-    typeof value['icon'] === 'string' &&
-    typeof value['menuId'] === 'number' &&
-    typeof value['title'] === 'string' &&
-    typeof value['url'] === 'string'
+    typeof value['name'] === 'string' &&
+    typeof value['activo'] === 'boolean'
   );
 }

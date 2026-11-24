@@ -1,9 +1,9 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { inject, Injector } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { environment } from 'src/environments/environment';
+import { SesionService } from '../services/sesion.service';
 import { esRutaPublica } from './auth.interceptor';
 
 /**
@@ -11,7 +11,7 @@ import { esRutaPublica } from './auth.interceptor';
  * El error siempre se propaga para que la pantalla libere sus banderas de carga.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const router = inject(Router);
+  const injector = inject(Injector);
 
   return next(req).pipe(
     catchError((error: unknown) => {
@@ -24,9 +24,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           // y una respuesta atrasada no cierra una sesión nueva.
           const token = sessionStorage.getItem('token');
           if (token && req.headers.get('Authorization') === `Bearer ${token}`) {
-            sessionStorage.removeItem('token');
-            void router.navigate(['/login']);
-            void Swal.fire('Sesión finalizada', 'Tu sesión expiró. Inicia sesión nuevamente.', 'warning');
+            injector.get(SesionService).expirar();
           }
         } else if (error.status === 403) {
           void Swal.fire('Acceso denegado', 'No tienes permiso para esta acción.', 'warning');

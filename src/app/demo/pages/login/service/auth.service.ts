@@ -4,7 +4,8 @@ import { AuthRs } from 'src/app/models/auth-rs';
 import { LoginRs } from 'src/app/models/login-rs';
 import { TokenRq } from 'src/app/models/token-rq';
 import { BackendService } from 'src/app/services/backend.service';
-import { getJwtPayload, JwtPayload } from 'src/app/utils/jwt.util';
+import { Rol } from 'src/app/models/estados';
+import { getJwtMenus, getJwtPayload, JwtPayload } from 'src/app/utils/jwt.util';
 import { environment } from 'src/environments/environment';
 
 export interface LoginRequest {
@@ -43,7 +44,7 @@ export class AuthService {
     sessionStorage.setItem(AuthService.TOKEN_KEY, token);
   }
 
-  getToken(): string | null {
+  obtenerToken(): string | null {
     return sessionStorage.getItem(AuthService.TOKEN_KEY);
   }
 
@@ -53,6 +54,19 @@ export class AuthService {
       return getJwtPayload();
     } catch {
       return null;
+    }
+  }
+
+  tieneRol(...roles: Rol[]): boolean {
+    const rol = this.obtenerUsuario()?.rol;
+    return roles.some((permitido) => permitido === rol);
+  }
+
+  tieneMenu(code: string): boolean {
+    try {
+      return getJwtMenus().some((menu) => menu.activo && menu.code === code);
+    } catch {
+      return false;
     }
   }
 

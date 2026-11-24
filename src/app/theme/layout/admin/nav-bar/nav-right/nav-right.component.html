@@ -1,14 +1,12 @@
-<ul class="navbar-nav flex-row align-items-center justify-content-end">
+<div class="sesion">
   @if (usuario) {
-    <li class="text-end lh-sm me-3">
-      <strong class="d-block">{{ usuario.username }}</strong>
-      <small class="text-muted">{{ usuario.rol }}</small>
-    </li>
+    <div class="sesion__usuario">
+      <strong>{{ usuario.username }}</strong>
+      <small>{{ rol }}</small>
+    </div>
   }
-  <li>
-    <button type="button" class="btn btn-sm btn-outline-danger mb-0" [disabled]="cerrando" (click)="cerrarSesion()">
-      <i class="feather icon-log-out" aria-hidden="true"></i>
-      {{ cerrando ? 'Cerrando...' : 'Cerrar sesión' }}
-    </button>
-  </li>
-</ul>
+  <button type="button" class="btn btn-sm btn-danger m-0" [disabled]="cerrando" (click)="cerrarSesion()">
+    <i class="feather icon-log-out" aria-hidden="true"></i>
+    {{ cerrando ? 'Cerrando...' : 'Cerrar sesión' }}
+  </button>
+</div>

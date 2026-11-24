@@ -1,5 +1,5 @@
-import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { Type } from '@angular/core';
+import { Route, Routes } from '@angular/router';
 import { AdminComponent } from './theme/layout/admin/admin.component';
 import { UsuarioComponent } from './demo/pages/usuario/usuario.component';
 import { MascotaComponent } from './demo/pages/mascota/mascota.component';
@@ -7,12 +7,39 @@ import { MedicoComponent } from './demo/pages/medico/medico.component';
 import { FormulaMedicaComponent } from './demo/pages/formula-medica/formula-medica.component';
 import { CitaComponent } from './demo/pages/cita/cita.component';
 import { ClienteComponent } from './demo/pages/cliente/cliente.component';
-import { MedicamentoComponent } from './demo/pages/medicamento/medicamento.component';
 import { HistoriaComponent } from './demo/pages/historia/historia.component';
 import { EspecializacionComponent } from './demo/pages/especializacion/especializacion.component';
+import { EnConstruccionComponent } from './demo/pages/en-construccion/en-construccion.component';
 import { LoginComponent } from './demo/pages/login/login.component';
 import { authGuard } from './guards/auth.guard';
+import { menuGuard } from './guards/menu.guard';
 
+/** Ruta hija de /inicio: su path es el código del menú que la autoriza. */
+const ruta = (menu: string, title: string, component: Type<unknown>): Route => ({
+  path: menu,
+  component,
+  canActivate: [menuGuard],
+  data: { title, menu }
+});
+
+const modulos: Routes = [
+  ruta('usuarios', 'Usuarios', UsuarioComponent),
+  ruta('clientes', 'Clientes', ClienteComponent),
+  ruta('medicos', 'Médicos', MedicoComponent),
+  ruta('especializaciones', 'Especializaciones', EspecializacionComponent),
+  ruta('tarifas', 'Tarifas', EnConstruccionComponent),
+  ruta('citas', 'Citas', CitaComponent),
+  ruta('calendario', 'Mi calendario', EnConstruccionComponent),
+  ruta('atencion', 'Atención médica', EnConstruccionComponent),
+  ruta('historias', 'Historias clínicas', HistoriaComponent),
+  ruta('formulas', 'Fórmulas médicas', FormulaMedicaComponent),
+  ruta('mascotas', 'Mascotas', MascotaComponent),
+  ruta('inventario', 'Inventario', EnConstruccionComponent),
+  ruta('carga-inventario', 'Carga masiva', EnConstruccionComponent),
+  ruta('despacho', 'Despacho', EnConstruccionComponent),
+  ruta('facturacion', 'Facturación', EnConstruccionComponent),
+  ruta('reportes', 'Reportes', EnConstruccionComponent)
+];
 
 export const routes: Routes = [
   {
@@ -27,24 +54,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     canActivateChild: [authGuard],
     data: { title: 'Inicio' },
-    children: [      
-      { path: 'usuarios', component: UsuarioComponent, data: { title: 'Usuarios' }},
-      { path: 'mascotas', component: MascotaComponent, data: { title: 'Mascotas' }},
-      { path: 'medicos', component: MedicoComponent, data: { title: 'Medicos' }},
-      /* Inserte nuevos menus aqui */    
-      { path: 'formulas', component: FormulaMedicaComponent, data: { title: 'Formulas' }},
-      { path: 'citas', component: CitaComponent, data: { title: 'Citas' }},
-      { path: 'clientes', component: ClienteComponent, data: { title: 'Clientes' }},
-      { path: 'medicamentos', component: MedicamentoComponent, data: { title: 'Medicamentos' }},
-      { path: 'historias', component: HistoriaComponent, data: { title: 'Historias' }},
-      { path: 'especializaciones', component: EspecializacionComponent, data: { title: 'Especializaciones' }}
-    ]
+    children: [...modulos, { path: '**', redirectTo: '/inicio' }]
   },
   { path: '**', redirectTo: 'login' }
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule {}

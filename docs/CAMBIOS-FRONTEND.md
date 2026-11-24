@@ -43,3 +43,21 @@
 | Duración de la cita | según el servicio | 30 minutos fijos (el frontend muestra 15 hasta la fase 5) |
 
 El build queda en `dist/` (no en `dist/<proyecto>/browser`), porque el proyecto usa el builder `browser`.
+
+## Fase 2: infraestructura
+
+- JWT: `medicoId` opcional y menús con la forma de C3 (`code`, `name`, `activo`).
+- `AuthService`: `guardarSesion`, `obtenerToken`, `obtenerUsuario`, `tieneRol`, `tieneMenu`, `estaVencido`, `cerrarSesion`. `SesionService` avisa 2 minutos antes del vencimiento, cierra la sesión y retira los modales abiertos.
+- `menuGuard` en las 16 rutas de C4 y directiva `*appTieneRol`. Los módulos que aún no existen muestran "en construcción".
+- Menú en cuatro secciones; la bienvenida ofrece accesos solo a los módulos autorizados (los datos por rol van en la fase 9).
+- `BackendService`: `patch`, `delete`, `getBlob` (convierte a JSON los errores de descarga) y `postArchivo`. Utilidades en `shared/utils/http.util.ts`.
+- Modelos del contrato en `models/`, sin campos duplicados en snake_case. La ruta `medicamentos` y su pantalla se eliminaron.
+- Componentes: `app-badge-estado`, `app-filtro-fechas`, `app-paginacion`, `app-boton-orden` (con la clase `Tabla`), `app-boton-descarga`. Pipes `moneda` y `fechaHora`.
+
+### Modelos por confirmar con el backend
+
+El contrato no define el JSON de respuesta de: atención (`/atencion/cita/{citaId}`), fórmula y sus listados, movimientos de inventario, historial de tarifas y de estados, configuración de la clínica, encabezado del despacho y sus historiales, factura, pagos y catálogo de reportes. Los modelos de esas respuestas son una propuesta y se ajustan en la fase de cada módulo.
+
+### Resuelto por el backend (commit 4363b46)
+
+Los claims `rol` (código), `medicoId` y `menus` (con `name`) ya cumplen C3.
