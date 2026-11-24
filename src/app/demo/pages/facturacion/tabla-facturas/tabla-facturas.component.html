@@ -1,0 +1,39 @@
+<input class="form-control my-2" type="search" placeholder="Buscar por número, propietario o mascota" aria-label="Buscar factura"
+  [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        @for (columna of columnas; track columna.clave) {
+          <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+            <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+          </th>
+        }
+        <th scope="col">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (factura of tabla.visibles; track factura.id) {
+        <tr>
+          <td class="text-nowrap">{{ factura.numero }}</td>
+          <td class="text-nowrap">{{ factura.fecha | fechaHora }}</td>
+          <td>{{ factura.clienteNombre }}</td>
+          <td>{{ factura.mascotaNombre }}</td>
+          <td class="text-nowrap">{{ factura.total | moneda }}</td>
+          <td class="text-nowrap">{{ factura.pagado | moneda }}</td>
+          <td class="text-nowrap">{{ factura.saldo | moneda }}</td>
+          <td><app-badge-estado [estado]="factura.estado" /></td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-sm btn-outline-secondary mb-0" (click)="ver(factura)">Ver</button>
+            @if (factura.estado === 'PENDIENTE' || factura.estado === 'PAGO_PARCIAL') {
+              <button type="button" class="btn btn-sm btn-success mb-0" (click)="ver(factura, true)">Pagar</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="9" class="text-center">No hay facturas</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+<app-paginacion [tabla]="tabla" />

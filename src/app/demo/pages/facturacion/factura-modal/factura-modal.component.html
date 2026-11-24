@@ -1,0 +1,144 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="facturaTitulo">
+    Factura {{ factura?.numero }}
+    @if (factura) {
+      <app-badge-estado [estado]="factura.estado" />
+    }
+  </h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="procesando" (click)="modal.close(cambio)"></button>
+</div>
+<div class="modal-body" [attr.aria-busy]="cargando">
+  @if (error) {
+    <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="cargar()">Reintentar</button></div>
+  }
+  @if (respuestaError) {
+    <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+  }
+  @if (factura) {
+    <dl class="row">
+      <dt class="col-5 col-md-2">Fecha</dt>
+      <dd class="col-7 col-md-4">{{ factura.fecha | fechaHora }}</dd>
+      <dt class="col-5 col-md-2">Generó</dt>
+      <dd class="col-7 col-md-4">{{ factura.usuario || 'No informado' }}</dd>
+      <dt class="col-5 col-md-2">Propietario</dt>
+      <dd class="col-7 col-md-4">{{ factura.clienteNombre }} ({{ factura.clienteDocumento }})</dd>
+      <dt class="col-5 col-md-2">Mascota</dt>
+      <dd class="col-7 col-md-4">{{ factura.mascotaNombre }}</dd>
+      <dt class="col-5 col-md-2">Médico</dt>
+      <dd class="col-7 col-md-4">{{ factura.medicoNombre }}</dd>
+      <dt class="col-5 col-md-2">Especialidad</dt>
+      <dd class="col-7 col-md-4">{{ factura.especialidadNombre }}</dd>
+      <dt class="col-5 col-md-2">Observación</dt>
+      <dd class="col-7 col-md-4">{{ factura.observacion || '—' }}</dd>
+    </dl>
+    @if (factura.estado === 'ANULADA') {
+      <div class="alert alert-danger">Anulada por {{ factura.usuarioAnulacion }} el {{ factura.fechaAnulacion | fechaHora }}. Motivo: {{ factura.motivoAnulacion }}</div>
+    }
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Concepto</th><th scope="col">Cant.</th><th scope="col">Precio</th><th scope="col">Descuento</th><th scope="col">IVA</th><th scope="col">Total</th></tr></thead>
+        <tbody>
+          @for (detalle of factura.detalles; track detalle.itemRef) {
+            <tr>
+              <td>{{ detalle.descripcion }}</td>
+              <td>{{ detalle.cantidad }}</td>
+              <td class="text-nowrap">{{ detalle.precioUnitario | moneda }}</td>
+              <td>
+                @if (detalle.porcentajeDescuento > 0) {
+                  {{ detalle.valorDescuento | moneda }} ({{ detalle.porcentajeDescuento }} %) <span class="d-block small text-muted">{{ detalle.motivoDescuento }}</span>
+                } @else {
+                  —
+                }
+              </td>
+              <td class="text-nowrap">{{ detalle.valorIva | moneda }} ({{ detalle.porcentajeIva }} %)</td>
+              <td class="text-nowrap">{{ detalle.total | moneda }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <dl class="row text-end">
+      <dt class="col-6 col-md-9">Subtotal</dt><dd class="col-6 col-md-3">{{ factura.subtotal | moneda }}</dd>
+      <dt class="col-6 col-md-9">Descuentos</dt><dd class="col-6 col-md-3">{{ factura.descuentos | moneda }}</dd>
+      <dt class="col-6 col-md-9">IVA</dt><dd class="col-6 col-md-3">{{ factura.iva | moneda }}</dd>
+      <dt class="col-6 col-md-9">Total</dt><dd class="col-6 col-md-3">{{ factura.total | moneda }}</dd>
+      <dt class="col-6 col-md-9">Pagado</dt><dd class="col-6 col-md-3 text-success">{{ factura.pagado | moneda }}</dd>
+      <dt class="col-6 col-md-9">Saldo</dt><dd class="col-6 col-md-3"><strong id="factura-saldo">{{ factura.saldo | moneda }}</strong></dd>
+    </dl>
+
+    @if (pagando && admitePagos) {
+      <form class="border rounded p-3 mb-3" [formGroup]="form" (ngSubmit)="pagar()" novalidate>
+        <h3 class="h6">Registrar pago</h3>
+        <fieldset [disabled]="procesando">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label for="pago-valor" class="form-label">Valor</label>
+              <input id="pago-valor" type="number" step="0.01" class="form-control" formControlName="valor" [class.is-invalid]="esInvalido(form.controls.valor)" />
+              <div class="invalid-feedback">
+                {{ form.controls.valor.errors?.['servidor'] ?? (form.controls.valor.hasError('superaSaldo') ? 'Supera el saldo.' : 'Ingresa un valor mayor que 0, con máximo 2 decimales.') }}
+              </div>
+              <button type="button" class="btn btn-link btn-sm p-0" (click)="pagarSaldo()">Pagar saldo completo</button>
+            </div>
+            <div class="col-md-4">
+              <label for="pago-medio" class="form-label">Medio de pago</label>
+              <select id="pago-medio" class="form-select" formControlName="medioPago" [class.is-invalid]="esInvalido(form.controls.medioPago)">
+                <option value="" disabled>Selecciona</option>
+                @for (medio of medios; track medio.valor) {
+                  <option [value]="medio.valor">{{ medio.etiqueta }}</option>
+                }
+              </select>
+              <div class="invalid-feedback">Selecciona el medio de pago.</div>
+            </div>
+            <div class="col-md-4">
+              <label for="pago-referencia" class="form-label">Referencia{{ form.controls.medioPago.value === 'EFECTIVO' ? ' (opcional)' : '' }}</label>
+              <input id="pago-referencia" type="text" maxlength="100" class="form-control" formControlName="referencia" [class.is-invalid]="esInvalido(form.controls.referencia)" />
+              <div class="invalid-feedback">{{ form.controls.referencia.errors?.['servidor'] ?? 'La referencia es obligatoria salvo en efectivo.' }}</div>
+            </div>
+          </div>
+          <div class="text-end mt-2">
+            <button type="button" class="btn btn-sm btn-secondary mb-0" (click)="pagando = false">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-primary mb-0">{{ procesando ? 'Registrando...' : 'Guardar pago' }}</button>
+          </div>
+        </fieldset>
+      </form>
+    }
+    <h3 class="h6">Pagos</h3>
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead><tr><th scope="col">Fecha</th><th scope="col">Valor</th><th scope="col">Medio</th><th scope="col">Referencia</th><th scope="col">Usuario</th></tr></thead>
+        <tbody>
+          @for (pago of factura.pagos; track pago.id) {
+            <tr>
+              <td>{{ pago.fecha | fechaHora }}</td><td>{{ pago.valor | moneda }}{{ pago.anulado ? ' (anulado)' : '' }}</td><td>{{ etiquetaMedio(pago.medioPago) }}</td>
+              <td>{{ pago.referencia || '—' }}</td><td>{{ pago.usuario }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="5" class="text-center">Sin pagos registrados</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <h3 class="h6">Historial de estados</h3>
+    <ul class="list-unstyled small mb-0">
+      @for (estado of historial; track estado.id) {
+        <li class="mb-1">{{ estado.fecha | fechaHora }} - <app-badge-estado [estado]="estado.estadoNuevo" /> {{ estado.usuario }}{{ estado.motivo ? ': ' + estado.motivo : '' }}</li>
+      }
+    </ul>
+  } @else if (cargando) {
+    <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando factura...</p>
+  }
+</div>
+<div class="modal-footer">
+  @if (factura) {
+    <app-boton-descarga [endpoint]="'factura/' + factura.id + '/pdf'" />
+    @if (admitePagos && !pagando) {
+      <button type="button" class="btn btn-sm btn-success mb-0" [disabled]="procesando" (click)="pagando = true">Registrar pago</button>
+    }
+    <ng-container *appTieneRol="['ADMINISTRADOR']">
+      @if (factura.estado !== 'ANULADA') {
+        <button type="button" class="btn btn-sm btn-outline-danger mb-0" [disabled]="procesando" (click)="anular()">Anular</button>
+      }
+    </ng-container>
+  }
+  <button type="button" class="btn btn-secondary" [disabled]="procesando" (click)="modal.close(cambio)">Cerrar</button>
+</div>

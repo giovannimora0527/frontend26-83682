@@ -1,0 +1,75 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="generarTitulo">Generar factura</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+</div>
+<div class="modal-body">
+  @if (error) {
+    <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="cargar()">Reintentar</button></div>
+  } @else if (!previa) {
+    <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Calculando factura...</p>
+  } @else {
+    <p class="mb-2">
+      <strong>{{ previa.clienteNombre }}</strong> ({{ previa.clienteDocumento }}) - {{ previa.mascotaNombre }}. {{ previa.medicoNombre }}, {{ previa.especialidadNombre }}. Cita: {{ previa.fechaCita | fechaHora }}
+    </p>
+    @for (advertencia of previa.advertencias; track advertencia) {
+      <div class="alert alert-warning py-2" role="status">{{ advertencia }}</div>
+    }
+    <div class="alert alert-info py-2">Lo que se despache después de generar la factura no entra en ella. Para cobrarlo hay que anularla y generar otra.</div>
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert" style="white-space: pre-line">{{ respuestaError }}</div>
+    }
+    <form id="formFactura" [formGroup]="form" (ngSubmit)="generar()" novalidate>
+      <fieldset [disabled]="enviando">
+        <p class="small text-muted mb-1">Descuento máximo permitido: {{ previa.topeDescuento }} %</p>
+        <div class="table-responsive" formArrayName="renglones">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th scope="col">Concepto</th><th scope="col">Cant.</th><th scope="col">Precio</th><th scope="col">Desc. %</th><th scope="col">Motivo del descuento</th>
+                <th scope="col">IVA</th><th scope="col">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (renglon of renglones.controls; track renglon; let i = $index) {
+                @let calculado = calculados[i];
+                <tr [formGroupName]="i">
+                  <td>{{ calculado.descripcion }} <span class="d-block small text-muted">{{ calculado.tipoItem === 'SERVICIO' ? 'Servicio' : 'Medicamento' }}</span></td>
+                  <td>{{ calculado.cantidad }}</td>
+                  <td class="text-nowrap">{{ calculado.precioUnitario | moneda }}</td>
+                  <td style="min-width: 100px">
+                    <input type="number" step="0.01" class="form-control form-control-sm" formControlName="porcentaje" [attr.aria-label]="'Descuento de ' + calculado.descripcion"
+                      [class.is-invalid]="esInvalido(renglon.controls.porcentaje)" />
+                    @if (esInvalido(renglon.controls.porcentaje)) {
+                      <div class="text-danger small">{{ renglon.controls.porcentaje.errors?.['servidor'] ?? 'De 0 a ' + previa.topeDescuento + ' %.' }}</div>
+                    }
+                  </td>
+                  <td style="min-width: 160px">
+                    <input type="text" maxlength="255" class="form-control form-control-sm" formControlName="motivo" [attr.aria-label]="'Motivo del descuento de ' + calculado.descripcion"
+                      [class.is-invalid]="renglon.hasError('sinMotivo') || esInvalido(renglon.controls.motivo)" />
+                    @if (renglon.hasError('sinMotivo') || renglon.controls.motivo.hasError('servidor')) {
+                      <div class="text-danger small">{{ renglon.controls.motivo.errors?.['servidor'] ?? 'El motivo es obligatorio.' }}</div>
+                    }
+                  </td>
+                  <td class="text-nowrap">{{ calculado.valorIva | moneda }} <span class="small text-muted">({{ calculado.porcentajeIva }} %)</span></td>
+                  <td class="text-nowrap">{{ calculado.total | moneda }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <dl class="row text-end mb-2" id="totales-factura">
+          <dt class="col-6 col-md-9">Subtotal</dt><dd class="col-6 col-md-3">{{ totales.subtotal | moneda }}</dd>
+          <dt class="col-6 col-md-9">Descuentos</dt><dd class="col-6 col-md-3">{{ totales.descuentos | moneda }}</dd>
+          <dt class="col-6 col-md-9">IVA</dt><dd class="col-6 col-md-3">{{ totales.iva | moneda }}</dd>
+          <dt class="col-6 col-md-9">Total</dt><dd class="col-6 col-md-3"><strong>{{ totales.total | moneda }}</strong></dd>
+        </dl>
+        <label for="factura-observacion" class="form-label">Observación (opcional)</label>
+        <textarea id="factura-observacion" rows="2" maxlength="500" class="form-control" formControlName="observacion"></textarea>
+      </fieldset>
+    </form>
+  }
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+  <button type="submit" form="formFactura" class="btn btn-primary" [disabled]="!previa || enviando">{{ enviando ? 'Generando...' : 'Generar factura' }}</button>
+</div>

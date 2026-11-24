@@ -2,11 +2,14 @@ import { EstadoFactura, MedioPago } from './estados';
 
 export interface FacturaDetalle {
   itemRef: string;
+  tipoItem: 'SERVICIO' | 'MEDICAMENTO';
   descripcion: string;
   cantidad: number;
   precioUnitario: number;
+  subtotal: number;
   porcentajeDescuento: number;
   valorDescuento: number;
+  motivoDescuento: string | null;
   porcentajeIva: number;
   valorIva: number;
   total: number;
@@ -19,13 +22,33 @@ export interface TotalesFactura {
   total: number;
 }
 
-export interface FacturaPrevia extends TotalesFactura {
+export interface CitaPorFacturar {
   citaId: number;
+  fecha: string;
+  clienteId: number;
   clienteNombre: string;
+  clienteDocumento: string;
+  mascotaId: number;
   mascotaNombre: string;
   medicoNombre: string;
+  motivo: string;
+  despachoPendiente: boolean;
+}
+
+export interface FacturaPrevia extends TotalesFactura {
+  citaId: number;
+  fechaCita: string;
+  clienteId: number;
+  clienteNombre: string;
+  clienteDocumento: string;
+  mascotaId: number;
+  mascotaNombre: string;
+  medicoNombre: string;
+  especialidadNombre: string;
   detalles: FacturaDetalle[];
-  advertencias?: string[];
+  /** Porcentaje máximo del usuario que consulta. */
+  topeDescuento: number;
+  advertencias: string[];
 }
 
 export interface DescuentoRq {
@@ -50,6 +73,7 @@ export interface Pago extends PagoRq {
   id: number;
   fecha: string;
   usuario: string;
+  anulado: boolean;
 }
 
 export interface Factura extends TotalesFactura {
@@ -68,6 +92,20 @@ export interface Factura extends TotalesFactura {
   saldo: number;
   estado: EstadoFactura;
   observacion: string | null;
+  usuario?: string;
+  fechaAnulacion?: string | null;
+  usuarioAnulacion?: string | null;
+  motivoAnulacion?: string | null;
+  /** Solo vienen al consultar una factura. */
   detalles?: FacturaDetalle[];
   pagos?: Pago[];
+}
+
+export interface HistorialFactura {
+  id: number;
+  estadoAnterior: EstadoFactura | null;
+  estadoNuevo: EstadoFactura;
+  motivo: string | null;
+  usuario: string;
+  fecha: string;
 }

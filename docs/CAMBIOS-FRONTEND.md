@@ -180,3 +180,13 @@ En una prueba, un cambio de Observaciones no quedó guardado después de rechaza
 ### Verificado contra el backend real (24/11/2026)
 
 FM-000010: preparar, liberar, 409 por lote, entrega parcial (DP-000004), entrega del resto con la respuesta cortada y reintento con la misma clave sin doble descuento (DP-000005), comprobante, historiales, log, kardex y reversión por admin. 360, 768 y 1366 px. Solo con pruebas automáticas: cancelar, otro usuario preparando, lotes vencidos y confirmar sin ítems.
+
+## Fase 8: facturación
+
+- **Facturación** (`/inicio/facturacion`): Por facturar (previsualización, descuentos por renglón con motivo y tope, totales en vivo), Facturas (filtros, detalle, PDF, pagos, historial de estados) e Historial por propietario o mascota.
+- Los totales en pantalla repiten el cálculo del backend (HALF_UP a 2 decimales por renglón); el valor definitivo es el que devuelve al generar.
+- Anular: solo ADMINISTRADOR, con motivo y doble confirmación; se muestra el aviso de pagos conservados.
+
+### Verificado contra el backend real (24/11/2026)
+
+Con `secretaria`: tope de 10 %, factura FV-000001 con 5 %, PDF, pago mayor al saldo rechazado, pago parcial y resto por transferencia. Con `admin`: anulación; la cita volvió a Por facturar. 360, 768 y 1366 px. Solo con pruebas automáticas: 409 por servicio sin tarifa y descuento del 100 %.

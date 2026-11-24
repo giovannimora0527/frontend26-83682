@@ -1,4 +1,4 @@
-import { TipoServicio, ViaAdministracion } from '../models/estados';
+import { MedioPago, TipoServicio, ViaAdministracion } from '../models/estados';
 
 export const TIPOS_SERVICIO: { valor: TipoServicio; etiqueta: string }[] = [
   { valor: 'CONSULTA', etiqueta: 'Consulta' },
@@ -18,6 +18,13 @@ export const VIAS_ADMINISTRACION: { valor: ViaAdministracion; etiqueta: string }
   { valor: 'INTRAMUSCULAR', etiqueta: 'Intramuscular' },
   { valor: 'INTRAVENOSA', etiqueta: 'Intravenosa' },
   { valor: 'OTRA', etiqueta: 'Otra' }
+];
+
+export const MEDIOS_PAGO: { valor: MedioPago; etiqueta: string }[] = [
+  { valor: 'EFECTIVO', etiqueta: 'Efectivo' },
+  { valor: 'TARJETA_DEBITO', etiqueta: 'Tarjeta débito' },
+  { valor: 'TARJETA_CREDITO', etiqueta: 'Tarjeta crédito' },
+  { valor: 'TRANSFERENCIA', etiqueta: 'Transferencia' }
 ];
 
 export function etiquetaDe<T extends string>(catalogo: { valor: T; etiqueta: string }[], valor: T | null | undefined): string {

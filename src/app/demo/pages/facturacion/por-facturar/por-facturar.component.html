@@ -1,0 +1,39 @@
+@if (generada) {
+  <div class="alert alert-success d-flex flex-wrap align-items-center gap-2" role="status">
+    <span>Factura <strong>{{ generada.numero }}</strong> por {{ generada.total | moneda }} <app-badge-estado [estado]="generada.estado" /></span>
+    <app-boton-descarga [endpoint]="'factura/' + generada.id + '/pdf'" />
+  </div>
+}
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando citas...</p>
+} @else {
+  <input class="form-control mb-2" type="search" placeholder="Buscar por propietario, mascota, médico o motivo" aria-label="Buscar cita"
+    [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead><tr><th scope="col">Fecha</th><th scope="col">Mascota</th><th scope="col">Propietario</th><th scope="col">Médico</th><th scope="col">Motivo</th><th scope="col">Acciones</th></tr></thead>
+      <tbody>
+        @for (cita of tabla.visibles; track cita.citaId) {
+          <tr>
+            <td class="text-nowrap">{{ cita.fecha | fechaHora }}</td>
+            <td>{{ cita.mascotaNombre }}</td>
+            <td>{{ cita.clienteNombre }}</td>
+            <td>{{ cita.medicoNombre }}</td>
+            <td>
+              {{ cita.motivo }}
+              @if (cita.despachoPendiente) {
+                <span class="badge bg-warning text-dark">Despacho pendiente</span>
+              }
+            </td>
+            <td><button type="button" class="btn btn-sm btn-primary mb-0" (click)="generar(cita)">Generar factura</button></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="text-center">{{ tabla.items.length ? 'No se encontraron citas' : 'No hay citas por facturar' }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+}

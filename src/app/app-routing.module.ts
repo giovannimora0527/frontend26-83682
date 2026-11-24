@@ -57,7 +57,7 @@ const modulos: Routes = [
   diferida('despacho', 'Despacho', () => import('./demo/pages/despacho/despacho.component').then((m) => m.DespachoComponent)),
   diferida('despacho', 'Preparación del despacho', () =>
     import('./demo/pages/despacho/preparacion/preparacion.component').then((m) => m.PreparacionComponent), 'despacho/:formulaId'),
-  ruta('facturacion', 'Facturación', EnConstruccionComponent),
+  diferida('facturacion', 'Facturación', () => import('./demo/pages/facturacion/facturacion.component').then((m) => m.FacturacionComponent)),
   ruta('reportes', 'Reportes', EnConstruccionComponent)
 ];
 
