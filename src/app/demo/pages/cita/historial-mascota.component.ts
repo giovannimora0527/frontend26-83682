@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, inject } from '@angular/core';
 import { AgendaService, CitaAnterior, errorAgenda } from '../../../services/agenda.service';
 
+/** Pantalla «historial mascota» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-historial-mascota',
   standalone: true,
@@ -35,17 +36,31 @@ import { AgendaService, CitaAnterior, errorAgenda } from '../../../services/agen
   `
 })
 export class HistorialMascotaComponent implements OnChanges {
+  /** Dependencia inyectada (AgendaService). */
+  /** Identificador de mascota. */
   @Input({required:true}) mascotaId!: number;
   private readonly agenda = inject(AgendaService);
+  /** Solicitud. */
   private solicitud = 0;
+  /** Página actual (desde 0). */
   pagina = 0;
+  /** Indica si existen más páginas. */
   hayMas = false;
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Mensaje mostrado al usuario (error). */
   error = '';
+  /** Lista de citas. */
   citas: CitaAnterior[] = [];
 
+  /** Reacciona a los cambios en las entradas del componente. */
   ngOnChanges() { this.cargar(0); }
 
+  /**
+   * Carga los datos de la pantalla desde el backend.
+   *
+   * @param pagina número de página.
+   */
   cargar(pagina: number) {
     const solicitud = ++this.solicitud;
     this.cargando = true;

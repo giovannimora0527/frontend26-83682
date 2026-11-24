@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+/** Routes. */
 const routes: Routes = [
   {
     path: '',
@@ -33,6 +34,7 @@ const routes: Routes = [
   }
 ];
 
+/** Módulo Angular ui basic routing. */
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]

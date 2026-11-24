@@ -14,6 +14,7 @@ import { NgbDropdownConfig } from '@ng-bootstrap/ng-bootstrap';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
 import { AuthService } from 'src/app/services/auth.service';
 
+/** Componente visual «navegación right» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-nav-right',
   imports: [SharedModule],
@@ -24,11 +25,14 @@ import { AuthService } from 'src/app/services/auth.service';
 export class NavRightComponent {
 
   // Servicio que administra el inicio y cierre de sesión.
+  /** Dependencia inyectada (AuthService). */
   private readonly authService = inject(AuthService);
 
   // Permite cambiar de pantalla.
+  /** Dependencia inyectada (Router). */
   private readonly router = inject(Router);
 
+  /** Crea la instancia con sus dependencias inyectadas. */
   constructor() {
     const config = inject(NgbDropdownConfig);
     config.placement = 'bottom-right';

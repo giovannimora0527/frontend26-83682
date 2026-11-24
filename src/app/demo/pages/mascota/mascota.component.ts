@@ -82,6 +82,7 @@ import { Cliente } from 'src/app/models/cliente';
 
 })
 
+/** Pantalla «mascota» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 export class MascotaComponent {
 
   // ========================================================
@@ -89,15 +90,19 @@ export class MascotaComponent {
   // ========================================================
 
   // Instancia del modal Bootstrap.
+  /** Modal instance. */
   modalInstance: Modal | null = null;
 
   // Título de la ventana.
+  /** Title modal. */
   titleModal: string = '';
 
   // C = Crear, E = Editar.
+  /** Modo formulario. */
   modoFormulario: string = '';
 
   // Texto del botón principal.
+  /** Title boton. */
   titleBoton: string = '';
 
 
@@ -106,9 +111,11 @@ export class MascotaComponent {
   // ========================================================
 
   // Mascotas obtenidas desde Spring Boot.
+  /** Lista de list mascotas. */
   listMascotas: Mascota[] = [];
 
   // Propietarios obtenidos desde Spring Boot.
+  /** Lista de list clientes. */
   listClientes: Cliente[] = [];
 
 
@@ -117,12 +124,15 @@ export class MascotaComponent {
   // ========================================================
 
   // Texto utilizado para buscar mascotas.
+  /** Criterio de filtrado: termino búsqueda. */
   terminoBusqueda: string = '';
 
   // Página actual de la tabla.
+  /** Página actual. */
   paginaActual: number = 1;
 
   // Cantidad de registros por página.
+  /** Registros por página. */
   readonly registrosPorPagina: number = 10;
 
 
@@ -131,12 +141,15 @@ export class MascotaComponent {
   // ========================================================
 
   // Formulario reactivo.
+  /** Formulario reactivo: form. */
   form!: FormGroup;
 
   // Mascota seleccionada para editar.
+  /** Mascota selected. */
   mascotaSelected: Mascota | null = null;
 
   // Evita enviar el formulario varias veces.
+  /** Indica si se está guardando. */
   guardando: boolean = false;
 
 
@@ -144,12 +157,22 @@ export class MascotaComponent {
   // 7. CONSTRUCTOR
   // ========================================================
 
+  /**
+   * Crea la instancia con sus dependencias inyectadas.
+   *
+   * @param mascotaService servicio mascota.
+   * @param formBuilder constructor de formularios reactivos.
+   * @param clienteService servicio cliente.
+   */
   constructor(
 
+    /** Dependencia inyectada (MascotaService). */
     private readonly mascotaService: MascotaService,
 
+    /** Formulario reactivo: form builder. */
     private readonly formBuilder: FormBuilder,
 
+    /** Dependencia inyectada (ClienteService). */
     private readonly clienteService: ClienteService
 
   ) {
@@ -222,8 +245,10 @@ export class MascotaComponent {
    */
   compararClientes = (
 
+    /** Cliente1. */
     cliente1: Cliente | null,
 
+    /** Cliente2. */
     cliente2: Cliente | null
 
   ): boolean => {

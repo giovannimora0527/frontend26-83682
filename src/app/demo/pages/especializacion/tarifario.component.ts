@@ -5,28 +5,53 @@ import { finalize, Observable } from 'rxjs';
 import { hoyBogota } from '../../../services/agenda.service';
 import { ClinicaService, Especialidad, mensajeClinica, ServicioClinico, TarifaClinica } from '../../../services/clinica.service';
 
+/** Pantalla «tarifario» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-tarifario',
   imports: [CommonModule, FormsModule],
   templateUrl: './tarifario.component.html'
 })
 export class TarifarioComponent implements OnInit {
+  /** Ruta del recurso en la API del backend. */
   private readonly api = inject(ClinicaService);
+  /** Lista de especialidades. */
   especialidades: Especialidad[] = [];
+  /** Especialidad. */
   especialidad: Especialidad | null = null;
+  /** Edición. */
   edicion: Especialidad | null = null;
+  /** Lista de servicios. */
   servicios: ServicioClinico[] = [];
+  /** Servicio. */
   servicio: ServicioClinico | null = null;
+  /** Lista de historial. */
   historial: TarifaClinica[] = [];
+  /** Tarifa. */
   tarifa: TarifaClinica | null = null;
+  /** Nombre servicio. */
   nombreServicio = '';
+  /** Mensaje mostrado al usuario (error). */
   error = '';
+  /** Mensaje mostrado al usuario (aviso). */
   aviso = '';
+  /** Indica si ocupado. */
   ocupado = false;
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() { this.cargar(); }
+  /** Carga los datos de la pantalla desde el backend. */
   cargar() { this.operar(this.api.especialidades(), datos => { this.especialidades = datos; }); }
+  /**
+   * Prepara el formulario para editar los datos de la pantalla.
+   *
+   * @param e evento del navegador.
+   */
   editar(e?: Especialidad) { this.edicion = e ? { ...e } : { codigo: '', nombre: '', descripcion: null, activo: true }; }
+  /**
+   * Guarda los datos de la pantalla validando el formulario y enviándolo al backend.
+   *
+   * @param e evento del navegador.
+   */
   guardar(e: Especialidad) {
     this.operar(this.api.guardarEspecialidad(e), actual => {
       this.edicion = null;
@@ -36,6 +61,11 @@ export class TarifarioComponent implements OnInit {
     });
   }
 
+  /**
+   * Muestra los datos de la pantalla.
+   *
+   * @param e evento del navegador.
+   */
   ver(e: Especialidad) {
     this.especialidad = e;
     this.servicio = null;
@@ -45,6 +75,11 @@ export class TarifarioComponent implements OnInit {
     this.operar(this.api.servicios(e.id!), servicios => { this.servicios = servicios; });
   }
 
+  /**
+   * Agrega servicio.
+   *
+   * @param e evento del navegador.
+   */
   agregarServicio(e: Especialidad) {
     this.operar(this.api.agregarServicio(e.id!, this.nombreServicio), s => {
       this.nombreServicio = '';
@@ -53,14 +88,26 @@ export class TarifarioComponent implements OnInit {
     });
   }
 
+  /**
+   * Muestra tarifas.
+   *
+   * @param s s.
+   */
   verTarifas(s: ServicioClinico) {
     this.servicio = s;
     this.tarifa = null;
     this.operar(this.api.historial(s.id), tarifas => { this.historial = tarifas; });
   }
 
+  /** Prepara el formulario para un nuevo registro de tarifa. */
   nuevaTarifa() { this.tarifa = { valor: 0, iva: 0, impuesto: 0, desde: hoyBogota(), hasta: null }; }
 
+  /**
+   * Registra los datos de la pantalla.
+   *
+   * @param s s.
+   * @param datos datos a enviar.
+   */
   registrar(s: ServicioClinico, datos: TarifaClinica) {
     if (!confirm('¿Registrar esta nueva vigencia de tarifa?')) return;
     this.operar(this.api.nuevaTarifa(s.id, datos), () => {
@@ -69,6 +116,12 @@ export class TarifarioComponent implements OnInit {
     });
   }
 
+  /**
+   * Ejecuta la operación los datos de la pantalla.
+   *
+   * @param req solicitud HTTP saliente.
+   * @param ok ok.
+   */
   private operar<T>(req: Observable<T>, ok: (dato: T) => void) {
     this.error = '';
     this.ocupado = true;

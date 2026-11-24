@@ -63,31 +63,41 @@ import { Menu } from
 // 3. COMPONENTE PRINCIPAL
 // ================================================
 
+/** Componente visual «navegación content» de la plantilla de la aplicación. */
 export class NavContentComponent implements OnInit {
 
+  /** Dependencia inyectada (Location). */
   private location = inject(Location);
 
+  /** Dependencia inyectada (MenuService). */
   private menuService = inject(MenuService);
 
   // Información de la aplicación.
+  /** Título visible. */
   title = 'Clínica Veterinaria - Uniminuto';
 
+  /** Current application versión. */
   currentApplicationVersion = environment.appVersion;
 
   // Menús que aparecerán en pantalla.
+  /** Lista de navigations. */
   navigations: NavigationItem[] = [];
 
   // Propiedades existentes del diseño.
+  /** Wrapper width. */
   wrapperWidth: number;
 
+  /** Window width. */
   windowWidth = window.innerWidth;
 
+  /** Navegación collapsed móvil. */
   NavCollapsedMob = output();
 
   // ================================================
   // 4. INICIALIZAR EL MENÚ
   // ================================================
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit(): void {
 
     this.cargarMenusAutorizados();
@@ -98,6 +108,7 @@ export class NavContentComponent implements OnInit {
   // 5. CONSULTAR LOS MENÚS DEL USUARIO AUTENTICADO
   // ================================================
 
+  /** Carga menús autorizados desde el backend. */
   cargarMenusAutorizados(): void {
 
     this.menuService.obtenerMenusPropios().subscribe({
@@ -110,7 +121,13 @@ export class NavContentComponent implements OnInit {
   // 6. CONSTRUIR EL MENÚ LATERAL
   // ================================================
 
+  /**
+   * Construye menú lateral.
+   *
+   * @param menus menús.
+   */
   private construirMenuLateral(
+    /** Lista de menús. */
     menus: Menu[]
   ): void {
 
@@ -175,6 +192,7 @@ export class NavContentComponent implements OnInit {
   // 7. CONTROL DEL MENÚ ACTIVO
   // ================================================
 
+  /** Gestiona out click. */
   fireOutClick(): void {
 
     let current_url = this.location.path();

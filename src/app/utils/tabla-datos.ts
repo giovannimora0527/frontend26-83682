@@ -28,9 +28,13 @@ export class TablaDatos<T extends object> {
    * @param porPagina filas por página.
    */
   constructor(
+    /** Lista de campos búsqueda. */
     private readonly camposBusqueda: (keyof T)[],
+    /** Columna inicial. */
     columnaInicial: keyof T,
+    /** Dirección inicial. */
     direccionInicial: 'asc' | 'desc' = 'desc',
+    /** Por página. */
     readonly porPagina = 10
   ) {
     this.columna = columnaInicial;
@@ -43,6 +47,11 @@ export class TablaDatos<T extends object> {
     this.pagina = Math.min(this.pagina, this.totalPaginas);
   }
 
+  /**
+   * Datos.
+   *
+   * @returns resultado de datos.
+   */
   get datos(): T[] {
     return this.filas;
   }
@@ -63,6 +72,11 @@ export class TablaDatos<T extends object> {
     return this.filtradas.slice(inicio, inicio + this.porPagina);
   }
 
+  /**
+   * Total páginas.
+   *
+   * @returns valor numérico calculado.
+   */
   get totalPaginas(): number {
     return Math.max(1, Math.ceil(this.filtradas.length / this.porPagina));
   }
@@ -89,6 +103,11 @@ export class TablaDatos<T extends object> {
     this.pagina = 1;
   }
 
+  /**
+   * Navega a a.
+   *
+   * @param pagina número de página.
+   */
   irA(pagina: number): void {
     this.pagina = Math.min(Math.max(1, pagina), this.totalPaginas);
   }

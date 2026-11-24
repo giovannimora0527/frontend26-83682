@@ -5,6 +5,7 @@ import { provideRouter, withEnabledBlockingInitialNavigation, withHashLocation, 
 import { routes } from './app-routing.module';
 import { authInterceptor } from "./interceptors/auth.interceptor";
 
+/** App config. */
 export const appConfig: ApplicationConfig = {
     providers: [
       provideRouter(routes,

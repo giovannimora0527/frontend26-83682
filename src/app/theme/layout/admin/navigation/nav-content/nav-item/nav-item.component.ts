@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { NavigationItem } from '../../navigation';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
 
+/** Componente visual «navegación item» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-nav-item',
   imports: [SharedModule, RouterModule],
@@ -14,14 +15,21 @@ import { SharedModule } from 'src/app/theme/shared/shared.module';
   styleUrls: ['./nav-item.component.scss']
 })
 export class NavItemComponent {
+  /** Dependencia inyectada (Location). */
   private location = inject(Location);
 
   // public props
+  /** Item. */
   item = input<NavigationItem>();
 
   // constructor
 
   // public method
+  /**
+   * Cierra other menú.
+   *
+   * @param event evento del navegador.
+   */
   closeOtherMenu(event: MouseEvent) {
     const ele = event.target as HTMLElement;
     if (ele !== null && ele !== undefined) {

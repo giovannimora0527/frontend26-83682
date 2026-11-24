@@ -4,6 +4,12 @@ import { catchError, map, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { MenuService } from '../services/menu.service';
 
+/**
+ * Menú permission guard.
+ *
+ * @param _ .
+ * @param state estado del enrutador.
+ */
 export const menuPermissionGuard: CanActivateChildFn = (_, state) => {
   const router = inject(Router);
   const auth = inject(AuthService);

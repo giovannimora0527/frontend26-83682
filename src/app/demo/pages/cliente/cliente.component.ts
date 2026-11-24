@@ -32,21 +32,33 @@ import { Cliente } from 'src/app/models/cliente';
   templateUrl: './cliente.component.html',
   styleUrl: './cliente.component.scss'
 })
+/** Pantalla «cliente» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 export class ClienteComponent implements OnInit {
 
   // Lista original recibida desde Spring Boot.
+  /** Lista de clientes. */
   clientes: Cliente[] = [];
 
   // Texto utilizado para buscar clientes.
+  /** Criterio de filtrado: texto búsqueda. */
   textoBusqueda: string = '';
 
   // Estado de carga de la información.
+  /** Indica si se está cargando. */
   cargando: boolean = false;
 
   // Mensaje cuando ocurre un error.
+  /** Mensaje mostrado al usuario (error carga). */
   errorCarga: string = '';
 
+  /**
+   * Crea la instancia con sus dependencias inyectadas.
+   *
+   * @param clienteService servicio cliente.
+   * @param sesion sesión.
+   */
   constructor(
+    /** Dependencia inyectada (ClienteService). */
     private readonly clienteService: ClienteService, private readonly sesion: AuthService
   ) {}
 
@@ -138,16 +150,31 @@ export class ClienteComponent implements OnInit {
   limpiarBusqueda(): void {
     this.textoBusqueda = '';
   }
+  /** Formulario reactivo: formulario. */
   formulario: ReturnType<ClienteComponent['datos']> | null = null;
+  /** Indica si se está editando. */
   editando?: number;
+  /** Por archivar. */
   porArchivar?: Cliente;
+  /** Indica si se está guardando. */
   guardando = false;
+  /** Mensaje mostrado al usuario (error operación). */
   errorOperacion = '';
 
+  /**
+   * Indica si el registro se puede archivar.
+   *
+   * @returns puede archivar.
+   */
   get puedeArchivar() {
     return ['ADMIN','ADMINISTRADOR'].includes(this.sesion.obtenerPerfil()?.trim().toUpperCase() ?? '');
   }
 
+  /**
+   * Datos.
+   *
+   * @param c c.
+   */
   datos(c?: Cliente) {
     return {tipoDocumento:c?.tipoDocumento ?? '',numeroDocumento:c?.numeroDocumento ?? '',
       nombres:c?.nombres ?? '',apellidos:c?.apellidos ?? '',
@@ -155,6 +182,11 @@ export class ClienteComponent implements OnInit {
       telefono:c?.telefono ?? '',direccion:c?.direccion ?? ''};
   }
 
+  /**
+   * Abre los datos de la pantalla.
+   *
+   * @param cliente cliente.
+   */
   abrir(cliente?: Cliente) {
     this.errorOperacion = '';
     this.editando = cliente?.clienteId;
@@ -169,6 +201,7 @@ export class ClienteComponent implements OnInit {
     });
   }
 
+  /** Guarda los datos de la pantalla validando el formulario y enviándolo al backend. */
   guardar() {
     if (!this.formulario || this.guardando) return;
     this.errorOperacion = '';
@@ -179,6 +212,7 @@ export class ClienteComponent implements OnInit {
     });
   }
 
+  /** Archiva los datos de la pantalla. */
   archivar() {
     const id = this.porArchivar?.clienteId;
     if (!id || this.guardando) return;
@@ -190,6 +224,11 @@ export class ClienteComponent implements OnInit {
     });
   }
 
+  /**
+   * Muestra error.
+   *
+   * @param error error recibido del backend.
+   */
   private mostrarError(error: {error?: {mensaje?: string}}) {
     this.errorOperacion = error.error?.mensaje ?? 'No fue posible completar la operación.';
   }

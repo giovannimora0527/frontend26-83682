@@ -1,3 +1,4 @@
+/** Spinkit. */
 export const Spinkit = {
   skChasingDots: 'sk-chasing-dots',
   skCubeGrid: 'sk-cube-grid',

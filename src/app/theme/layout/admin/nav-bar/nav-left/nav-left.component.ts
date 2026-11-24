@@ -8,6 +8,7 @@ import { NavSearchComponent } from './nav-search/nav-search.component';
 //
 import screenfull from 'screenfull';
 
+/** Componente visual «navegación left» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-nav-left',
   imports: [SharedModule],
@@ -15,9 +16,11 @@ import screenfull from 'screenfull';
   styleUrls: ['./nav-left.component.scss']
 })
 export class NavLeftComponent implements OnInit, OnDestroy {
+  /** Indica si screen full. */
   screenFull = true;
 
   // life cycle hook
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() {
     if (screenfull.isEnabled) {
       this.screenFull = screenfull.isFullscreen; // Initialize based on current fullscreen state
@@ -27,6 +30,7 @@ export class NavLeftComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Libera recursos (suscripciones y temporizadores) al destruir el componente. */
   ngOnDestroy() {
     if (screenfull.isEnabled) {
       screenfull.off('change', () => {
@@ -35,6 +39,7 @@ export class NavLeftComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Alterna fullscreen. */
   toggleFullscreen() {
     if (screenfull.isEnabled) {
       screenfull.toggle().then(() => {

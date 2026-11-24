@@ -8,6 +8,7 @@ import { SharedModule } from 'src/app/theme/shared/shared.module';
 import { NavItemComponent } from '../nav-item/nav-item.component';
 import { NavCollapseComponent } from '../nav-collapse/nav-collapse.component';
 
+/** Componente visual «navegación group» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-nav-group',
   imports: [SharedModule, NavItemComponent, NavCollapseComponent],
@@ -15,12 +16,15 @@ import { NavCollapseComponent } from '../nav-collapse/nav-collapse.component';
   styleUrls: ['./nav-group.component.scss']
 })
 export class NavGroupComponent implements OnInit {
+  /** Dependencia inyectada (Location). */
   private location = inject(Location);
 
   // public props
+  /** Item. */
   readonly item = input<NavigationItem>(undefined);
 
   // life cycle event
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() {
     // at reload time active and trigger link
     let current_url = this.location.path();

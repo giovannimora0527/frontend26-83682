@@ -30,29 +30,49 @@ import { mensajeError } from '../../../utils/tabla-datos';
 // MODELOS DE CITAS MÉDICAS
 // ======================================================
 
+/** Modelo de datos «Cita» que se intercambia con el backend. */
 export interface Cita {
+  /** Identificador único del registro. */
   id: number;
+  /** Identificador de cliente. */
   clienteId: number;
+  /** Identificador de mascota. */
   mascotaId: number;
+  /** Identificador de médico. */
   medicoId: number;
+  /** Fecha y hora (AAAA-MM-DDTHH:MM). */
   fechaHora: string;
+  /** Fecha fin. */
   fechaFin: string;
+  /** Estado actual del registro. */
   estado: string;
+  /** Motivo registrado. */
   motivo: string | null;
   /** Nombres que envía el backend para el DataTable. */
   cliente?: string;
+  /** Mascota (opcional). */
   mascota?: string;
+  /** Veterinario (opcional). */
   veterinario?: string;
+  /** Identificador de historia (opcional). */
   historiaId?: number | null;
 }
 
+/** Modelo de datos «CrearCitaDTO» que se intercambia con el backend. */
 export interface CrearCitaDTO {
+  /** Identificador de cliente. */
   clienteId: number;
+  /** Identificador de mascota. */
   mascotaId: number;
+  /** Identificador de médico. */
   medicoId: number;
+  /** Fecha y hora (AAAA-MM-DDTHH:MM). */
   fechaHora: string;
+  /** Fecha fin. */
   fechaFin: string;
+  /** Estado actual del registro. */
   estado: string;
+  /** Motivo registrado. */
   motivo: string | null;
 }
 
@@ -60,6 +80,7 @@ export interface CrearCitaDTO {
 // COMPONENTE DE GESTIÓN DE CITAS
 // ======================================================
 
+/** Pantalla «cita» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-cita',
   standalone: true,
@@ -73,57 +94,80 @@ export interface CrearCitaDTO {
   styleUrl: './cita.component.scss'
 })
 export class CitaComponent implements OnInit {
+  /** Mascota historial. */
   mascotaHistorial: number | null = null;
 
   // ====================================================
   // 1. CONFIGURACIÓN DEL BACKEND
   // ====================================================
 
+  /** Ruta del recurso en la API del backend. */
   private readonly api = 'cita';
 
   // ====================================================
   // 2. LISTADOS
   // ====================================================
 
+  /** Lista de citas. */
   citas: Cita[] = [];
+  /** Lista de clientes. */
   clientes: Cliente[] = [];
+  /** Lista de mascotas. */
   mascotas: Mascota[] = [];
+  /** Lista de médicos. */
   medicos: Medico[] = [];
 
   // ====================================================
   // 3. ESTADOS DE CARGA
   // ====================================================
 
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Indica si se está cargando clientes. */
   cargandoClientes = false;
+  /** Indica si se está cargando mascotas. */
   cargandoMascotas = false;
+  /** Indica si se está guardando. */
   guardando = false;
 
+  /** Mensaje mostrado al usuario (error carga). */
   errorCarga = '';
+  /** Mensaje mostrado al usuario (error clientes). */
   errorClientes = '';
+  /** Mensaje mostrado al usuario (error mascotas). */
   errorMascotas = '';
 
   // NUEVO:
   // Mostrar los errores directamente dentro del modal.
+  /** Mensaje mostrado al usuario (mensaje error guardar). */
   mensajeErrorGuardar = '';
 
   // ====================================================
   // 4. BÚSQUEDA Y FILTROS
   // ====================================================
 
+  /** Criterio de filtrado: búsqueda. */
   busqueda = '';
+  /** Criterio de filtrado: filtro estado. */
   filtroEstado = '';
 
+  /** Dependencia inyectada (AgendaService). */
   private readonly agenda = inject(AgendaService);
+  /** Dependencia inyectada (CitaService). */
   private readonly citasApi = inject(CitaService);
+  /** Indica si es admin. */
   readonly esAdmin = ['ADMIN', 'ADMINISTRADOR'].includes((inject(AuthService).obtenerPerfil() ?? '').trim().toUpperCase());
+  /** Lista de estados. */
   readonly estados = ['pendiente', 'programada', 'confirmada', 'atendida', 'finalizada', 'cancelada'];
 
   // ---------------- Ordenamiento por columnas y filtro por rango de fechas ----------------
   /** Columna por la que se ordena el DataTable (inicialmente fecha y hora descendente). */
   ordenColumna: 'fechaHora' | 'cliente' | 'mascota' | 'veterinario' | 'estado' | 'id' = 'fechaHora';
+  /** Orden dirección. */
   ordenDireccion: 'asc' | 'desc' = 'desc';
+  /** Fecha desde. */
   fechaDesde = '';
+  /** Fecha hasta. */
   fechaHasta = '';
 
   /** Cambia la columna de orden o invierte la dirección si es la misma. */
@@ -133,11 +177,18 @@ export class CitaComponent implements OnInit {
     this.paginaActual = 1;
   }
 
+  /**
+   * Ícono que indica la dirección del ordenamiento de una columna.
+   *
+   * @param columna columna a ordenar.
+   * @returns texto resultante.
+   */
   iconoOrden(columna: string): string {
     return this.ordenColumna !== columna ? '↕' : this.ordenDireccion === 'asc' ? '▲' : '▼';
   }
 
   // ---------------- Combo dependiente: mascotas consultadas al backend por cliente ----------------
+  /** Lista de mascotas cliente. */
   mascotasCliente: Mascota[] = [];
 
   /** Consulta al backend únicamente las mascotas del cliente seleccionado. */
@@ -159,10 +210,18 @@ export class CitaComponent implements OnInit {
   }
 
   // ---------------- Reactivación explícita de citas canceladas ----------------
+  /** Cita reactivar. */
   citaReactivar: Cita | null = null;
+  /** Reactivar inicio. */
   reactivarInicio = '';
+  /** Reactivar fin. */
   reactivarFin = '';
 
+  /**
+   * Abre reactivar.
+   *
+   * @param cita cita seleccionada.
+   */
   abrirReactivar(cita: Cita): void {
     this.citaReactivar = cita;
     this.errorAgenda = '';
@@ -182,17 +241,28 @@ export class CitaComponent implements OnInit {
       error: e => (this.errorAgenda = mensajeError(e, 'No fue posible reactivar la cita.'))
     });
   }
+  /** Disponibilidad. */
   disponibilidad: DisponibilidadMedica | null = null;
+  /** Médico configuración. */
   medicoConfiguracion: number | null = null;
+  /** Cita historial. */
   citaHistorial: Cita | null = null;
+  /** Lista de historial. */
   historial: RevisionCita[] = [];
+  /** Mensaje mostrado al usuario (error agenda). */
   errorAgenda = '';
 
+  /**
+   * Estados formulario.
+   *
+   * @returns resultado de estados formulario.
+   */
   get estadosFormulario(): string[] {
     if (this.modoFormulario === 'crear') return ['pendiente', 'programada', 'confirmada'];
     return this.esAdmin ? ['pendiente', 'programada', 'confirmada', 'cancelada', 'atendida'] : ['pendiente', 'programada', 'confirmada', 'cancelada'];
   }
 
+  /** Consulta disponibilidad. */
   consultarDisponibilidad() {
     const medico = Number(this.formulario.get('medicoId')?.value);
     const fecha = String(this.formulario.get('fechaHora')?.value ?? '').slice(0, 10);
@@ -211,6 +281,11 @@ export class CitaComponent implements OnInit {
     });
   }
 
+  /**
+   * Usa franja.
+   *
+   * @param franja franja.
+   */
   usarFranja(franja: Intervalo) {
     const inicio = franja.inicio.slice(0, 16);
     const sugerido = new Date(new Date(franja.inicio + 'Z').getTime() + 30 * 60_000).toISOString().slice(0, 16);
@@ -219,6 +294,11 @@ export class CitaComponent implements OnInit {
     this.disponibilidad = null;
   }
 
+  /**
+   * Muestra historial.
+   *
+   * @param cita cita seleccionada.
+   */
   verHistorial(cita: Cita) {
     this.citaHistorial = cita;
     this.historial = [];
@@ -229,6 +309,11 @@ export class CitaComponent implements OnInit {
     });
   }
 
+  /**
+   * Finaliza los datos de la pantalla.
+   *
+   * @param cita cita seleccionada.
+   */
   finalizar(cita: Cita) {
     if (!confirm('¿Finalizar la cita atendida?')) return;
     this.errorAgenda = '';
@@ -242,30 +327,50 @@ export class CitaComponent implements OnInit {
   // 5. PAGINACIÓN
   // ====================================================
 
+  /** Página actual. */
   paginaActual = 1;
+  /** Registros por página. */
   readonly registrosPorPagina = 10;
 
   // ====================================================
   // 6. FORMULARIO
   // ====================================================
 
+  /** Formulario reactivo: formulario. */
   formulario: FormGroup;
 
+  /** Indica si se muestra formulario. */
   mostrarFormulario = false;
 
+  /** Modo formulario. */
   modoFormulario: 'crear' | 'editar' = 'crear';
 
+  /** Identificador de cita seleccionada. */
   citaSeleccionadaId: number | null = null;
 
   // ====================================================
   // 7. CONSTRUCTOR
   // ====================================================
 
+  /**
+   * Crea la instancia con sus dependencias inyectadas.
+   *
+   * @param backendService servicio backend.
+   * @param clienteService servicio cliente.
+   * @param mascotaService servicio mascota.
+   * @param medicoService servicio médico.
+   * @param formBuilder constructor de formularios reactivos.
+   */
   constructor(
+    /** Dependencia inyectada (BackendService). */
     private readonly backendService: BackendService,
+    /** Dependencia inyectada (ClienteService). */
     private readonly clienteService: ClienteService,
+    /** Dependencia inyectada (MascotaService). */
     private readonly mascotaService: MascotaService,
+    /** Dependencia inyectada (MedicoService). */
     private readonly medicoService: MedicoService,
+    /** Formulario reactivo: form builder. */
     private readonly formBuilder: FormBuilder
   ) {
 
@@ -308,6 +413,7 @@ export class CitaComponent implements OnInit {
   // 8. INICIALIZACIÓN
   // ====================================================
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit(): void {
     this.cargarCitas();
     this.cargarClientes();
@@ -319,6 +425,7 @@ export class CitaComponent implements OnInit {
   // 9. CARGAR CITAS MÉDICAS
   // ====================================================
 
+  /** Carga citas desde el backend. */
   cargarCitas(): void {
 
     this.cargando = true;
@@ -364,6 +471,7 @@ export class CitaComponent implements OnInit {
   // 10. CARGAR CLIENTES
   // ====================================================
 
+  /** Carga clientes desde el backend. */
   cargarClientes(): void {
 
     this.cargandoClientes = true;
@@ -400,6 +508,7 @@ export class CitaComponent implements OnInit {
   // 11. CARGAR MASCOTAS
   // ====================================================
 
+  /** Carga mascotas desde el backend. */
   cargarMascotas(): void {
 
     this.cargandoMascotas = true;
@@ -436,6 +545,7 @@ export class CitaComponent implements OnInit {
   // 12. CARGAR MÉDICOS
   // ====================================================
 
+  /** Carga médicos desde el backend. */
   cargarMedicos(): void {
 
     this.medicoService.listarMedicos().subscribe({
@@ -470,6 +580,12 @@ export class CitaComponent implements OnInit {
   // 13. MOSTRAR NOMBRE DEL CLIENTE
   // ====================================================
 
+  /**
+   * Obtiene nombre cliente.
+   *
+   * @param cliente cliente.
+   * @returns texto resultante.
+   */
   obtenerNombreCliente(cliente: Cliente): string {
 
     const nombreCompleto =
@@ -487,7 +603,14 @@ export class CitaComponent implements OnInit {
   // 14. OBTENER CLIENTE POR IDENTIFICADOR
   // ====================================================
 
+  /**
+   * Obtiene cliente por identificador.
+   *
+   * @param clienteId identificador de cliente.
+   * @returns resultado de obtener cliente por identificador.
+   */
   obtenerClientePorId(
+    /** Identificador de cliente. */
     clienteId: number
   ): Cliente | undefined {
 
@@ -502,6 +625,11 @@ export class CitaComponent implements OnInit {
   // 15. FILTRAR MASCOTAS DEL CLIENTE
   // ====================================================
 
+  /**
+   * Mascotas del cliente.
+   *
+   * @returns resultado de mascotas del cliente.
+   */
   get mascotasDelCliente(): Mascota[] {
 
     const clienteSeleccionado =
@@ -524,6 +652,12 @@ export class CitaComponent implements OnInit {
   // 16. MOSTRAR NOMBRE DE LA MASCOTA
   // ====================================================
 
+  /**
+   * Obtiene nombre mascota.
+   *
+   * @param mascota mascota.
+   * @returns texto resultante.
+   */
   obtenerNombreMascota(mascota: Mascota): string {
 
     const nombre =
@@ -540,6 +674,12 @@ export class CitaComponent implements OnInit {
   // 17. MOSTRAR NOMBRE DEL MÉDICO
   // ====================================================
 
+  /**
+   * Obtiene nombre médico.
+   *
+   * @param id identificador del registro.
+   * @returns texto resultante.
+   */
   obtenerNombreMedico(id: number): string {
 
     const medico = this.medicos.find(
@@ -558,6 +698,7 @@ export class CitaComponent implements OnInit {
   // 18. CAMBIO DE CLIENTE
   // ====================================================
 
+  /** Reacciona al evento cambiar cliente. */
   alCambiarCliente(): void {
 
     // Evita seleccionar una mascota de otro cliente y consulta solo las mascotas del cliente elegido.
@@ -573,6 +714,11 @@ export class CitaComponent implements OnInit {
   // 19. FILTRAR CITAS
   // ====================================================
 
+  /**
+   * Citas filtradas.
+   *
+   * @returns resultado de citas filtradas.
+   */
   get citasFiltradas(): Cita[] {
 
     const texto =
@@ -640,6 +786,11 @@ export class CitaComponent implements OnInit {
   // 20. PAGINACIÓN
   // ====================================================
 
+  /**
+   * Total páginas.
+   *
+   * @returns valor numérico calculado.
+   */
   get totalPaginas(): number {
 
     return Math.ceil(
@@ -649,6 +800,11 @@ export class CitaComponent implements OnInit {
 
   }
 
+  /**
+   * Citas paginadas.
+   *
+   * @returns resultado de citas paginadas.
+   */
   get citasPaginadas(): Cita[] {
 
     const inicio =
@@ -662,6 +818,11 @@ export class CitaComponent implements OnInit {
 
   }
 
+  /**
+   * Páginas.
+   *
+   * @returns resultado de páginas.
+   */
   get paginas(): number[] {
 
     return Array.from(
@@ -671,6 +832,11 @@ export class CitaComponent implements OnInit {
 
   }
 
+  /**
+   * Cambia página.
+   *
+   * @param pagina número de página.
+   */
   cambiarPagina(pagina: number): void {
 
     if (
@@ -682,10 +848,12 @@ export class CitaComponent implements OnInit {
 
   }
 
+  /** Actualiza filtros. */
   actualizarFiltros(): void {
     this.paginaActual = 1;
   }
 
+  /** Limpia filtros. */
   limpiarFiltros(): void {
 
     this.busqueda = '';
@@ -700,6 +868,7 @@ export class CitaComponent implements OnInit {
   // 21. REGISTRAR NUEVA CITA
   // ====================================================
 
+  /** Prepara el formulario para un nuevo registro de cita. */
   nuevaCita(): void {
 
     this.disponibilidad = null;
@@ -727,6 +896,11 @@ export class CitaComponent implements OnInit {
   // 22. EDITAR CITA
   // ====================================================
 
+  /**
+   * Prepara el formulario para editar cita.
+   *
+   * @param cita cita seleccionada.
+   */
   editarCita(cita: Cita): void {
 
     this.disponibilidad = null;
@@ -755,6 +929,7 @@ export class CitaComponent implements OnInit {
   // 23. CERRAR EL FORMULARIO
   // ====================================================
 
+  /** Cierra formulario. */
   cerrarFormulario(): void {
 
     if (this.guardando) {
@@ -771,6 +946,11 @@ export class CitaComponent implements OnInit {
   // 24. MOSTRAR ERRORES DENTRO DEL FORMULARIO
   // ====================================================
 
+  /**
+   * Muestra error formulario.
+   *
+   * @param mensaje mensaje.
+   */
   private mostrarErrorFormulario(mensaje: string): void {
 
     this.mensajeErrorGuardar = mensaje;
@@ -786,6 +966,7 @@ export class CitaComponent implements OnInit {
   // 25. GUARDAR O ACTUALIZAR CITA
   // ====================================================
 
+  /** Guarda cita validando el formulario y enviándolo al backend. */
   guardarCita(): void {
 
     // Evitar enviar solicitudes duplicadas.

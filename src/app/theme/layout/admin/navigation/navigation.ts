@@ -25,42 +25,55 @@
 export interface NavigationItem {
 
   // Identificador único.
+  /** Identificador único del registro. */
   id: string;
 
   // Nombre que aparece en pantalla.
+  /** Título visible. */
   title: string;
 
   // Tipo de elemento.
+  /** Tipo de elemento del menú (item, collapse o group). */
   type: 'item' | 'collapse' | 'group';
 
   // Traducción opcional.
+  /** Translate (opcional). */
   translate?: string;
 
   // Icono visual del menú.
+  /** Clase del ícono (opcional). */
   icon?: string;
 
   // Permite ocultar un elemento.
+  /** Indica si el elemento se oculta (opcional). */
   hidden?: boolean;
 
   // Ruta hacia el componente de Angular.
+  /** Ruta de navegación (opcional). */
   url?: string;
 
   // Clases CSS.
+  /** Clases CSS adicionales (opcional). */
   classes?: string;
 
   // Coincidencia exacta de la ruta.
+  /** Indica si la ruta debe coincidir exactamente (opcional). */
   exactMatch?: boolean;
 
   // Identifica enlaces externos.
+  /** Indica si el enlace abre un sitio externo (opcional). */
   external?: boolean;
 
   // Configuración del destino.
+  /** Indica si se abre en otra pestaña (opcional). */
   target?: boolean;
 
   // Muestra la navegación de migas de pan.
+  /** Indica si se muestra en las migas de pan (opcional). */
   breadcrumbs?: boolean;
 
   // Elementos secundarios.
+  /** Elementos hijos del menú (opcional). */
   children?: NavigationItem[];
 }
 
@@ -68,6 +81,7 @@ export interface NavigationItem {
 // 2. MENÚ PRINCIPAL DE LA CLÍNICA
 // ==========================================================
 
+/** Navigation items. */
 export const NavigationItems: NavigationItem[] = [
 
   {

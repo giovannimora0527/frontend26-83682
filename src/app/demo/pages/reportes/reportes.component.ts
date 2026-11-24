@@ -5,6 +5,7 @@ import { AuthService } from '../../../services/auth.service';
 import { descargarClinica, mensajeClinica } from '../../../services/clinica.service';
 import { CeldaReporte, ColumnaReporte, ReportesService, ResultadoReporte } from '../../../services/reportes.service';
 
+/** Catalogo. */
 const catalogo = [
   { id:'FINANCIERO', nombre:'Resumen financiero', grupo:'Financieros' },
   { id:'FACTURAS', nombre:'Facturas y saldos al cierre', grupo:'Financieros' },
@@ -22,6 +23,7 @@ const catalogo = [
   { id:'CITAS_OPERATIVAS', nombre:'Resumen operativo de citas', grupo:'Operativos' }
 ];
 
+/** Pantalla «reportes» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector:'app-reportes',
   standalone:true,
@@ -29,23 +31,49 @@ const catalogo = [
   templateUrl:'./reportes.component.html'
 })
 export class ReportesComponent {
+  /** Ruta del recurso en la API del backend. */
   private readonly api=inject(ReportesService);
+  /** Rol del usuario. */
   private readonly rol=inject(AuthService).obtenerPerfil()?.trim().toUpperCase();
+  /** Catalogo. */
   readonly catalogo=this.rol==='ADMINISTRADOR'||this.rol==='ADMIN'
     ? catalogo : catalogo.filter(r=>r.id==='CITAS_OPERATIVAS');
+  /** Lista de grupos. */
   readonly grupos=[...new Set(this.catalogo.map(r=>r.grupo))];
+  /** Tipo de registro. */
   tipo=this.catalogo[0].id;
+  /** Criterio de filtrado: filtros. */
   filtros={desde:'',hasta:'',medico:'',especialidad:'',medicamento:'',lote:'',mascota:'',propietario:'',estado:'',agrupacion:'DIA'};
+  /** Resultado. */
   resultado:ResultadoReporte|null=null;
+  /** Mensaje mostrado al usuario (error). */
   error='';
+  /** Indica si ocupado. */
   ocupado=false;
+  /** Consulta. */
   private consulta:{tipo:string;parametros:Record<string,string>}|null=null;
 
+  /** Crea la instancia con sus dependencias inyectadas. */
   constructor() { this.limpiar(); }
 
+  /**
+   * Indica si el reporte seleccionado es de inventario.
+   *
+   * @returns es inventario.
+   */
   get esInventario() { return this.catalogo.find(r=>r.id===this.tipo)?.grupo==='Inventario'; }
+  /**
+   * Existencia histórica.
+   *
+   * @returns existencia histórica.
+   */
   get existenciaHistorica() { return this.tipo==='EXISTENCIAS' && !!(this.filtros.desde || this.filtros.hasta); }
 
+  /**
+   * Estados.
+   *
+   * @returns estados.
+   */
   get estados() {
     if(this.tipo==='FACTURAS') return ['PENDIENTE_PAGO','PAGO_PARCIAL','PAGADA','ANULADA'];
     if(this.tipo==='EXISTENCIAS' && !this.existenciaHistorica) return ['agotado','minimo','vencido','proximo'];
@@ -54,6 +82,7 @@ export class ReportesComponent {
       ? ['pendiente','confirmada','cancelada','atendida','finalizada'] : [];
   }
 
+  /** Limpia los datos de la pantalla. */
   limpiar() {
     const partes=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'})
       .formatToParts(new Date());
@@ -69,6 +98,7 @@ export class ReportesComponent {
     this.error='';
   }
 
+  /** Consulta los datos de la pantalla. */
   consultar() {
     const { agrupacion,...filtros }=this.filtros;
     const parametros=Object.fromEntries(Object.entries(filtros).filter(([,v])=>v!==null && v!=='' && v!==undefined));
@@ -83,6 +113,11 @@ export class ReportesComponent {
     });
   }
 
+  /**
+   * Cambia página.
+   *
+   * @param pagina número de página.
+   */
   cambiarPagina(pagina:number) {
     const consulta=this.consulta;
     if(!consulta) return;
@@ -91,6 +126,11 @@ export class ReportesComponent {
     });
   }
 
+  /**
+   * Exporta los datos de la pantalla.
+   *
+   * @param formato formato.
+   */
   exportar(formato:'pdf'|'excel') {
     const consulta=this.consulta;
     if(!consulta) return;
@@ -100,12 +140,28 @@ export class ReportesComponent {
     });
   }
 
+  /**
+   * Entradas.
+   *
+   * @param mapa mapa.
+   */
   entradas(mapa:Record<string,CeldaReporte>) { return Object.entries(mapa); }
 
+  /**
+   * Etiqueta.
+   *
+   * @param clave clave.
+   */
   etiqueta(clave:string) {
     return this.resultado?.columnas.find(c=>c.clave===clave)?.titulo ?? clave.replaceAll('_',' ');
   }
 
+  /**
+   * Valor.
+   *
+   * @param celda celda.
+   * @param col col.
+   */
   valor(celda:CeldaReporte|undefined,col?:ColumnaReporte) {
     if(celda===null || celda===undefined) return '—';
     if(col?.formato==='COP') return 'COP '+String(celda).replace('.',',');
@@ -113,10 +169,21 @@ export class ReportesComponent {
     return String(celda);
   }
 
+  /**
+   * Total.
+   *
+   * @param clave clave.
+   * @param celda celda.
+   */
   total(clave:string,celda:CeldaReporte) {
     return this.valor(celda,this.resultado?.columnas.find(c=>c.clave===clave));
   }
 
+  /**
+   * Ejecuta la operación los datos de la pantalla.
+   *
+   * @param accion acción.
+   */
   private async operar(accion:()=>Promise<void>) {
     if(this.ocupado) return;
     this.ocupado=true;

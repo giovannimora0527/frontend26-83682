@@ -11,7 +11,9 @@ import { AnotacionHistoria, AnotacionRq } from '../models/anotacion-historia';
  */
 @Injectable({ providedIn: 'root' })
 export class AnotacionHistoriaService {
+  /** Dependencia inyectada (HttpClient). */
   private readonly http = inject(HttpClient);
+  /** URL base de la API del backend. */
   private readonly apiUrl = `${environment.apiUrlAuth}/anotacion-historia`;
 
   /** Lista anotaciones (más recientes primero) con filtros opcionales. */
@@ -22,14 +24,33 @@ export class AnotacionHistoriaService {
     return this.http.get<AnotacionHistoria[]>(`${this.apiUrl}/listar-todos`, { params });
   }
 
+  /**
+   * Consulta anotación historia mediante la API del backend.
+   *
+   * @param id identificador del registro.
+   * @returns observable con la respuesta del backend.
+   */
   consultar(id: number): Observable<AnotacionHistoria> {
     return this.http.get<AnotacionHistoria>(`${this.apiUrl}/${id}`);
   }
 
+  /**
+   * Crea anotación historia mediante la API del backend.
+   *
+   * @param datos datos a enviar.
+   * @returns observable con la respuesta del backend.
+   */
   crear(datos: AnotacionRq): Observable<AnotacionHistoria> {
     return this.http.post<AnotacionHistoria>(`${this.apiUrl}/crear`, datos);
   }
 
+  /**
+   * Actualiza anotación historia mediante la API del backend.
+   *
+   * @param id identificador del registro.
+   * @param datos datos a enviar.
+   * @returns observable con la respuesta del backend.
+   */
   actualizar(id: number, datos: AnotacionRq): Observable<AnotacionHistoria> {
     return this.http.put<AnotacionHistoria>(`${this.apiUrl}/actualizar/${id}`, datos);
   }

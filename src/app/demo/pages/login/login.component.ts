@@ -9,6 +9,7 @@ import { AuthService, DesafioResponse } from '../../../services/auth.service';
 /** Pantallas del inicio de sesión. */
 type Paso = 'credenciales' | 'verificacion' | 'recuperar' | 'restablecer';
 
+/** Pantalla de inicio de sesión en dos pasos (usuario/contraseña y código enviado al correo) con recuperación de contraseña. */
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -21,27 +22,49 @@ export class LoginComponent implements OnDestroy {
   /** Imagen del panel izquierdo (si no existe se muestra el degradado azul). */
   readonly imagenFondo = 'url(assets/images/login-veterinaria.jpg)';
 
+  /** Paso visible del flujo: credenciales, verificación, recuperación o restablecimiento. */
   paso: Paso = 'credenciales';
+  /** Nombre de usuario. */
   username = '';
+  /** Contraseña ingresada (nunca se guarda en el navegador). */
   password = '';
+  /** Código de 6 caracteres recibido por correo. */
   codigo = '';
+  /** Usuario o correo para recuperar la contraseña. */
   usuarioRecuperar = '';
+  /** Nueva contraseña. */
   nuevaClave = '';
+  /** Confirmación de la nueva contraseña. */
   confirmarClave = '';
+  /** Indica si la contraseña se muestra en texto plano. */
   mostrarPassword = false;
 
+  /** Identificador del desafío de verificación por correo. */
   desafio: string | null = null;
+  /** Correo electrónico. */
   correo: string | null = null;
+  /** Segundos que faltan para poder reenviar el código. */
   segundosReenvio = 0;
 
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Mensaje de error mostrado al usuario. */
   mensajeError = '';
+  /** Mensaje informativo mostrado al usuario. */
   mensajeInfo = '';
 
+  /** Temporizador de la cuenta regresiva de reenvío. */
   private temporizador?: ReturnType<typeof setInterval>;
 
+  /**
+   * Crea la instancia con sus dependencias inyectadas.
+   *
+   * @param authService servicio auth.
+   * @param router enrutador de Angular.
+   */
   constructor(private authService: AuthService, private router: Router) {}
 
+  /** Libera recursos (suscripciones y temporizadores) al destruir el componente. */
   ngOnDestroy(): void {
     clearInterval(this.temporizador);
   }
@@ -50,6 +73,7 @@ export class LoginComponent implements OnDestroy {
   // PASO 1: USUARIO Y CONTRASEÑA
   // ==========================================
 
+  /** Valida usuario y contraseña y pasa al paso de verificación por correo. */
   iniciarSesion(): void {
     this.limpiarMensajes();
     if (!this.username.trim() || !this.password) {
@@ -80,6 +104,7 @@ export class LoginComponent implements OnDestroy {
   // PASO 2: CÓDIGO DE VERIFICACIÓN
   // ==========================================
 
+  /** Valida el código recibido por correo y entra al sistema. */
   verificar(): void {
     this.limpiarMensajes();
     const codigo = this.codigo.trim().toUpperCase();
@@ -101,6 +126,7 @@ export class LoginComponent implements OnDestroy {
     });
   }
 
+  /** Reenvía el código de verificación al correo. */
   reenviar(): void {
     if (!this.desafio || this.segundosReenvio > 0) return;
     this.limpiarMensajes();
@@ -123,12 +149,14 @@ export class LoginComponent implements OnDestroy {
   // RECUPERAR CONTRASEÑA
   // ==========================================
 
+  /** Muestra el formulario de recuperación de contraseña. */
   abrirRecuperacion(): void {
     this.limpiarMensajes();
     this.usuarioRecuperar = this.username.trim();
     this.paso = 'recuperar';
   }
 
+  /** Solicita el código de recuperación de contraseña. */
   solicitarRecuperacion(): void {
     this.limpiarMensajes();
     if (!this.usuarioRecuperar.trim()) {
@@ -150,6 +178,7 @@ export class LoginComponent implements OnDestroy {
     });
   }
 
+  /** Cambia la contraseña con el código de recuperación. */
   restablecer(): void {
     this.limpiarMensajes();
     const codigo = this.codigo.trim().toUpperCase();
@@ -179,6 +208,7 @@ export class LoginComponent implements OnDestroy {
     });
   }
 
+  /** Vuelve al formulario de usuario y contraseña. */
   volver(): void {
     clearInterval(this.temporizador);
     this.segundosReenvio = 0;
@@ -192,6 +222,12 @@ export class LoginComponent implements OnDestroy {
   // UTILIDADES
   // ==========================================
 
+  /**
+   * Muestra el paso de verificación e inicia la cuenta regresiva de reenvío.
+   *
+   * @param respuesta respuesta.
+   * @param paso paso.
+   */
   private irAVerificacion(respuesta: DesafioResponse, paso: Paso): void {
     this.desafio = respuesta.desafio;
     this.correo = respuesta.correo;
@@ -205,11 +241,19 @@ export class LoginComponent implements OnDestroy {
     }, 1000);
   }
 
+  /** Limpia los mensajes de error e información. */
   private limpiarMensajes(): void {
     this.mensajeError = '';
     this.mensajeInfo = '';
   }
 
+  /**
+   * Convierte un error HTTP en un mensaje según su código de estado.
+   *
+   * @param error error recibido del backend.
+   * @param porEstado por estado.
+   * @returns texto resultante.
+   */
   private mensaje(error: HttpErrorResponse, porEstado: Record<number, string>): string {
     if (error.status === 0) return 'No hay conexión con el servidor.';
     return error.error?.mensaje ?? porEstado[error.status] ?? 'No fue posible completar la operación.';

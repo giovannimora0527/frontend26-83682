@@ -16,31 +16,54 @@ import { Perfil, UsuarioRq, UsuarioService, UsuarioSistema } from './service/usu
   styleUrl: './usuario.component.scss'
 })
 export class UsuarioComponent implements OnInit {
+  /** Ruta del recurso en la API del backend. */
   private readonly api = inject(UsuarioService);
+  /** Usuario actual. */
   readonly usuarioActual = inject(AuthService).obtenerUsuarioId();
+  /** Por página. */
   readonly porPagina = 10;
 
+  /** Lista de usuarios. */
   usuarios: UsuarioSistema[] = [];
+  /** Lista de perfiles. */
   perfiles: Perfil[] = [];
+  /** Formulario reactivo: formulario. */
   formulario: UsuarioRq | null = null;
+  /** Confirmar clave. */
   confirmarClave = '';
+  /** Por cambiar estado. */
   porCambiarEstado: UsuarioSistema | null = null;
 
+  /** Criterio de filtrado: búsqueda. */
   busqueda = '';
+  /** Criterio de filtrado: filtro perfil. */
   filtroPerfil: number | '' = '';
+  /** Criterio de filtrado: filtro estado. */
   filtroEstado: '' | 'activo' | 'inactivo' = '';
+  /** Página actual (desde 0). */
   pagina = 1;
 
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Indica si se está guardando. */
   guardando = false;
+  /** Mensaje mostrado al usuario (error). */
   error = '';
+  /** Mensaje mostrado al usuario (error formulario). */
   errorFormulario = '';
+  /** Mensaje mostrado al usuario (aviso). */
   aviso = '';
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit(): void {
     this.cargar();
   }
 
+  /**
+   * Filtrados.
+   *
+   * @returns resultado de filtrados.
+   */
   get filtrados(): UsuarioSistema[] {
     const q = this.busqueda.trim().toLowerCase();
     return this.usuarios.filter(u =>
@@ -49,18 +72,34 @@ export class UsuarioComponent implements OnInit {
       && (this.filtroEstado === '' || (this.filtroEstado === 'activo') === u.activo));
   }
 
+  /**
+   * Total páginas.
+   *
+   * @returns valor numérico calculado.
+   */
   get totalPaginas(): number {
     return Math.max(1, Math.ceil(this.filtrados.length / this.porPagina));
   }
 
+  /**
+   * Visibles.
+   *
+   * @returns resultado de visibles.
+   */
   get visibles(): UsuarioSistema[] {
     return this.filtrados.slice((this.pagina - 1) * this.porPagina, this.pagina * this.porPagina);
   }
 
+  /**
+   * Activos.
+   *
+   * @returns valor numérico calculado.
+   */
   get activos(): number {
     return this.usuarios.filter(u => u.activo).length;
   }
 
+  /** Carga los datos de la pantalla desde el backend. */
   cargar(): void {
     this.cargando = true;
     this.error = '';
@@ -76,6 +115,7 @@ export class UsuarioComponent implements OnInit {
       });
   }
 
+  /** Limpia filtros. */
   limpiarFiltros(): void {
     this.busqueda = '';
     this.filtroPerfil = '';
@@ -83,6 +123,7 @@ export class UsuarioComponent implements OnInit {
     this.pagina = 1;
   }
 
+  /** Prepara el formulario para un nuevo registro. */
   nuevo(): void {
     this.aviso = '';
     this.errorFormulario = '';
@@ -90,6 +131,11 @@ export class UsuarioComponent implements OnInit {
     this.formulario = { username: '', password: '', rol: null, email: '', activo: true };
   }
 
+  /**
+   * Prepara el formulario para editar los datos de la pantalla.
+   *
+   * @param u u.
+   */
   editar(u: UsuarioSistema): void {
     this.aviso = '';
     this.errorFormulario = '';
@@ -97,6 +143,7 @@ export class UsuarioComponent implements OnInit {
     this.formulario = { id: u.id, username: u.username, password: '', rol: u.rol, email: u.email, activo: u.activo };
   }
 
+  /** Guarda los datos de la pantalla validando el formulario y enviándolo al backend. */
   guardar(): void {
     const f = this.formulario;
     if (!f) return;
@@ -116,6 +163,7 @@ export class UsuarioComponent implements OnInit {
       });
   }
 
+  /** Cambia estado. */
   cambiarEstado(): void {
     const u = this.porCambiarEstado;
     if (!u) return;
@@ -135,6 +183,12 @@ export class UsuarioComponent implements OnInit {
       });
   }
 
+  /**
+   * Claseperfil.
+   *
+   * @param perfil perfil.
+   * @returns texto resultante.
+   */
   claseperfil(perfil: string): string {
     const p = perfil.normalize('NFD').replace(/\p{M}/gu, '').toUpperCase();
     if (p.startsWith('ADMIN')) return 'text-bg-primary';
@@ -143,6 +197,12 @@ export class UsuarioComponent implements OnInit {
     return 'text-bg-info';
   }
 
+  /**
+   * Valida los datos de la pantalla.
+   *
+   * @param f f.
+   * @returns texto resultante.
+   */
   private validar(f: UsuarioRq): string {
     if (!/^[A-Za-z0-9._-]{3,50}$/.test(f.username.trim())) {
       return 'El usuario debe tener entre 3 y 50 caracteres (letras, números, punto, guion o guion bajo).';

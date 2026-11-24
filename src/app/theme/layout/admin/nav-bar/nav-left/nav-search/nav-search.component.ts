@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
 // project import
 import { SharedModule } from 'src/app/theme/shared/shared.module';
 
+/** Componente visual «navegación search» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-nav-search',
   imports: [SharedModule],
@@ -12,16 +13,21 @@ import { SharedModule } from 'src/app/theme/shared/shared.module';
 })
 export class NavSearchComponent {
   // public props
+  /** Search interval. */
   searchInterval;
+  /** Search width. */
   searchWidth: number;
+  /** Search width string. */
   searchWidthString: string;
 
   // constructor
+  /** Crea la instancia con sus dependencias inyectadas. */
   constructor() {
     this.searchWidth = 0;
   }
 
   // public method
+  /** Gestiona la búsqueda on. */
   searchOn() {
     document.querySelector('#main-search').classList.add('open');
     this.searchInterval = setInterval(() => {
@@ -34,6 +40,7 @@ export class NavSearchComponent {
     }, 35);
   }
 
+  /** Gestiona la búsqueda off. */
   searchOff() {
     this.searchInterval = setInterval(() => {
       if (this.searchWidth <= 0) {

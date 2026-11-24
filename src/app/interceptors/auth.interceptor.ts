@@ -5,6 +5,12 @@ import { catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 
+/**
+ * Auth interceptor.
+ *
+ * @param request request.
+ * @param next siguiente manejador de la cadena HTTP.
+ */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const base = new URL(environment.apiUrlAuth, document.baseURI);
   const url = new URL(request.url, document.baseURI);

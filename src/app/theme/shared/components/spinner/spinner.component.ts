@@ -2,6 +2,7 @@ import { Component, OnDestroy, ViewEncapsulation, inject, input } from '@angular
 import { Spinkit } from './spinkits';
 import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 
+/** Componente visual «spinner» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-spinner',
   templateUrl: './spinner.component.html',
@@ -9,12 +10,18 @@ import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationErr
   encapsulation: ViewEncapsulation.None
 })
 export class SpinnerComponent implements OnDestroy {
+  /** Dependencia inyectada (Router). */
   private router = inject(Router);
 
+  /** Indica si spinner visible. */
   isSpinnerVisible = true;
+  /** Spinkit. */
   Spinkit = Spinkit;
+  /** Background color. */
   readonly backgroundColor = input('#1dc4e9');
+  /** Spinner. */
   readonly spinner = input(Spinkit.skLine);
+  /** Crea la instancia con sus dependencias inyectadas. */
   constructor() {
     this.router.events.subscribe(
       (event) => {
@@ -30,6 +37,7 @@ export class SpinnerComponent implements OnDestroy {
     );
   }
 
+  /** Libera recursos (suscripciones y temporizadores) al destruir el componente. */
   ngOnDestroy(): void {
     this.isSpinnerVisible = false;
   }

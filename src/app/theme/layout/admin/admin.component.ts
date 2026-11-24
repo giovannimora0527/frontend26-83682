@@ -17,6 +17,7 @@ import { AuthService } from 'src/app/services/auth.service';
 
 
 
+/** Componente visual «admin» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-admin',
   imports: [NavBarComponent, NavigationComponent, RouterModule, CommonModule, ConfigurationComponent, BreadcrumbsComponent],
@@ -26,8 +27,10 @@ import { AuthService } from 'src/app/services/auth.service';
 export class AdminComponent {
 
   // Servicio que consulta los permisos desde Spring Boot.
+  /** Dependencia inyectada (MenuService). */
   private readonly menuService = inject(MenuService);
 
+  /** Dependencia inyectada (AuthService). */
   readonly auth = inject(AuthService);
   /** Accesos rápidos de la página de inicio, según los menús permitidos al perfil. */
   private static readonly ACCESOS: { code: string; texto: string; icono: string }[] = [
@@ -43,35 +46,53 @@ export class AdminComponent {
     { code: 'reportes', texto: 'Reportes', icono: 'feather icon-bar-chart-2' }
   ];
 
+  /** Accesos. */
   readonly accesos = toSignal(
     this.menuService.obtenerMenusPropios().pipe(
+      /**
+       * Transforma la respuesta del backend al modelo del frontend.
+       *
+       * @param menus menús.
+       */
       map(menus => AdminComponent.ACCESOS
         .map(a => ({ ...a, url: menus.find(m => m.code === a.code)?.url }))
         .filter((a): a is { code: string; texto: string; icono: string; url: string } => !!a.url)
         .slice(0, 6)),
+      /** Convierte errores HTTP en mensajes legibles. */
       catchError(() => of([]))
     ),
     { initialValue: [] as { code: string; texto: string; icono: string; url: string }[] }
   );
 
+  /** Dependencia inyectada (Router). */
   private readonly router = inject(Router);
 
   // public props
+  /** Indica si navegación collapsed. */
   navCollapsed: any;
+  /** Indica si navegación collapsed móvil. */
   navCollapsedMob: boolean;
+  /** Window width. */
   windowWidth: number;
 
   // constructor
+  /** Crea la instancia con sus dependencias inyectadas. */
   constructor() {
     this.windowWidth = window.innerWidth;
     this.navCollapsedMob = false;
   }
 
+  /**
+   * Indica si home.
+   *
+   * @returns true si se cumple la condición.
+   */
   get isHome(): boolean {
     return this.router.url === '/inicio';
   }
 
   // public method
+  /** Gestiona la navegación móvil click. */
   navMobClick() {
     if (this.navCollapsedMob && !document.querySelector('app-navigation.pcoded-navbar')?.classList.contains('mob-open')) {
       this.navCollapsedMob = !this.navCollapsedMob;
@@ -84,12 +105,18 @@ export class AdminComponent {
   }
 
   // this is for eslint rule
+  /**
+   * Gestiona key down.
+   *
+   * @param event evento del navegador.
+   */
   handleKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.closeMenu();
     }
   }
 
+  /** Cierra menú. */
   closeMenu() {
     const navigation = document.querySelector('app-navigation.pcoded-navbar');
     if (navigation?.classList.contains('mob-open')) {

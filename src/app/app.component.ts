@@ -6,6 +6,7 @@ import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { SpinnerComponent } from './theme/shared/components/spinner/spinner.component';
 import { FooterComponent } from './theme/shared/components/footer/footer.component';
 
+/** Componente visual «app» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-root',
   imports: [SpinnerComponent, FooterComponent, RouterModule],
@@ -13,8 +14,10 @@ import { FooterComponent } from './theme/shared/components/footer/footer.compone
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
+  /** Dependencia inyectada (Router). */
   private router = inject(Router);
 
+  /** Título visible. */
   title = 'Clínica Veterinaria Uniminuto';
 
   /** La pantalla de inicio de sesión ocupa toda la ventana y no muestra el pie de página general. */
@@ -23,6 +26,7 @@ export class AppComponent implements OnInit {
   }
 
   // life cycle hook
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() {
     this.router.events.subscribe((evt) => {
       if (!(evt instanceof NavigationEnd)) {

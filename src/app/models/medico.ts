@@ -17,28 +17,37 @@
 export class Medico {
 
   // Identificador único del médico.
+  /** Identificador único del registro. */
   id?: number;
+  /** Indica si el registro está activo. */
   activo?: boolean;
 
   // Tipo de documento: CC, CE, etc.
+  /** Tipo documento. */
   tipoDocumento?: string;
 
   // Número del documento de identidad.
+  /** Número documento. */
   numeroDocumento?: string;
 
   // Nombres del médico veterinario.
+  /** Nombres de la persona. */
   nombres?: string;
 
   // Apellidos del médico veterinario.
+  /** Apellidos de la persona. */
   apellidos?: string;
 
   // Teléfono del médico (puede ser nulo).
+  /** Número de teléfono. */
   telefono?: string | null;
 
   // Número de registro profesional.
+  /** Registro profesional. */
   registroProfesional?: string;
 
   // Identificador de su especialización.
+  /** Identificador de especialización. */
   especializacionId?: number;
 
 }

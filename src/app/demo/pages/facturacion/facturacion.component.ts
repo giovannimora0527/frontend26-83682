@@ -6,6 +6,7 @@ import { AuthService } from '../../../services/auth.service';
 import { descargarClinica, mensajeClinica } from '../../../services/clinica.service';
 import { DetalleFactura, Factura, FacturacionService, OrigenFactura, PreviaFactura } from '../../../services/facturacion.service';
 
+/** Pantalla «facturacion» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector:'app-facturacion',
   standalone:true,
@@ -13,31 +14,59 @@ import { DetalleFactura, Factura, FacturacionService, OrigenFactura, PreviaFactu
   templateUrl:'./facturacion.component.html'
 })
 export class FacturacionComponent implements OnInit {
+  /** Ruta del recurso en la API del backend. */
   private readonly api=inject(FacturacionService);
+  /** Perfil (rol) del usuario. */
   private readonly perfil=inject(AuthService).obtenerPerfil()?.trim().toUpperCase();
+  /** Admin. */
   readonly admin=this.perfil==='ADMIN' || this.perfil==='ADMINISTRADOR';
+  /** Lista de estados. */
   readonly estados=['PENDIENTE_PAGO','PAGO_PARCIAL','PAGADA','ANULADA'];
+  /** Lista de métodos. */
   readonly metodos=['EFECTIVO','TARJETA','TRANSFERENCIA','OTRO'];
+  /** Vista. */
   vista:'listado'|'emision'='listado';
+  /** Criterio de filtrado: filtros. */
   filtros={desde:'',hasta:'',propietario:'',mascota:'',estado:''};
+  /** Lista de facturas. */
   facturas:Factura[]=[];
+  /** Lista de atenciones. */
   atenciones:OrigenFactura[]=[];
+  /** Detalle. */
   detalle:DetalleFactura|null=null;
+  /** Origen. */
   origen:OrigenFactura|null=null;
+  /** Previa. */
   previa:PreviaFactura|null=null;
+  /** Descuento. */
   descuento='0';
+  /** Motivo descuento. */
   motivoDescuento='';
+  /** Motivo anulación. */
   motivoAnulacion='';
+  /** Abono. */
   abono={importe:'',metodo:'EFECTIVO',referencia:''};
+  /** Página actual (desde 0). */
   pagina=0;
+  /** Indica si ocupado. */
   ocupado=false;
+  /** Mensaje mostrado al usuario (error). */
   error='';
+  /** Mensaje mostrado al usuario (aviso). */
   aviso='';
+  /** Clave emisión. */
   private claveEmision='';
+  /** Intento pago. */
   private intentoPago: {firma:string; clave:string}|null=null;
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() { this.buscar(); }
 
+  /**
+   * Cambia los datos de la pantalla.
+   *
+   * @param vista vista.
+   */
   cambiar(vista:'listado'|'emision') {
     this.vista=vista;
     this.detalle=null;
@@ -46,6 +75,11 @@ export class FacturacionComponent implements OnInit {
     this.buscar();
   }
 
+  /**
+   * Busca los datos de la pantalla según los filtros.
+   *
+   * @param pagina número de página.
+   */
   buscar(pagina=0) {
     void this.operar(async()=>{
       this.pagina=pagina;
@@ -53,6 +87,11 @@ export class FacturacionComponent implements OnInit {
     });
   }
 
+  /**
+   * Selecciona los datos de la pantalla.
+   *
+   * @param origen origen.
+   */
   seleccionar(origen:OrigenFactura) {
     this.origen=origen;
     this.previa=null;
@@ -61,6 +100,7 @@ export class FacturacionComponent implements OnInit {
     this.revisar();
   }
 
+  /** Revisa los datos de la pantalla. */
   revisar() {
     const origen=this.origen;
     if(!origen) return;
@@ -71,6 +111,7 @@ export class FacturacionComponent implements OnInit {
     });
   }
 
+  /** Emite los datos de la pantalla. */
   emitir() {
     const previa=this.previa;
     if(!previa || !confirm('¿Emitir la factura con los conceptos e importes de la vista previa?')) return;
@@ -86,6 +127,11 @@ export class FacturacionComponent implements OnInit {
     });
   }
 
+  /**
+   * Abre los datos de la pantalla.
+   *
+   * @param id identificador del registro.
+   */
   abrir(id:number) {
     void this.operar(async()=>{
       this.detalle=await firstValueFrom(this.api.detalle(id));
@@ -94,6 +140,7 @@ export class FacturacionComponent implements OnInit {
     });
   }
 
+  /** Registra el pago de los datos de la pantalla. */
   pagar() {
     const f=this.detalle?.factura;
     if(!f) return;
@@ -115,6 +162,7 @@ export class FacturacionComponent implements OnInit {
     });
   }
 
+  /** Anula los datos de la pantalla. */
   anular() {
     const f=this.detalle?.factura;
     if(!f || !this.motivoAnulacion.trim() || !confirm('¿Anular esta factura?')) return;
@@ -125,12 +173,23 @@ export class FacturacionComponent implements OnInit {
     });
   }
 
+  /**
+   * Descarga el PDF los datos de la pantalla.
+   *
+   * @param id identificador del registro.
+   */
   pdf(id:number) {
     void this.operar(async()=>descargarClinica(await firstValueFrom(this.api.pdf(id)),'factura-'+id+'.pdf'));
   }
 
+  /**
+   * Etiqueta.
+   *
+   * @param estado estado a aplicar.
+   */
   etiqueta(estado:string) { return estado.toLowerCase().replaceAll('_',' '); }
 
+  /** Carga lista desde el backend. */
   private async cargarLista() {
     if(this.vista==='emision') {
       this.atenciones=await firstValueFrom(this.api.elegibles(this.pagina));
@@ -140,6 +199,11 @@ export class FacturacionComponent implements OnInit {
     this.facturas=await firstValueFrom(this.api.listar({...params,pagina:this.pagina}));
   }
 
+  /**
+   * Ejecuta la operación los datos de la pantalla.
+   *
+   * @param accion acción.
+   */
   private async operar(accion:()=>Promise<void>) {
     if(this.ocupado) return;
     this.ocupado=true;

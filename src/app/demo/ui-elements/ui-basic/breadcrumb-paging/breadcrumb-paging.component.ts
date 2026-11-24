@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 
+/** Componente visual «breadcrumb paging» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-breadcrumb-paging',
   standalone: true,

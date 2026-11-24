@@ -34,26 +34,38 @@ import {
   templateUrl: './raza.component.html',
   styleUrl: './raza.component.scss'
 })
+/** Pantalla «raza» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 export class RazaComponent implements OnInit {
 
   // Lista original de razas recibida desde MySQL.
+  /** Lista de razas. */
   razas: RazaRegistro[] = [];
 
   // Texto ingresado en el buscador.
+  /** Criterio de filtrado: texto búsqueda. */
   textoBusqueda: string = '';
 
   // Indica cuándo se están cargando los registros.
+  /** Indica si se está cargando. */
   cargando: boolean = false;
 
   // Guarda un mensaje si falla la petición HTTP.
+  /** Mensaje mostrado al usuario (error carga). */
   errorCarga: string = '';
 
   // 4. CONSTRUCTOR
+  /**
+   * Crea la instancia con sus dependencias inyectadas.
+   *
+   * @param razaService servicio raza.
+   */
   constructor(
+    /** Dependencia inyectada (RazaService). */
     private readonly razaService: RazaService
   ) {}
 
   // 5. INICIALIZACIÓN
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit(): void {
 
     // Consultar las razas cuando se abre la pantalla.
@@ -62,6 +74,7 @@ export class RazaComponent implements OnInit {
   }
 
   // 6. CONSULTAR RAZAS EN SPRING BOOT
+  /** Carga razas desde el backend. */
   cargarRazas(): void {
 
     this.cargando = true;
@@ -103,6 +116,11 @@ export class RazaComponent implements OnInit {
   }
 
   // 7. FILTRAR RAZAS
+  /**
+   * Razas filtradas.
+   *
+   * @returns resultado de razas filtradas.
+   */
   get razasFiltradas(): RazaRegistro[] {
 
     // Convertir el texto a minúsculas.
@@ -134,6 +152,7 @@ export class RazaComponent implements OnInit {
   }
 
   // 8. LIMPIAR BÚSQUEDA
+  /** Limpia búsqueda. */
   limpiarBusqueda(): void {
 
     this.textoBusqueda = '';

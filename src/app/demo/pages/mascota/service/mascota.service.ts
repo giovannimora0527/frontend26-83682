@@ -20,15 +20,19 @@ import { environment } from 'src/environments/environment';
 export interface CrearMascotaDTO {
 
   // Nombre de la mascota.
+  /** Nombre mascota. */
   nombreMascota: string;
 
   // Edad en años.
+  /** Edad de la mascota en años. */
   edad: number;
 
   // Identificador de la raza.
+  /** Identificador de raza. */
   razaId: number;
 
   // Identificador del propietario.
+  /** Identificador de cliente. */
   clienteId: number;
 }
 
@@ -44,9 +48,16 @@ export interface CrearMascotaDTO {
 export class MascotaService {
 
   // Recurso principal de la API.
+  /** Ruta del recurso en la API del backend. */
   private readonly api = 'mascota';
 
+  /**
+   * Crea la instancia con sus dependencias inyectadas.
+   *
+   * @param backendService servicio backend.
+   */
   constructor(
+    /** Dependencia inyectada (BackendService). */
     private readonly backendService: BackendService
   ) {}
 
@@ -91,6 +102,7 @@ export class MascotaService {
    * Devuelve la mascota recién registrada.
    */
   crearMascota(
+    /** Datos. */
     datos: CrearMascotaDTO
   ): Observable<Mascota> {
 

@@ -6,6 +6,7 @@ import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 
+/** Componente visual «card» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-card',
   standalone: true,
@@ -50,23 +51,38 @@ import { CommonModule } from '@angular/common';
 })
 export class CardComponent implements OnInit {
   // public props
+  /** Card title. */
   cardTitle = input<string>('Card Title');
+  /** Block class. */
+  /** Card class. */
   @Input() cardClass: string;
   blockClass = input<string>();
+  /** Header class. */
   headerClass = input<string>();
+  /** Options. */
   options = input<boolean>(true);
+  /** Indica si hid header. */
   hidHeader = input<boolean>(false);
+  /** Custom header. */
   customHeader = input<boolean>(false);
 
+  /** Animation. */
   animation: string;
+  /** Full icon. */
   fullIcon: string;
+  /** Indica si animating. */
   isAnimating: boolean;
+  /** Indica si collapsed card. */
   collapsedCard: string;
+  /** Indica si collapsed icon. */
   collapsedIcon: string;
+  /** Indica si load card. */
   loadCard: boolean;
+  /** Card remove. */
   cardRemove: string;
 
   // constructor
+  /** Crea la instancia con sus dependencias inyectadas. */
   constructor() {
     this.fullIcon = 'icon-maximize';
     this.isAnimating = false;
@@ -77,6 +93,7 @@ export class CardComponent implements OnInit {
   }
 
   // life cycle event
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() {
     if (!this.options || this.hidHeader || this.customHeader) {
       this.collapsedCard = 'false';
@@ -84,6 +101,13 @@ export class CardComponent implements OnInit {
   }
 
   // public method
+  /**
+   * Alterna pantalla completa card toggle.
+   *
+   * @param element element.
+   * @param animation animation.
+   * @param status status.
+   */
   fullCardToggle(element: HTMLElement, animation: string, status: boolean) {
     animation = this.cardClass === 'full-card' ? 'zoomOut' : 'zoomIn';
     this.fullIcon = this.cardClass === 'full-card' ? 'icon-maximize' : 'icon-minimize';
@@ -103,11 +127,13 @@ export class CardComponent implements OnInit {
     }, 500);
   }
 
+  /** Contrae o expande card toggle. */
   collapsedCardToggle() {
     this.collapsedCard = this.collapsedCard === 'collapsed' ? 'expanded' : 'collapsed';
     this.collapsedIcon = this.collapsedCard === 'collapsed' ? 'icon-plus' : 'icon-minus';
   }
 
+  /** Acción de la tarjeta refresh. */
   cardRefresh() {
     this.loadCard = true;
     this.cardClass = 'card-load';
@@ -117,6 +143,7 @@ export class CardComponent implements OnInit {
     }, 3000);
   }
 
+  /** Acción de la tarjeta remove action. */
   cardRemoveAction() {
     this.cardRemove = this.cardRemove === 'closed' ? 'open' : 'closed';
   }

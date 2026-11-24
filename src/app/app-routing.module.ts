@@ -59,6 +59,7 @@ import { FormulaComponent } from './demo/pages/formula/formula.component';
 // 5. CONFIGURACIÓN DE RUTAS
 // ==========================================================
 
+/** Routes. */
 export const routes: Routes = [
 
 {
@@ -210,6 +211,7 @@ export const routes: Routes = [
 // 6. REGISTRO DEL MÓDULO DE ENRUTAMIENTO
 // ==========================================================
 
+/** Módulo Angular app routing. */
 @NgModule({
   imports: [
     RouterModule.forRoot(routes)

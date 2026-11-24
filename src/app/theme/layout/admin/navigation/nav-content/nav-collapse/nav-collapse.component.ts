@@ -9,6 +9,7 @@ import { NavigationItem } from '../../navigation';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
 import { NavItemComponent } from '../nav-item/nav-item.component';
 
+/** Componente visual «navegación collapse» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-nav-collapse',
   imports: [SharedModule, NavItemComponent, RouterModule, CommonModule],
@@ -26,10 +27,17 @@ import { NavItemComponent } from '../nav-item/nav-item.component';
 })
 export class NavCollapseComponent {
   // public props
+  /** Item. */
   item = input<NavigationItem>();
+  /** Indica si visible. */
   visible = false;
 
   // public method
+  /**
+   * Gestiona la navegación collapse.
+   *
+   * @param e evento del navegador.
+   */
   navCollapse(e: MouseEvent) {
     this.visible = !this.visible;
     let parent = e.target as HTMLElement;

@@ -20,20 +20,29 @@ import { mensajeError, soloFecha, soloHora, TablaDatos } from '../../../utils/ta
   styleUrls: ['./anotacion-historia.component.scss']
 })
 export class AnotacionHistoriaComponent implements OnInit {
+  /** Ruta del recurso en la API del backend. */
   private readonly api = inject(AnotacionHistoriaService);
+  /** Solo fecha. */
   readonly soloFecha = soloFecha;
+  /** Solo hora. */
   readonly soloHora = soloHora;
 
   /** DataTable de anotaciones, de la más reciente a la más antigua. */
   readonly tabla = new TablaDatos<AnotacionHistoria>(
     ['id', 'historiaId', 'veterinario', 'descripcion', 'observacion', 'diagnostico'], 'fecha', 'desc');
 
+  /** Fecha inicio. */
   fechaInicio = '';
+  /** Fecha fin. */
   fechaFin = '';
+  /** Seleccionada. */
   seleccionada: AnotacionHistoria | null = null;
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Mensaje mostrado al usuario (error). */
   error = '';
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit(): void {
     this.cargar();
   }
@@ -54,6 +63,7 @@ export class AnotacionHistoriaComponent implements OnInit {
       });
   }
 
+  /** Limpia los datos de la pantalla. */
   limpiar(): void {
     this.fechaInicio = '';
     this.fechaFin = '';

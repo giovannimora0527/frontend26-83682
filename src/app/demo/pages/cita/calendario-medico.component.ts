@@ -5,9 +5,12 @@ import { AgendaService, CambioCita, errorAgenda, EventoMedico, hoyBogota, Revisi
 import { AtencionClinicaComponent } from './atencion-clinica.component';
 import { AgendaConfiguracionComponent } from './agenda-configuracion.component';
 
+/** Tipo «Vista»: valores permitidos para vista. */
 type Vista = 'dia' | 'semana' | 'mes';
+/** Modelo de datos «DiaCalendario» que se intercambia con el backend. */
 interface DiaCalendario { fecha: string; dia: number; nombre: string; otroMes: boolean; citas: EventoMedico[]; }
 
+/** Pantalla «calendario médico» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-calendario-medico',
   imports: [HistorialMascotaComponent, FormsModule, AgendaConfiguracionComponent, AtencionClinicaComponent],
@@ -15,51 +18,98 @@ interface DiaCalendario { fecha: string; dia: number; nombre: string; otroMes: b
   styleUrl: './calendario-medico.component.scss'
 })
 export class CalendarioMedicoComponent implements OnInit {
+  /** Mascota historial. */
   mascotaHistorial: number | null = null;
+  /** Dependencia inyectada (AgendaService). */
   private readonly agenda = inject(AgendaService);
+  /** Formulario reactivo: formato día. */
   private readonly formatoDia = new Intl.DateTimeFormat('es-CO', { weekday: 'short', timeZone: 'UTC' });
+  /** Formulario reactivo: formato mes. */
   private readonly formatoMes = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  /** Lista de estados. */
   readonly estados = ['pendiente', 'programada', 'confirmada', 'cancelada', 'atendida', 'finalizada'];
+  /** Lista de vistas. */
   readonly vistas: { id: Vista; nombre: string }[] = [
     { id: 'dia', nombre: 'Día' }, { id: 'semana', nombre: 'Semana' }, { id: 'mes', nombre: 'Mes' }
   ];
+  /** Fecha de hoy (AAAA-MM-DD). */
   readonly hoy = hoyBogota();
+  /** Vista. */
   vista: Vista = 'semana';
+  /** Fecha (AAAA-MM-DD). */
   fecha = this.hoy;
+  /** Fecha inicial del rango. */
   desde = this.hoy;
+  /** Fecha final del rango. */
   hasta = this.hoy;
+  /** Exportar desde. */
   exportarDesde = this.hoy;
+  /** Exportar hasta. */
   exportarHasta = this.hoy;
+  /** Estado actual del registro. */
   estado = '';
+  /** Lista de días. */
   dias: DiaCalendario[] = [];
+  /** Evento. */
   evento: EventoMedico | null = null;
+  /** Fecha y hora de inicio. */
   inicio = '';
+  /** Fecha y hora de fin. */
   fin = '';
+  /** Lista de historial. */
   historial: RevisionCita[] = [];
+  /** Indica si ver horario. */
   verHorario = false;
+  /** Identificador de atención. */
   atencionId: number | null = null;
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Indica si se está guardando. */
   guardando = false;
+  /** Mensaje mostrado al usuario (error). */
   error = '';
+  /** Mensaje mostrado al usuario (aviso). */
   aviso = '';
+  /** Consulta. */
   private consulta = 0;
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() { this.cargar(true); }
 
+  /**
+   * Titulo.
+   *
+   * @returns titulo.
+   */
   get titulo() {
     if (this.vista === 'mes') return this.formatoMes.format(this.fechaUtc(this.fecha));
     if (this.vista === 'dia') return this.fecha;
     return this.desde + ' a ' + this.hasta;
   }
 
+  /**
+   * Selecciona vista.
+   *
+   * @param vista vista.
+   */
   seleccionarVista(vista: Vista) { this.vista = vista; this.cargar(true); }
 
+  /**
+   * Selecciona fecha.
+   *
+   * @param fecha fecha (AAAA-MM-DD).
+   */
   seleccionarFecha(fecha: string) {
     if (!fecha) return;
     this.fecha = fecha;
     this.cargar(true);
   }
 
+  /**
+   * Navega a los datos de la pantalla.
+   *
+   * @param paso paso.
+   */
   navegar(paso: number) {
     const fecha = this.fechaUtc(this.fecha);
     if (this.vista === 'mes') {
@@ -71,6 +121,11 @@ export class CalendarioMedicoComponent implements OnInit {
     this.seleccionarFecha(this.iso(fecha));
   }
 
+  /**
+   * Carga los datos de la pantalla desde el backend.
+   *
+   * @param reiniciarExportacion reiniciar exportacion.
+   */
   cargar(reiniciarExportacion = false) {
     const fechas = this.fechasVista();
     this.desde = this.iso(fechas[0]);
@@ -106,6 +161,11 @@ export class CalendarioMedicoComponent implements OnInit {
     });
   }
 
+  /**
+   * Selecciona los datos de la pantalla.
+   *
+   * @param evento evento.
+   */
   seleccionar(evento: EventoMedico) {
     this.evento = evento;
     this.inicio = evento.inicio.slice(0, 16);
@@ -117,6 +177,12 @@ export class CalendarioMedicoComponent implements OnInit {
     });
   }
 
+  /**
+   * Cambia los datos de la pantalla.
+   *
+   * @param evento evento.
+   * @param cambios cambios.
+   */
   cambiar(evento: EventoMedico, cambios: CambioCita) {
     if (!confirm('¿Guardar el cambio de la cita?')) return;
     this.guardando = true;
@@ -131,6 +197,7 @@ export class CalendarioMedicoComponent implements OnInit {
     });
   }
 
+  /** Descarga los datos de la pantalla como archivo. */
   descargar() {
     if (!this.exportarDesde || !this.exportarHasta || this.exportarHasta < this.exportarDesde) {
       this.error = 'Selecciona un rango válido para exportar.';
@@ -153,8 +220,14 @@ export class CalendarioMedicoComponent implements OnInit {
     });
   }
 
+  /**
+   * Reservada.
+   *
+   * @param cita cita seleccionada.
+   */
   reservada(cita: EventoMedico) { return ['pendiente', 'programada', 'confirmada'].includes(cita.estado); }
 
+  /** Fechas vista. */
   private fechasVista() {
     const fecha = this.fechaUtc(this.fecha);
     if (this.vista === 'dia') return [fecha];
@@ -173,6 +246,16 @@ export class CalendarioMedicoComponent implements OnInit {
     });
   }
 
+  /**
+   * Fecha UTC.
+   *
+   * @param valor valor recibido.
+   */
   private fechaUtc(valor: string) { return new Date(valor + 'T00:00:00Z'); }
+  /**
+   * ISO.
+   *
+   * @param fecha fecha (AAAA-MM-DD).
+   */
   private iso(fecha: Date) { return fecha.toISOString().slice(0, 10); }
 }

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
 
+/** Componente visual «basic badge» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-basic-badge',
   standalone: true,

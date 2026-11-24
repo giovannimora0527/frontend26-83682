@@ -2,6 +2,7 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
+/** Componente visual «guest» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-guest',
   imports: [RouterModule],

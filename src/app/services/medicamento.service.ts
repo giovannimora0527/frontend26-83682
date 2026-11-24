@@ -35,6 +35,7 @@ import { Medicamento } from '../models/medicamento';
 // 2. CONFIGURACIÓN DEL SERVICIO
 // ==========================================================
 
+/** Servicio de medicamento: consume los endpoints correspondientes de la API REST del backend. */
 @Injectable({
   providedIn: 'root'
 })
@@ -62,6 +63,7 @@ export class MedicamentoService {
    * desde Angular hacia Spring Boot.
    */
   constructor(
+    /** Http. */
     private readonly http: HttpClient
   ) {}
 

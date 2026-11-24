@@ -13,6 +13,7 @@ import { NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 // third party
 import { NgScrollbarModule } from 'ngx-scrollbar';
 
+/** Módulo Angular shared. */
 @NgModule({
   declarations: [],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, CardComponent, NgbModule, NgScrollbarModule, NgbCollapseModule],

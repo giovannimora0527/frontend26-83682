@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 import { ClinicaService, descargarClinica, FormulaClinica, mensajeClinica } from '../../../services/clinica.service';
 import { AtencionClinicaComponent } from '../cita/atencion-clinica.component';
 
+/** Pantalla «fórmulas clínicas» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-formulas-clinicas',
   imports: [CommonModule, FormsModule, AtencionClinicaComponent],
@@ -42,19 +43,32 @@ import { AtencionClinicaComponent } from '../cita/atencion-clinica.component';
     </section>`
 })
 export class FormulasClinicasComponent implements OnInit {
+  /** Ruta del recurso en la API del backend. */
   private readonly api = inject(ClinicaService);
+  /** Lista de citas. */
   citas: { id: number; mascotaId: number; fechaHora: string; estado: string }[] = [];
+  /** Formulario reactivo: fórmulas. */
   formulas: FormulaClinica[] = [];
+  /** Elegida. */
   elegida: number | null = null;
+  /** Seleccionada. */
   seleccionada: number | null = null;
+  /** Mensaje mostrado al usuario (error). */
   error = '';
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit() { this.cargar(); }
+  /** Carga los datos de la pantalla desde el backend. */
   cargar() {
     forkJoin({ citas: this.api.citasPropias(), formulas: this.api.formulas() }).subscribe({
       next: d => { this.citas = d.citas.filter(c => c.estado !== 'cancelada'); this.formulas = d.formulas; },
       error: async err => { this.error = await mensajeClinica(err); }
     });
   }
+  /**
+   * Descarga el PDF los datos de la pantalla.
+   *
+   * @param f f.
+   */
   pdf(f: FormulaClinica) {
     this.api.formulaPdf(f.id).subscribe({
       next: b => descargarClinica(b, 'formula-' + f.id + '.pdf'),

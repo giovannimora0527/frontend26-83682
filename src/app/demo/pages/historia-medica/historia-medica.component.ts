@@ -30,16 +30,24 @@ import { mensajeError, soloFecha, soloHora, TablaDatos } from '../../../utils/ta
   styleUrls: ['./historia-medica.component.scss']
 })
 export class HistoriaMedicaComponent implements OnInit {
+  /** Dependencia inyectada (HistoriaMedicaService). */
   private readonly historiasApi = inject(HistoriaMedicaService);
+  /** Dependencia inyectada (AnotacionHistoriaService). */
   private readonly anotacionesApi = inject(AnotacionHistoriaService);
+  /** Dependencia inyectada (CitaService). */
   private readonly citasApi = inject(CitaService);
+  /** Dependencia inyectada (ClienteService). */
   private readonly clientesApi = inject(ClienteService);
+  /** Dependencia inyectada (MedicoService). */
   private readonly medicosApi = inject(MedicoService);
+  /** Dependencia inyectada (FormBuilder). */
   private readonly fb = inject(FormBuilder);
 
   /** El perfil MEDICO registra información solo a su nombre (el backend también lo valida). */
   readonly esMedico = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase() === 'MEDICO';
+  /** Solo fecha. */
   readonly soloFecha = soloFecha;
+  /** Solo hora. */
   readonly soloHora = soloHora;
 
   /** DataTable principal de historias. */
@@ -50,27 +58,44 @@ export class HistoriaMedicaComponent implements OnInit {
     ['descripcion', 'observacion', 'diagnostico', 'veterinario'], 'fecha', 'desc', 5);
 
   // Filtros de fecha (se aplican en el backend) y de estado (en el cliente).
+  /** Fecha inicio. */
   fechaInicio = '';
+  /** Fecha fin. */
   fechaFin = '';
+  /** Criterio de filtrado: filtro estado. */
   filtroEstado = '';
 
+  /** Lista de clientes. */
   clientes: Cliente[] = [];
+  /** Lista de médicos. */
   medicos: Medico[] = [];
+  /** Lista de mascotas. */
   mascotas: MascotaCliente[] = [];
+  /** Lista de citas. */
   citas: CitaDetalle[] = [];
 
   /** null: formulario cerrado; 0: nueva historia; >0: edición. */
   editandoId: number | null = null;
+  /** Detalle. */
   detalle: HistoriaDetalle | null = null;
+  /** Anotación seleccionada. */
   anotacionSeleccionada: AnotacionHistoria | null = null;
+  /** Identificador de anotación editando. */
   anotacionEditandoId: number | null = null;
+  /** Indica si se muestra form anotación. */
   mostrarFormAnotacion = false;
 
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Indica si se está guardando. */
   guardando = false;
+  /** Mensaje mostrado al usuario (error). */
   error = '';
+  /** Mensaje mostrado al usuario (aviso). */
   aviso = '';
+  /** Mensaje mostrado al usuario (error formulario). */
   errorFormulario = '';
+  /** Mensaje mostrado al usuario (error anotación). */
   errorAnotacion = '';
 
   /** Formulario reactivo de historia clínica. */
@@ -94,6 +119,7 @@ export class HistoriaMedicaComponent implements OnInit {
     diagnostico: this.fb.control<string | null>(null, Validators.maxLength(4000))
   });
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit(): void {
     this.tabla.filtroExtra = h => !this.filtroEstado || h.estado === this.filtroEstado;
     if (this.esMedico) {
@@ -127,6 +153,7 @@ export class HistoriaMedicaComponent implements OnInit {
       });
   }
 
+  /** Limpia filtros. */
   limpiarFiltros(): void {
     this.fechaInicio = '';
     this.fechaFin = '';
@@ -136,12 +163,19 @@ export class HistoriaMedicaComponent implements OnInit {
     this.cargar();
   }
 
+  /**
+   * Nombre médico.
+   *
+   * @param m m.
+   * @returns texto resultante.
+   */
   nombreMedico(m: Medico): string {
     return `${m.nombres ?? ''} ${m.apellidos ?? ''}`.trim();
   }
 
   // ------------------------------------------------------------------ Crear / editar historia
 
+  /** Prepara el formulario para un nuevo registro. */
   nueva(): void {
     this.aviso = '';
     this.errorFormulario = '';
@@ -155,6 +189,11 @@ export class HistoriaMedicaComponent implements OnInit {
     this.formulario.controls.citaId.enable();
   }
 
+  /**
+   * Prepara el formulario para editar los datos de la pantalla.
+   *
+   * @param h h.
+   */
   editar(h: HistoriaMedica): void {
     this.aviso = '';
     this.errorFormulario = '';
@@ -203,6 +242,7 @@ export class HistoriaMedicaComponent implements OnInit {
     }
   }
 
+  /** Guarda los datos de la pantalla validando el formulario y enviándolo al backend. */
   guardar(): void {
     this.errorFormulario = '';
     if (this.formulario.invalid) {
@@ -230,6 +270,12 @@ export class HistoriaMedicaComponent implements OnInit {
       });
   }
 
+  /**
+   * Inválido.
+   *
+   * @param campo campo a ordenar.
+   * @returns true si se cumple la condición.
+   */
   invalido(campo: string): boolean {
     const c = this.formulario.get(campo);
     return !!c && c.invalid && (c.touched || c.dirty);
@@ -237,6 +283,11 @@ export class HistoriaMedicaComponent implements OnInit {
 
   // ------------------------------------------------------------------ Ver detalle y anotaciones
 
+  /**
+   * Muestra los datos de la pantalla.
+   *
+   * @param h h.
+   */
   ver(h: HistoriaMedica): void {
     this.anotacionSeleccionada = null;
     this.mostrarFormAnotacion = false;
@@ -252,11 +303,13 @@ export class HistoriaMedicaComponent implements OnInit {
     });
   }
 
+  /** Cierra detalle. */
   cerrarDetalle(): void {
     this.detalle = null;
     this.anotacionSeleccionada = null;
   }
 
+  /** Prepara el formulario para un nuevo registro de anotación. */
   nuevaAnotacion(): void {
     this.errorAnotacion = '';
     this.anotacionEditandoId = null;
@@ -264,6 +317,11 @@ export class HistoriaMedicaComponent implements OnInit {
     this.formAnotacion.reset({ medicoId: this.detalle?.medicoId ?? null, descripcion: '', observacion: null, diagnostico: null });
   }
 
+  /**
+   * Prepara el formulario para editar anotación.
+   *
+   * @param a a.
+   */
   editarAnotacion(a: AnotacionHistoria): void {
     this.errorAnotacion = '';
     this.anotacionEditandoId = a.id;
@@ -272,6 +330,7 @@ export class HistoriaMedicaComponent implements OnInit {
       diagnostico: a.diagnostico });
   }
 
+  /** Guarda anotación validando el formulario y enviándolo al backend. */
   guardarAnotacion(): void {
     const historia = this.detalle;
     if (!historia) return;

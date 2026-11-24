@@ -37,43 +37,69 @@ const CANTIDAD_POSITIVA = /(^|\D)(0*[1-9]\d*([.,]\d+)?|0*[.,]\d*[1-9]\d*)/;
   styleUrls: ['./formula.component.scss']
 })
 export class FormulaComponent implements OnInit {
+  /** Ruta del recurso en la API del backend. */
   private readonly api = inject(FormulaMedicaService);
+  /** Dependencia inyectada (ClinicaService). */
   private readonly clinica = inject(ClinicaService);
+  /** Dependencia inyectada (CitaService). */
   private readonly citasApi = inject(CitaService);
+  /** Dependencia inyectada (ClienteService). */
   private readonly clientesApi = inject(ClienteService);
+  /** Dependencia inyectada (MedicoService). */
   private readonly medicosApi = inject(MedicoService);
+  /** Dependencia inyectada (InventarioService). */
   private readonly inventarioApi = inject(InventarioService);
+  /** Dependencia inyectada (FormBuilder). */
   private readonly fb = inject(FormBuilder);
 
+  /** Indica si es médico. */
   readonly esMedico = (inject(AuthService).obtenerPerfil() ?? '').normalize('NFD')
     .replace(/\p{M}/gu, '').trim().toUpperCase() === 'MEDICO';
+  /** Solo fecha. */
   readonly soloFecha = soloFecha;
+  /** Fecha de hoy (AAAA-MM-DD). */
   readonly hoy = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Bogota' }).format(new Date());
 
   /** DataTable de fórmulas: inicialmente por fecha de creación descendente. */
   readonly tabla = new TablaDatos<FormulaMedica>(
     ['id', 'mascota', 'cliente', 'veterinario', 'medicamento', 'dosis', 'estado'], 'fechaCreacionRegistro', 'desc');
 
+  /** Criterio de filtrado: filtro estado. */
   filtroEstado = '';
+  /** Criterio de filtrado: filtro veterinario. */
   filtroVeterinario = '';
+  /** Emisión desde. */
   emisionDesde = '';
+  /** Emisión hasta. */
   emisionHasta = '';
 
+  /** Lista de clientes. */
   clientes: Cliente[] = [];
+  /** Lista de médicos. */
   medicos: Medico[] = [];
+  /** Lista de medicamentos. */
   medicamentos: FichaInventario[] = [];
+  /** Lista de mascotas. */
   mascotas: MascotaCliente[] = [];
+  /** Lista de citas. */
   citas: CitaDetalle[] = [];
 
   /** null: cerrado; 0: nueva; >0: edición. */
   editandoId: number | null = null;
+  /** Detalle. */
   detalle: FormulaMedica | null = null;
+  /** Por cambiar estado. */
   porCambiarEstado: FormulaMedica | null = null;
 
+  /** Indica si se está cargando. */
   cargando = false;
+  /** Indica si se está guardando. */
   guardando = false;
+  /** Mensaje mostrado al usuario (error). */
   error = '';
+  /** Mensaje mostrado al usuario (aviso). */
   aviso = '';
+  /** Mensaje mostrado al usuario (error formulario). */
   errorFormulario = '';
 
   /** Formulario reactivo de la fórmula. */
@@ -91,6 +117,7 @@ export class FormulaComponent implements OnInit {
     fechaEmision: this.fb.nonNullable.control('', Validators.required)
   });
 
+  /** Inicializa el componente y carga los datos iniciales. */
   ngOnInit(): void {
     this.tabla.filtroExtra = f =>
       (!this.filtroEstado || f.estado === this.filtroEstado)
@@ -112,6 +139,7 @@ export class FormulaComponent implements OnInit {
     this.cargar();
   }
 
+  /** Carga los datos de la pantalla desde el backend. */
   cargar(): void {
     this.cargando = true;
     this.error = '';
@@ -121,6 +149,7 @@ export class FormulaComponent implements OnInit {
     });
   }
 
+  /** Limpia filtros. */
   limpiarFiltros(): void {
     this.tabla.busqueda = '';
     this.filtroEstado = '';
@@ -130,12 +159,19 @@ export class FormulaComponent implements OnInit {
     this.tabla.reiniciar();
   }
 
+  /**
+   * Nombre médico.
+   *
+   * @param m m.
+   * @returns texto resultante.
+   */
   nombreMedico(m: Medico): string {
     return `${m.nombres ?? ''} ${m.apellidos ?? ''}`.trim();
   }
 
   // ------------------------------------------------------------------ Crear / editar
 
+  /** Prepara el formulario para un nuevo registro. */
   nueva(): void {
     this.aviso = '';
     this.errorFormulario = '';
@@ -147,6 +183,11 @@ export class FormulaComponent implements OnInit {
     ['clienteId', 'mascotaId', 'citaId'].forEach(c => this.formulario.get(c)?.enable());
   }
 
+  /**
+   * Prepara el formulario para editar los datos de la pantalla.
+   *
+   * @param f f.
+   */
   editar(f: FormulaMedica): void {
     this.aviso = '';
     this.errorFormulario = '';
@@ -203,6 +244,7 @@ export class FormulaComponent implements OnInit {
     return cita ? cita.fechaHora.slice(0, 10) : '';
   }
 
+  /** Guarda los datos de la pantalla validando el formulario y enviándolo al backend. */
   guardar(): void {
     this.errorFormulario = '';
     if (this.formulario.invalid) {
@@ -235,6 +277,12 @@ export class FormulaComponent implements OnInit {
       });
   }
 
+  /**
+   * Inválido.
+   *
+   * @param campo campo a ordenar.
+   * @returns true si se cumple la condición.
+   */
   invalido(campo: string): boolean {
     const c = this.formulario.get(campo);
     return !!c && c.invalid && (c.touched || c.dirty);
@@ -242,6 +290,11 @@ export class FormulaComponent implements OnInit {
 
   // ------------------------------------------------------------------ Ver, estado y PDF
 
+  /**
+   * Muestra los datos de la pantalla.
+   *
+   * @param f f.
+   */
   ver(f: FormulaMedica): void {
     this.api.consultarFormula(f.id).subscribe({
       next: d => (this.detalle = d),
@@ -249,6 +302,7 @@ export class FormulaComponent implements OnInit {
     });
   }
 
+  /** Cambia estado. */
   cambiarEstado(): void {
     const f = this.porCambiarEstado;
     if (!f) return;
@@ -266,6 +320,11 @@ export class FormulaComponent implements OnInit {
     });
   }
 
+  /**
+   * Descarga PDF como archivo.
+   *
+   * @param id identificador del registro.
+   */
   descargarPdf(id: number): void {
     this.clinica.formulaPdf(id, true).subscribe({
       next: archivo => descargarClinica(archivo, 'formula-' + id + '.pdf'),

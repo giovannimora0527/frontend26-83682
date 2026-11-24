@@ -12,7 +12,9 @@ import { AnotacionHistoria } from '../models/anotacion-historia';
  */
 @Injectable({ providedIn: 'root' })
 export class HistoriaMedicaService {
+  /** Dependencia inyectada (HttpClient). */
   private readonly http = inject(HttpClient);
+  /** URL base de la API del backend. */
   private readonly apiUrl = `${environment.apiUrlAuth}/historia-medica`;
 
   /** Lista historias (más recientes primero) con filtro opcional por rango de fechas. */
@@ -33,10 +35,23 @@ export class HistoriaMedicaService {
     return this.http.get<HistoriaDetalle>(`${this.apiUrl}/${id}`);
   }
 
+  /**
+   * Crea historia medica mediante la API del backend.
+   *
+   * @param datos datos a enviar.
+   * @returns observable con la respuesta del backend.
+   */
   crear(datos: HistoriaRq): Observable<HistoriaDetalle> {
     return this.http.post<HistoriaDetalle>(`${this.apiUrl}/crear`, datos);
   }
 
+  /**
+   * Actualiza historia medica mediante la API del backend.
+   *
+   * @param id identificador del registro.
+   * @param datos datos a enviar.
+   * @returns observable con la respuesta del backend.
+   */
   actualizar(id: number, datos: HistoriaRq): Observable<HistoriaDetalle> {
     return this.http.put<HistoriaDetalle>(`${this.apiUrl}/actualizar/${id}`, datos);
   }

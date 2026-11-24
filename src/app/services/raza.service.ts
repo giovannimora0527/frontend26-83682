@@ -36,18 +36,23 @@ import { environment } from '../../environments/environment';
 export interface RazaRegistro {
 
   // Identificador de la raza.
+  /** Identificador de raza. */
   razaId: number;
 
   // Nombre registrado.
+  /** Nombre. */
   nombre: string;
 
   // Especie.
+  /** Especie de la mascota. */
   especie: string;
 
   // Fecha de creación enviada por Spring Boot.
+  /** Fecha creación. */
   fechaCreacion: string;
 
   // Fecha de última modificación.
+  /** Fecha modificación. */
   fechaModificacion: string;
 }
 
@@ -55,15 +60,23 @@ export interface RazaRegistro {
 // 3. SERVICIO DE RAZAS
 // ==========================================================
 
+/** Servicio de raza: consume los endpoints correspondientes de la API REST del backend. */
 @Injectable({
   providedIn: 'root'
 })
 export class RazaService {
 
   // Recurso de la API.
+  /** Ruta del recurso en la API del backend. */
   private readonly api = 'raza';
 
+  /**
+   * Crea la instancia con sus dependencias inyectadas.
+   *
+   * @param backendService servicio backend.
+   */
   constructor(
+    /** Dependencia inyectada (BackendService). */
     private readonly backendService: BackendService
   ) {}
 

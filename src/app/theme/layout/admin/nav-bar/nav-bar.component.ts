@@ -8,6 +8,7 @@ import { SharedModule } from 'src/app/theme/shared/shared.module';
 import { NavLeftComponent } from './nav-left/nav-left.component';
 import { NavRightComponent } from './nav-right/nav-right.component';
 
+/** Componente visual «navegación bar» de la plantilla de la aplicación. */
 @Component({
   selector: 'app-nav-bar',
   imports: [SharedModule, NavLeftComponent, NavRightComponent, RouterModule, CommonModule],
@@ -16,13 +17,19 @@ import { NavRightComponent } from './nav-right/nav-right.component';
 })
 export class NavBarComponent {
   // public props
+  /** Navegación collapsed móvil. */
   readonly NavCollapsedMob = output();
+  /** Indica si navegación collapsed móvil. */
   navCollapsedMob;
+  /** Header style. */
   headerStyle: string;
+  /** Indica si menú class. */
   menuClass: boolean;
+  /** Collapse style. */
   collapseStyle: string;
 
   // constructor
+  /** Crea la instancia con sus dependencias inyectadas. */
   constructor() {
     this.navCollapsedMob = false;
     this.headerStyle = '';
@@ -31,6 +38,7 @@ export class NavBarComponent {
   }
 
   // public method
+  /** Alterna móvil option. */
   toggleMobOption() {
     this.menuClass = !this.menuClass;
     this.headerStyle = this.menuClass ? 'none' : '';
@@ -38,12 +46,18 @@ export class NavBarComponent {
   }
 
   // this is for eslint rule
+  /**
+   * Gestiona key down.
+   *
+   * @param event evento del navegador.
+   */
   handleKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.closeMenu();
     }
   }
 
+  /** Cierra menú. */
   closeMenu() {
       document.querySelector<HTMLElement>('app-navigation.pcoded-navbar')?.classList.remove('mob-open');
   }

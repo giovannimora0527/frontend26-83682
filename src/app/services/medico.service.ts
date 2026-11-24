@@ -54,6 +54,7 @@ export class MedicoService {
    * realiza las peticiones HTTP.
    */
   constructor(
+    /** Dependencia inyectada (BackendService). */
     private readonly backendService: BackendService
   ) {}
 
