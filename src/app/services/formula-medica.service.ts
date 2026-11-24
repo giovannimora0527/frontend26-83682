@@ -1,121 +1,38 @@
-
-/**
- * ==========================================================
- * CLÍNICA VETERINARIA - UNIMINUTO
- * SERVICIO DE FÓRMULAS MÉDICAS
- * ==========================================================
- *
- * Permite conectar Angular con el backend Spring Boot.
- *
- * Endpoint:
- * GET /formula-medica/listar-todos
- *
- * Este servicio consultará las fórmulas médicas
- * registradas en la base de datos MySQL.
- */
-
-// ==========================================================
-// 1. IMPORTACIONES
-// ==========================================================
-
-// Permite crear servicios en Angular.
-import { environment } from '../../environments/environment';
-import { Injectable } from '@angular/core';
-
-// Permite realizar solicitudes HTTP.
 import { HttpClient } from '@angular/common/http';
-
-// Permite trabajar con respuestas asíncronas.
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { FormulaMedica, FormulaRq } from '../models/formula-medica';
 
-// Modelo de fórmulas médicas.
-import { FormulaMedica } from '../models/formula-medica';
-
-// ==========================================================
-// 2. CONFIGURACIÓN DEL SERVICIO
-// ==========================================================
-
-@Injectable({
-  providedIn: 'root'
-})
+/**
+ * Consumo de la API de fórmulas médicas.
+ * Endpoints: GET /formula-medica/listar-todos, GET /formula-medica/consultar/{id}, POST /formula-medica/crear,
+ * PUT /formula-medica/actualizar/{id}, PATCH /formula-medica/{id}/estado.
+ */
+@Injectable({ providedIn: 'root' })
 export class FormulaMedicaService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrlAuth}/formula-medica`;
 
-  // ========================================================
-  // 3. DIRECCIÓN DEL BACKEND
-  // ========================================================
-
-  // Dirección de Spring Boot en desarrollo local.
-  private readonly apiUrl =
-    `${environment.apiUrlAuth}/formula-medica`;
-
-  // ========================================================
-  // 4. CONSTRUCTOR
-  // ========================================================
-
-  /**
-   * Inyecta HttpClient para realizar
-   * solicitudes HTTP al backend.
-   */
-  constructor(
-    private http: HttpClient
-  ) {}
-
-  // ========================================================
-  // 5. LISTAR FÓRMULAS MÉDICAS
-  // ========================================================
-
-  /**
-   * Consulta todas las fórmulas médicas
-   * registradas en MySQL.
-   *
-   * Método HTTP: GET
-   *
-   * Ruta completa:
-   * http://localhost:8080/clinica/v1/
-   * formula-medica/listar-todos
-   *
-   * @returns Observable con la lista de fórmulas.
-   */
+  /** Fórmulas ordenadas por fecha de creación descendente. */
   listarFormulasMedicas(): Observable<FormulaMedica[]> {
-
-    return this.http.get<FormulaMedica[]>(
-      `${this.apiUrl}/listar-todos`
-    );
-
+    return this.http.get<FormulaMedica[]>(`${this.apiUrl}/listar-todos`);
   }
-/**
- * Consulta una fórmula médica por su ID.
- */
-consultarFormula(id: number): Observable<FormulaMedica> {
-  return this.http.get<FormulaMedica>(
-    `${this.apiUrl}/consultar/${id}`
-  );
-}
 
-/**
- * Registra una nueva fórmula médica.
- */
-crearFormula(
-  formula: Partial<FormulaMedica>
-): Observable<FormulaMedica> {
+  consultarFormula(id: number): Observable<FormulaMedica> {
+    return this.http.get<FormulaMedica>(`${this.apiUrl}/consultar/${id}`);
+  }
 
-  return this.http.post<FormulaMedica>(
-    `${this.apiUrl}/crear`,
-    formula
-  );
-}
+  crearFormula(formula: FormulaRq): Observable<FormulaMedica> {
+    return this.http.post<FormulaMedica>(`${this.apiUrl}/crear`, formula);
+  }
 
-/**
- * Actualiza una fórmula médica existente.
- */
-actualizarFormula(
-  id: number,
-  formula: Partial<FormulaMedica>
-): Observable<FormulaMedica> {
+  actualizarFormula(id: number, formula: FormulaRq): Observable<FormulaMedica> {
+    return this.http.put<FormulaMedica>(`${this.apiUrl}/actualizar/${id}`, formula);
+  }
 
-  return this.http.put<FormulaMedica>(
-    `${this.apiUrl}/actualizar/${id}`,
-    formula
-  );
-}
+  /** Activa o inactiva una fórmula (no se eliminan físicamente). */
+  cambiarEstado(id: number, activo: boolean): Observable<FormulaMedica> {
+    return this.http.patch<FormulaMedica>(`${this.apiUrl}/${id}/estado`, { activo });
+  }
 }

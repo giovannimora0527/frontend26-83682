@@ -72,7 +72,7 @@
 
         <div class="row g-3 align-items-end mb-4">
 
-          <div class="col-md-5">
+          <div class="col-md-3">
 
             <label for="buscarCita" class="form-label">
               Buscar cita
@@ -87,6 +87,16 @@
               (ngModelChange)="actualizarFiltros()"
             />
 
+          </div>
+
+          <div class="col-md-2">
+            <label for="citaDesde" class="form-label">Desde</label>
+            <input id="citaDesde" type="date" class="form-control" [(ngModel)]="fechaDesde" (ngModelChange)="actualizarFiltros()" />
+          </div>
+
+          <div class="col-md-2">
+            <label for="citaHasta" class="form-label">Hasta</label>
+            <input id="citaHasta" type="date" class="form-control" [(ngModel)]="fechaHasta" (ngModelChange)="actualizarFiltros()" />
           </div>
 
           <div class="col-md-3">
@@ -183,6 +193,22 @@
 
         <!-- TABLA -->
 
+        @if (citaReactivar; as c) {
+          <div class="alert alert-info">
+            <p class="mb-2"><strong>Reactivar la cita #{{ c.id }}</strong> ({{ c.mascota }} · {{ c.cliente }}). Volverá a quedar
+              <em>pendiente</em>; elige un horario futuro y disponible del veterinario.</p>
+            @if (errorAgenda) { <p class="text-danger mb-2">{{ errorAgenda }}</p> }
+            <div class="row g-2 align-items-end">
+              <label class="col-md-4">Inicio <input class="form-control" type="datetime-local" [(ngModel)]="reactivarInicio"></label>
+              <label class="col-md-4">Fin <input class="form-control" type="datetime-local" [(ngModel)]="reactivarFin"></label>
+              <div class="col-md-4">
+                <button type="button" class="btn btn-success me-2" (click)="reactivar()">Reactivar cita</button>
+                <button type="button" class="btn btn-outline-secondary" (click)="citaReactivar = null">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        }
+
         <div
           *ngIf="!cargando && !errorCarga"
           class="table-responsive"
@@ -194,13 +220,14 @@
 
             <thead class="table-light">
 
-            <tr class="text-center">
-              <th>ID</th>
-              <th>Cliente</th>
-              <th>Mascota</th>
-              <th>Médico</th>
-              <th>Fecha y hora</th>
-              <th>Estado</th>
+            <tr class="text-center tabla-ordenable">
+              <th (click)="ordenarPor('id')">ID {{ iconoOrden('id') }}</th>
+              <th (click)="ordenarPor('cliente')">Cliente {{ iconoOrden('cliente') }}</th>
+              <th (click)="ordenarPor('mascota')">Mascota {{ iconoOrden('mascota') }}</th>
+              <th (click)="ordenarPor('veterinario')">Veterinario {{ iconoOrden('veterinario') }}</th>
+              <th (click)="ordenarPor('fechaHora')">Fecha {{ iconoOrden('fechaHora') }}</th>
+              <th>Hora</th>
+              <th (click)="ordenarPor('estado')">Estado {{ iconoOrden('estado') }}</th>
               <th>Motivo</th>
               <th>Acciones</th>
             </tr>
@@ -221,9 +248,10 @@
 
               <td>
 
+                <ng-container *ngIf="cita.cliente">{{ cita.cliente }}</ng-container>
                 <ng-container
                   *ngIf="
-                      obtenerClientePorId(cita.clienteId)
+                      !cita.cliente && obtenerClientePorId(cita.clienteId)
                       as cliente;
                       else clienteNoDisponible
                     "
@@ -233,7 +261,7 @@
                 </ng-container>
 
                 <ng-template #clienteNoDisponible>
-                  Cliente ID: {{ cita.clienteId }}
+                  <ng-container *ngIf="!cita.cliente">Cliente ID: {{ cita.clienteId }}</ng-container>
                 </ng-template>
 
               </td>
@@ -242,20 +270,19 @@
 
               <td class="text-center">
                 <button type="button" class="btn btn-sm btn-outline-secondary"
-                  (click)="mascotaHistorial = cita.mascotaId" [attr.aria-label]="'Historial de mascota '+cita.mascotaId">{{ cita.mascotaId }}</button>
+                  (click)="mascotaHistorial = cita.mascotaId" [attr.aria-label]="'Historial de citas de ' + (cita.mascota || cita.mascotaId)" title="Ver historial de citas de la mascota">{{ cita.mascota || cita.mascotaId }}</button>
               </td>
 
               <!-- MÉDICO -->
 
               <td>
-                {{ obtenerNombreMedico(cita.medicoId) }}
+                {{ cita.veterinario || obtenerNombreMedico(cita.medicoId) }}
               </td>
 
               <!-- FECHA -->
 
-              <td>
-                {{ cita.fechaHora | date:'dd/MM/yyyy HH:mm' }} – {{ cita.fechaFin | date:'HH:mm' }}
-              </td>
+              <td class="text-nowrap">{{ cita.fechaHora | date:'dd/MM/yyyy' }}</td>
+              <td class="text-nowrap">{{ cita.fechaHora | date:'HH:mm' }} – {{ cita.fechaFin | date:'HH:mm' }}</td>
 
               <!-- ESTADO -->
 
@@ -304,6 +331,9 @@
                   Editar
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary ms-1" (click)="verHistorial(cita)">Historial</button>
+                @if (cita.estado === 'cancelada') {
+                  <button type="button" class="btn btn-sm btn-outline-success ms-1" (click)="abrirReactivar(cita)">Reactivar</button>
+                }
                 @if (esAdmin && cita.estado === 'atendida') {
                   <button type="button" class="btn btn-sm btn-primary ms-1" (click)="finalizar(cita)">Finalizar cita</button>
                 }
@@ -317,7 +347,7 @@
             <tr *ngIf="citasFiltradas.length === 0">
 
               <td
-                colspan="8"
+                colspan="9"
                 class="text-center text-muted py-4"
               >
                 No se encontraron citas médicas.

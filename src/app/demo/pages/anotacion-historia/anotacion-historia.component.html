@@ -1,268 +1,89 @@
-
-<!-- ========================================================
-     CLÍNICA VETERINARIA - UNIMINUTO
-     GESTIÓN DE ANOTACIONES MÉDICAS
-     ========================================================
-
-     Funcionalidades:
-
-     1. Mostrar anotaciones registradas en MySQL.
-     2. Buscar por ID, historia, médico o descripción.
-     3. Mostrar fecha y descripción.
-     4. Limpiar la búsqueda.
-     5. Mostrar errores de conexión.
-     6. Mostrar cantidad de registros.
-======================================================== -->
-
 <div class="row">
-
   <div class="col-12">
-
-    <!-- ====================================================
-         1. TARJETA PRINCIPAL
-         ==================================================== -->
-
     <div class="card">
-
-      <!-- Título del módulo -->
-
       <div class="card-header">
-
-        <h5 class="mb-0">
-          Listado de anotaciones médicas
-        </h5>
-
+        <h5 class="mb-0">Anotaciones de historias clínicas</h5>
+        <small class="text-muted">Para agregar o editar anotaciones, abre la historia en Gestión de Historias Médicas → Ver.</small>
       </div>
-
-      <!-- Contenido -->
-
       <div class="card-body">
+        @if (error) { <p class="alert alert-danger" role="alert">{{ error }}</p> }
 
-        <!-- ==================================================
-             2. DESCRIPCIÓN DEL MÓDULO
-             ================================================== -->
-
-        <p class="text-muted mb-4">
-
-          Consulta las anotaciones registradas en
-          las historias médicas de los pacientes
-          de la clínica veterinaria.
-
-        </p>
-
-        <!-- ==================================================
-             3. BUSCADOR DE ANOTACIONES
-             ================================================== -->
-
-        <div class="row mb-4">
-
-          <!-- Campo de búsqueda -->
-
-          <div class="col-md-8 mb-3">
-
-            <label
-              for="buscarAnotacion"
-              class="form-label"
-            >
-              Buscar anotación médica
-            </label>
-
-            <input
-              id="buscarAnotacion"
-              name="buscarAnotacion"
-              type="text"
-              class="form-control"
-              placeholder="Buscar por ID, historia, médico o descripción"
-              [(ngModel)]="textoBusqueda"
-            />
-
+        <div class="row g-2 mb-3">
+          <div class="col-md-5">
+            <label class="form-label" for="busquedaAnotacion">Buscar</label>
+            <input id="busquedaAnotacion" type="search" class="form-control" placeholder="Descripción, diagnóstico, veterinario, historia…"
+              [(ngModel)]="tabla.busqueda" (ngModelChange)="tabla.reiniciar()">
           </div>
-
-          <!-- Botón para limpiar el buscador -->
-
-          <div class="col-md-4 mb-3 d-flex align-items-end">
-
-            <button
-              type="button"
-              class="btn btn-outline-secondary w-100"
-              (click)="limpiarBusqueda()"
-            >
-              Limpiar
-            </button>
-
+          <div class="col-md-2">
+            <label class="form-label" for="desdeAnotacion">Desde</label>
+            <input id="desdeAnotacion" type="date" class="form-control" [(ngModel)]="fechaInicio" (change)="cargar()">
           </div>
-
+          <div class="col-md-2">
+            <label class="form-label" for="hastaAnotacion">Hasta</label>
+            <input id="hastaAnotacion" type="date" class="form-control" [(ngModel)]="fechaFin" (change)="cargar()">
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-secondary w-100" (click)="limpiar()">Limpiar filtros</button>
+          </div>
         </div>
 
-        <!-- ==================================================
-             4. MENSAJE DE CARGA
-             ================================================== -->
+        @if (cargando) {
+          <p class="text-muted" role="status">Cargando anotaciones…</p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle tabla-ordenable">
+              <thead class="table-light">
+                <tr>
+                  <th (click)="tabla.ordenarPor('fecha')">Fecha y hora {{ tabla.icono('fecha') }}</th>
+                  <th (click)="tabla.ordenarPor('historiaId')">Historia {{ tabla.icono('historiaId') }}</th>
+                  <th (click)="tabla.ordenarPor('veterinario')">Veterinario {{ tabla.icono('veterinario') }}</th>
+                  <th (click)="tabla.ordenarPor('descripcion')">Descripción {{ tabla.icono('descripcion') }}</th>
+                  <th (click)="tabla.ordenarPor('diagnostico')">Diagnóstico o evolución {{ tabla.icono('diagnostico') }}</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (a of tabla.visibles; track a.id) {
+                  <tr [class.table-active]="seleccionada?.id === a.id">
+                    <td class="text-nowrap">{{ soloFecha(a.fecha) }} {{ soloHora(a.fecha) }}</td>
+                    <td>#{{ a.historiaId }}</td>
+                    <td>{{ a.veterinario }}</td>
+                    <td class="celda-corta" [title]="a.descripcion">{{ a.descripcion }}</td>
+                    <td class="celda-corta" [title]="a.diagnostico">{{ a.diagnostico || '—' }}</td>
+                    <td><button type="button" class="btn btn-sm btn-outline-primary" (click)="seleccionada = a"><i class="feather icon-eye"></i> Ver</button></td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="6" class="text-center text-muted">No hay anotaciones que coincidan con los filtros.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <small class="text-muted">{{ tabla.filtradas.length }} anotación(es) · página {{ tabla.pagina }} de {{ tabla.totalPaginas }}</small>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="tabla.pagina === 1" (click)="tabla.irA(tabla.pagina - 1)">Anterior</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="tabla.pagina >= tabla.totalPaginas" (click)="tabla.irA(tabla.pagina + 1)">Siguiente</button>
+            </div>
+          </div>
+        }
 
-        <div
-          *ngIf="cargando"
-          class="alert alert-info"
-          role="status"
-        >
-
-          Consultando anotaciones médicas...
-
-        </div>
-
-        <!-- ==================================================
-             5. MENSAJE DE ERROR
-             ================================================== -->
-
-        <div
-          *ngIf="mensajeError"
-          class="alert alert-danger"
-          role="alert"
-        >
-
-          {{ mensajeError }}
-
-          <!-- Permite intentar nuevamente la consulta -->
-
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-danger ms-3"
-            (click)="cargarAnotaciones()"
-          >
-            Reintentar
-          </button>
-
-        </div>
-
-        <!-- ==================================================
-             6. TABLA DE ANOTACIONES MÉDICAS
-             ================================================== -->
-
-        <div
-          *ngIf="!cargando && !mensajeError"
-          class="table-responsive"
-        >
-
-          <table
-            class="table table-bordered table-hover align-middle"
-          >
-
-            <!-- Encabezados de la tabla -->
-
-            <thead class="table-light">
-
-            <tr>
-
-              <th>ID</th>
-
-              <th>ID Historia Médica</th>
-
-              <th>ID Médico</th>
-
-              <th>Fecha</th>
-
-              <th>Descripción</th>
-
-            </tr>
-
-            </thead>
-
-            <!-- =================================================
-                 7. REGISTROS DE LA BASE DE DATOS
-                 ================================================= -->
-
-            <tbody>
-
-            <tr
-              *ngFor="let anotacion of anotacionesFiltradas"
-            >
-
-              <!-- ID de la anotación -->
-
-              <td>
-                {{ anotacion.id }}
-              </td>
-
-              <!-- ID de la historia médica -->
-
-              <td>
-                {{ anotacion.historiaId }}
-              </td>
-
-              <!-- ID del médico responsable -->
-
-              <td>
-                {{ anotacion.medicoId }}
-              </td>
-
-              <!-- Fecha de la anotación -->
-
-              <td>
-
-                {{
-                anotacion.fecha
-                ? (
-                anotacion.fecha
-                | date:'dd/MM/yyyy HH:mm'
-                )
-                : 'Sin fecha registrada'
-                }}
-
-              </td>
-
-              <!-- Descripción médica -->
-
-              <td>
-                {{ anotacion.descripcion }}
-              </td>
-
-            </tr>
-
-            <!-- =================================================
-                 8. MENSAJE CUANDO NO HAY REGISTROS
-                 ================================================= -->
-
-            <tr
-              *ngIf="anotacionesFiltradas.length === 0"
-            >
-
-              <td
-                colspan="5"
-                class="text-center text-muted py-4"
-              >
-
-                No se encontraron anotaciones médicas.
-
-              </td>
-
-            </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        <!-- ==================================================
-             9. CONTADOR DE REGISTROS
-             ================================================== -->
-
-        <div
-          *ngIf="!cargando && !mensajeError"
-          class="mt-3"
-        >
-
-          <span class="text-muted">
-
-            Registros encontrados:
-            {{ anotacionesFiltradas.length }}
-
-          </span>
-
-        </div>
-
+        @if (seleccionada; as a) {
+          <div class="border rounded p-3 mt-3">
+            <div class="d-flex justify-content-between">
+              <h6>Anotación #{{ a.id }} · Historia clínica #{{ a.historiaId }}</h6>
+              <button type="button" class="btn-close" aria-label="Cerrar detalle" (click)="seleccionada = null"></button>
+            </div>
+            <div class="row g-2 detalle-datos">
+              <div class="col-md-4"><span>Fecha y hora</span>{{ soloFecha(a.fecha) }} {{ soloHora(a.fecha) }}</div>
+              <div class="col-md-4"><span>Veterinario</span>{{ a.veterinario }}</div>
+              <div class="col-md-4"><span>Cita</span>#{{ a.citaId || '—' }}</div>
+              <div class="col-12"><span>Descripción</span>{{ a.descripcion }}</div>
+              <div class="col-md-6"><span>Observación</span>{{ a.observacion || '—' }}</div>
+              <div class="col-md-6"><span>Diagnóstico o evolución</span>{{ a.diagnostico || '—' }}</div>
+            </div>
+          </div>
+        }
       </div>
-
     </div>
-
   </div>
-
 </div>

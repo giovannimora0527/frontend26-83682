@@ -1,103 +1,48 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { HistoriaDetalle, HistoriaMedica, HistoriaRq } from '../models/historia-medica';
+import { AnotacionHistoria } from '../models/anotacion-historia';
 
 /**
- * ==========================================================
- * CLÍNICA VETERINARIA - UNIMINUTO
- * SERVICIO DE HISTORIAS MÉDICAS
- * ==========================================================
- *
- * Funciones:
- *
- * 1. Consultar todas las historias médicas.
- * 2. Consultar historias médicas por paciente.
- * 3. Conectar Angular con Spring Boot.
+ * Consumo de la API de historias clínicas.
+ * Endpoints: GET /historia-medica/listar-todos, GET /historia-medica/{id}, POST /historia-medica/crear,
+ * PUT /historia-medica/actualizar/{id}, GET /historia-medica/{id}/anotaciones.
  */
-
-// ==========================================================
-// 1. IMPORTACIONES
-// ==========================================================
-
-// Permite registrar el servicio en Angular.
-import { environment } from '../../environments/environment';
-import { Injectable } from '@angular/core';
-
-// Permite realizar solicitudes HTTP al backend.
-import { HttpClient } from '@angular/common/http';
-
-// Permite manejar respuestas asíncronas.
-import { Observable } from 'rxjs';
-
-// Modelo de historias médicas.
-import { HistoriaMedica } from '../models/historia-medica';
-
-// ==========================================================
-// 2. CONFIGURACIÓN DEL SERVICIO
-// ==========================================================
-
-@Injectable({
-  providedIn: 'root'
-})
-
-// ==========================================================
-// 3. CLASE DEL SERVICIO
-// ==========================================================
-
+@Injectable({ providedIn: 'root' })
 export class HistoriaMedicaService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrlAuth}/historia-medica`;
 
-  // ========================================================
-  // 4. URL DEL BACKEND SPRING BOOT
-  // ========================================================
-
-  private readonly apiUrl =
-    `${environment.apiUrlAuth}/historia-medica`;
-
-  // ========================================================
-  // 5. CONSTRUCTOR
-  // ========================================================
-
-  constructor(
-    private http: HttpClient
-  ) {}
-
-  // ========================================================
-  // 6. CONSULTAR TODAS LAS HISTORIAS MÉDICAS
-  // ========================================================
-
-  /**
-   * Obtiene las historias médicas registradas
-   * en la base de datos MySQL.
-   *
-   * GET /historia-medica/listar-todos
-   */
-
-  listarHistoriasMedicas(): Observable<HistoriaMedica[]> {
-
-    return this.http.get<HistoriaMedica[]>(
-      `${this.apiUrl}/listar-todos`
-    );
-
+  /** Lista historias (más recientes primero) con filtro opcional por rango de fechas. */
+  listarHistoriasMedicas(fechaInicio?: string, fechaFin?: string): Observable<HistoriaMedica[]> {
+    let params = new HttpParams();
+    if (fechaInicio) params = params.set('fechaInicio', fechaInicio);
+    if (fechaFin) params = params.set('fechaFin', fechaFin);
+    return this.http.get<HistoriaMedica[]>(`${this.apiUrl}/listar-todos`, { params });
   }
 
-  // ========================================================
-  // 7. CONSULTAR HISTORIAS POR PACIENTE
-  // ========================================================
-
-  /**
-   * Consulta las historias médicas asociadas
-   * al identificador de un paciente.
-   *
-   * @param pacienteId Identificador del paciente.
-   *
-   * GET /historia-medica/listar-por-paciente/1
-   */
-
-  listarHistoriasPorPaciente(
-    pacienteId: number
-  ): Observable<HistoriaMedica[]> {
-
-    return this.http.get<HistoriaMedica[]>(
-      `${this.apiUrl}/listar-por-paciente/${pacienteId}`
-    );
-
+  /** Historias clínicas de una mascota. */
+  listarHistoriasPorPaciente(pacienteId: number): Observable<HistoriaMedica[]> {
+    return this.http.get<HistoriaMedica[]>(`${this.apiUrl}/listar-por-paciente/${pacienteId}`);
   }
 
+  /** Detalle de una historia con su histórico de anotaciones y fórmulas. */
+  consultar(id: number): Observable<HistoriaDetalle> {
+    return this.http.get<HistoriaDetalle>(`${this.apiUrl}/${id}`);
+  }
+
+  crear(datos: HistoriaRq): Observable<HistoriaDetalle> {
+    return this.http.post<HistoriaDetalle>(`${this.apiUrl}/crear`, datos);
+  }
+
+  actualizar(id: number, datos: HistoriaRq): Observable<HistoriaDetalle> {
+    return this.http.put<HistoriaDetalle>(`${this.apiUrl}/actualizar/${id}`, datos);
+  }
+
+  /** Anotaciones de una historia, de la más reciente a la más antigua. */
+  anotaciones(id: number): Observable<AnotacionHistoria[]> {
+    return this.http.get<AnotacionHistoria[]>(`${this.apiUrl}/${id}/anotaciones`);
+  }
 }

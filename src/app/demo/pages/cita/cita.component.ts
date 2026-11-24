@@ -23,6 +23,8 @@ import { environment } from 'src/environments/environment';
 import { AuthService } from '../../../services/auth.service';
 import { AgendaService, DisponibilidadMedica, errorAgenda, Intervalo, RevisionCita } from '../../../services/agenda.service';
 import { AgendaConfiguracionComponent } from './agenda-configuracion.component';
+import { CitaService } from '../../../services/cita.service';
+import { mensajeError } from '../../../utils/tabla-datos';
 
 // ======================================================
 // MODELOS DE CITAS MÉDICAS
@@ -37,6 +39,11 @@ export interface Cita {
   fechaFin: string;
   estado: string;
   motivo: string | null;
+  /** Nombres que envía el backend para el DataTable. */
+  cliente?: string;
+  mascota?: string;
+  veterinario?: string;
+  historiaId?: number | null;
 }
 
 export interface CrearCitaDTO {
@@ -108,8 +115,73 @@ export class CitaComponent implements OnInit {
   filtroEstado = '';
 
   private readonly agenda = inject(AgendaService);
+  private readonly citasApi = inject(CitaService);
   readonly esAdmin = ['ADMIN', 'ADMINISTRADOR'].includes((inject(AuthService).obtenerPerfil() ?? '').trim().toUpperCase());
-  readonly estados = ['pendiente', 'confirmada', 'atendida', 'finalizada', 'cancelada'];
+  readonly estados = ['pendiente', 'programada', 'confirmada', 'atendida', 'finalizada', 'cancelada'];
+
+  // ---------------- Ordenamiento por columnas y filtro por rango de fechas ----------------
+  /** Columna por la que se ordena el DataTable (inicialmente fecha y hora descendente). */
+  ordenColumna: 'fechaHora' | 'cliente' | 'mascota' | 'veterinario' | 'estado' | 'id' = 'fechaHora';
+  ordenDireccion: 'asc' | 'desc' = 'desc';
+  fechaDesde = '';
+  fechaHasta = '';
+
+  /** Cambia la columna de orden o invierte la dirección si es la misma. */
+  ordenarPor(columna: 'fechaHora' | 'cliente' | 'mascota' | 'veterinario' | 'estado' | 'id'): void {
+    this.ordenDireccion = this.ordenColumna === columna && this.ordenDireccion === 'asc' ? 'desc' : 'asc';
+    this.ordenColumna = columna;
+    this.paginaActual = 1;
+  }
+
+  iconoOrden(columna: string): string {
+    return this.ordenColumna !== columna ? '↕' : this.ordenDireccion === 'asc' ? '▲' : '▼';
+  }
+
+  // ---------------- Combo dependiente: mascotas consultadas al backend por cliente ----------------
+  mascotasCliente: Mascota[] = [];
+
+  /** Consulta al backend únicamente las mascotas del cliente seleccionado. */
+  cargarMascotasDeCliente(clienteId: number | null): void {
+    this.mascotasCliente = [];
+    if (!clienteId) return;
+    this.cargandoMascotas = true;
+    this.citasApi.mascotasDeCliente(clienteId).subscribe({
+      next: lista => {
+        this.mascotasCliente = lista.map(m => ({ mascotaId: m.mascotaId, nombreMascota: m.nombreMascota, edad: m.edad,
+          raza: { nombre: m.raza, especie: m.especie }, cliente: { clienteId: m.clienteId } }) as Mascota);
+        this.cargandoMascotas = false;
+      },
+      error: e => {
+        this.cargandoMascotas = false;
+        this.mensajeErrorGuardar = mensajeError(e, 'No fue posible consultar las mascotas del cliente.');
+      }
+    });
+  }
+
+  // ---------------- Reactivación explícita de citas canceladas ----------------
+  citaReactivar: Cita | null = null;
+  reactivarInicio = '';
+  reactivarFin = '';
+
+  abrirReactivar(cita: Cita): void {
+    this.citaReactivar = cita;
+    this.errorAgenda = '';
+    this.reactivarInicio = cita.fechaHora.slice(0, 16);
+    this.reactivarFin = cita.fechaFin.slice(0, 16);
+  }
+
+  /** Reactiva la cita cancelada (vuelve a "pendiente"); el backend valida horario y superposiciones. */
+  reactivar(): void {
+    const cita = this.citaReactivar;
+    if (!cita) return;
+    this.citasApi.reactivar(cita.id, this.reactivarInicio, this.reactivarFin).subscribe({
+      next: () => {
+        this.citaReactivar = null;
+        this.cargarCitas();
+      },
+      error: e => (this.errorAgenda = mensajeError(e, 'No fue posible reactivar la cita.'))
+    });
+  }
   disponibilidad: DisponibilidadMedica | null = null;
   medicoConfiguracion: number | null = null;
   citaHistorial: Cita | null = null;
@@ -117,8 +189,8 @@ export class CitaComponent implements OnInit {
   errorAgenda = '';
 
   get estadosFormulario(): string[] {
-    if (this.modoFormulario === 'crear') return ['pendiente', 'confirmada'];
-    return this.esAdmin ? ['pendiente', 'confirmada', 'cancelada', 'atendida'] : ['pendiente', 'confirmada', 'cancelada'];
+    if (this.modoFormulario === 'crear') return ['pendiente', 'programada', 'confirmada'];
+    return this.esAdmin ? ['pendiente', 'programada', 'confirmada', 'cancelada', 'atendida'] : ['pendiente', 'programada', 'confirmada', 'cancelada'];
   }
 
   consultarDisponibilidad() {
@@ -443,11 +515,8 @@ export class CitaComponent implements OnInit {
       return [];
     }
 
-    return this.mascotas.filter(
-      mascota =>
-        Number(mascota.cliente?.clienteId) ===
-        Number(clienteSeleccionado)
-    );
+    // Mascotas consultadas al backend para el cliente seleccionado (GET /cliente/{id}/mascotas).
+    return this.mascotasCliente;
 
   }
 
@@ -491,8 +560,9 @@ export class CitaComponent implements OnInit {
 
   alCambiarCliente(): void {
 
-    // Evita seleccionar una mascota de otro cliente.
+    // Evita seleccionar una mascota de otro cliente y consulta solo las mascotas del cliente elegido.
     this.formulario.get('mascotaId')?.reset(null);
+    this.cargarMascotasDeCliente(Number(this.formulario.get('clienteId')?.value) || null);
 
     // Limpiar errores anteriores.
     this.mensajeErrorGuardar = '';
@@ -530,6 +600,7 @@ export class CitaComponent implements OnInit {
         cita.clienteId,
         nombreCliente,
         cita.mascotaId,
+        cita.mascota ?? '',
         cita.medicoId,
         nombreMedico,
         cita.estado,
@@ -542,8 +613,25 @@ export class CitaComponent implements OnInit {
       const coincideTexto =
         !texto || datosBusqueda.includes(texto);
 
-      return coincideEstado && coincideTexto;
+      const dia = (cita.fechaHora ?? '').slice(0, 10);
+      const coincideFecha = (!this.fechaDesde || dia >= this.fechaDesde) && (!this.fechaHasta || dia <= this.fechaHasta);
 
+      return coincideEstado && coincideTexto && coincideFecha;
+
+    }).sort((a, b) => {
+      const valor = (c: Cita): string | number => {
+        switch (this.ordenColumna) {
+          case 'id': return c.id;
+          case 'cliente': return (c.cliente ?? '').toLowerCase();
+          case 'mascota': return (c.mascota ?? '').toLowerCase();
+          case 'veterinario': return (c.veterinario ?? this.obtenerNombreMedico(c.medicoId)).toLowerCase();
+          case 'estado': return c.estado;
+          default: return c.fechaHora;
+        }
+      };
+      const x = valor(a), y = valor(b);
+      const r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'es');
+      return this.ordenDireccion === 'asc' ? r : -r;
     });
 
   }
@@ -602,6 +690,8 @@ export class CitaComponent implements OnInit {
 
     this.busqueda = '';
     this.filtroEstado = '';
+    this.fechaDesde = '';
+    this.fechaHasta = '';
     this.paginaActual = 1;
 
   }
@@ -652,9 +742,10 @@ export class CitaComponent implements OnInit {
       medicoId: cita.medicoId,
       fechaHora: cita.fechaHora.substring(0, 16),
       fechaFin: cita.fechaFin.substring(0, 16),
-      estado: cita.estado === 'programada' ? 'pendiente' : cita.estado,
+      estado: cita.estado,
       motivo: cita.motivo ?? ''
     });
+    this.cargarMascotasDeCliente(cita.clienteId);
 
     this.mostrarFormulario = true;
 

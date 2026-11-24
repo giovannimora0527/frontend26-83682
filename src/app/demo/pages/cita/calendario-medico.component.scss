@@ -39,6 +39,7 @@
 }
 
 .evento > span { font-size: .75rem; text-transform: capitalize; }
+.evento[data-estado="programada"] { background: #e7f0fd; color: #133f7a; border-color: #8fb2e6; }
 .evento[data-estado="confirmada"] { background: #e4f5ec; color: #11543c; border-color: #82b69e; }
 .evento[data-estado="cancelada"] { background: #fdecec; color: #792122; border-color: #d59e9e; }
 .evento[data-estado="atendida"] { background: #fff3da; color: #5f4818; border-color: #c3a76c; }

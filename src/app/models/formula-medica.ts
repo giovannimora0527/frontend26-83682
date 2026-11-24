@@ -1,36 +1,39 @@
-/**
- * Modelo de una fórmula médica.
- * Representa los datos recibidos desde Spring Boot.
- */
+/** Fórmula médica asociada a una consulta (cita), mascota, veterinario e historia clínica. */
 export interface FormulaMedica {
-
-  // Identificador de la fórmula.
   id: number;
-
-  // Cita médica relacionada.
   citaId: number;
-
-  // Medicamento recetado.
+  mascotaId: number;
+  mascota: string;
+  clienteId: number;
+  cliente: string;
+  medicoId: number;
+  veterinario: string;
+  historiaId: number | null;
   medicamentoId: number;
-
-  // Cantidad o dosis del medicamento.
+  medicamento: string;
+  presentacion: string | null;
   dosis: string;
-
-  // Frecuencia de administración.
   frecuencia: string | null;
-
-  // Duración del tratamiento.
   duracionTratamiento: string | null;
-
-  // Recomendaciones del médico.
   indicaciones: string | null;
-
-  // Fecha en que se emite la fórmula.
   fechaEmision: string | null;
-
-  // Fecha de creación del registro.
+  fechaCita: string;
+  activo: boolean;
+  estado: 'Activa' | 'Inactiva';
   fechaCreacionRegistro: string;
-
-  // Última actualización.
   fechaActualizacionRegistro: string | null;
+}
+
+/** Datos para crear o editar una fórmula. */
+export interface FormulaRq {
+  clienteId: number | null;
+  mascotaId: number | null;
+  citaId: number | null;
+  medicoId: number | null;
+  medicamentoId: number | null;
+  dosis: string;
+  frecuencia: string;
+  duracionTratamiento: string;
+  indicaciones: string | null;
+  fechaEmision: string;
 }

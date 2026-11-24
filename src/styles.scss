@@ -58,3 +58,44 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+
+/* ---------- Estilos compartidos de DataTables y modales ---------- */
+.tabla-ordenable th[class=''],
+.tabla-ordenable th:not(:last-child) {
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+}
+
+.celda-corta {
+	max-width: 260px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.modal-fondo {
+	position: fixed;
+	inset: 0;
+	z-index: 1050;
+	background: rgba(17, 33, 58, 0.45);
+}
+
+.modal.d-block {
+	z-index: 1055;
+}
+
+.detalle-datos > div {
+	padding: 0.5rem 0.75rem;
+	border-left: 3px solid #1a5cc0;
+	background: #f4f7fc;
+}
+
+.detalle-datos span {
+	display: block;
+	color: #647789;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+}

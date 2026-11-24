@@ -1,52 +1,22 @@
-
-/**
- * =====================================================
- * CLÍNICA VETERINARIA - UNIMINUTO
- * MODELO DE ANOTACIONES DE HISTORIAS MÉDICAS
- * =====================================================
- *
- * Este modelo representa los datos recibidos
- * desde Spring Boot.
- *
- * Tabla MySQL: anotacion_historia
- */
-
+/** Anotación de una historia clínica (evolución de la consulta). */
 export interface AnotacionHistoria {
-
-  // ==================================================
-  // 1. IDENTIFICADOR DE LA ANOTACIÓN
-  // ==================================================
-
-  // Llave primaria generada automáticamente.
   id: number;
-
-  // ==================================================
-  // 2. IDENTIFICADOR DE LA HISTORIA MÉDICA
-  // ==================================================
-
-  // Relaciona la anotación con una historia médica.
   historiaId: number;
-
-  // ==================================================
-  // 3. IDENTIFICADOR DEL MÉDICO
-  // ==================================================
-
-  // Identifica al médico responsable.
   medicoId: number;
-
-  // ==================================================
-  // 4. FECHA DE LA ANOTACIÓN
-  // ==================================================
-
-  // Spring Boot devuelve la fecha en formato texto.
-  // MySQL permite valores NULL en este campo.
-  fecha: string | null;
-
-  // ==================================================
-  // 5. DESCRIPCIÓN DE LA ANOTACIÓN
-  // ==================================================
-
-  // Contiene las observaciones médicas registradas.
+  veterinario: string;
+  citaId: number | null;
+  fecha: string;
   descripcion: string;
+  observacion: string | null;
+  diagnostico: string | null;
+  fechaModificacion: string | null;
+}
 
+/** Datos para crear o actualizar una anotación. */
+export interface AnotacionRq {
+  historiaId: number;
+  medicoId: number | null;
+  descripcion: string;
+  observacion: string | null;
+  diagnostico: string | null;
 }

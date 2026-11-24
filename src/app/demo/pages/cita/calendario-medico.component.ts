@@ -19,7 +19,7 @@ export class CalendarioMedicoComponent implements OnInit {
   private readonly agenda = inject(AgendaService);
   private readonly formatoDia = new Intl.DateTimeFormat('es-CO', { weekday: 'short', timeZone: 'UTC' });
   private readonly formatoMes = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  readonly estados = ['pendiente', 'confirmada', 'cancelada', 'atendida', 'finalizada'];
+  readonly estados = ['pendiente', 'programada', 'confirmada', 'cancelada', 'atendida', 'finalizada'];
   readonly vistas: { id: Vista; nombre: string }[] = [
     { id: 'dia', nombre: 'Día' }, { id: 'semana', nombre: 'Semana' }, { id: 'mes', nombre: 'Mes' }
   ];
@@ -153,7 +153,7 @@ export class CalendarioMedicoComponent implements OnInit {
     });
   }
 
-  reservada(cita: EventoMedico) { return cita.estado === 'pendiente' || cita.estado === 'confirmada'; }
+  reservada(cita: EventoMedico) { return ['pendiente', 'programada', 'confirmada'].includes(cita.estado); }
 
   private fechasVista() {
     const fecha = this.fechaUtc(this.fecha);
