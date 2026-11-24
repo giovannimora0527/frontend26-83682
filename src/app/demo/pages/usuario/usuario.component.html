@@ -1,5 +1,161 @@
-<div class="container">
-   <label>Usuario Component Funciona</label>
-   
-</div>
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="mb-0">Usuarios del sistema</h5>
+        <div class="usuarios-resumen">
+          <span><strong>{{ usuarios.length }}</strong> registrados</span>
+          <span><strong>{{ activos }}</strong> activos</span>
+          <span><strong>{{ usuarios.length - activos }}</strong> inactivos</span>
+        </div>
+      </div>
 
+      <div class="card-body">
+        <button type="button" class="btn btn-primary mb-3" [disabled]="guardando" (click)="nuevo()">
+          <i class="feather icon-user-plus me-1"></i> Nuevo usuario
+        </button>
+
+        @if (aviso) { <p class="alert alert-success" role="status">{{ aviso }}</p> }
+        @if (error) { <p class="alert alert-danger" role="alert">{{ error }}</p> }
+
+        <!-- FORMULARIO -->
+        @if (formulario; as f) {
+          <form (ngSubmit)="guardar()" class="border rounded p-3 mb-4 usuarios-form" novalidate>
+            <h2 class="h6 mb-3">{{ f.id ? 'Editar usuario' : 'Registrar usuario' }}</h2>
+            @if (errorFormulario) { <p class="alert alert-danger py-2" role="alert">{{ errorFormulario }}</p> }
+            <div class="row g-3">
+              <label class="col-sm-6 col-lg-4">Usuario
+                <input class="form-control" name="username" maxlength="50" autocomplete="off" required [(ngModel)]="f.username">
+              </label>
+              <label class="col-sm-6 col-lg-4">Correo electrónico
+                <input class="form-control" name="email" type="email" maxlength="255" required [(ngModel)]="f.email">
+                <small class="text-muted">Aquí llega el código de verificación del inicio de sesión.</small>
+              </label>
+              <label class="col-sm-6 col-lg-4">Perfil
+                <select class="form-select" name="rol" required [(ngModel)]="f.rol">
+                  <option [ngValue]="null">Seleccionar</option>
+                  @for (p of perfiles; track p.perfilId) { <option [ngValue]="p.perfilId">{{ p.nombre }}</option> }
+                </select>
+              </label>
+              <label class="col-sm-6 col-lg-4">{{ f.id ? 'Nueva contraseña (opcional)' : 'Contraseña' }}
+                <input class="form-control" name="password" type="password" autocomplete="new-password" [(ngModel)]="f.password">
+                <small class="text-muted">Mínimo 8 caracteres, con letras y números.</small>
+              </label>
+              <label class="col-sm-6 col-lg-4">Confirmar contraseña
+                <input class="form-control" name="confirmarClave" type="password" autocomplete="new-password"
+                  [(ngModel)]="confirmarClave" [disabled]="!f.password">
+              </label>
+              @if (f.id) {
+                <div class="col-sm-6 col-lg-4 d-flex align-items-end">
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="activo" name="activo" [(ngModel)]="f.activo"
+                      [disabled]="f.id === usuarioActual">
+                    <label class="form-check-label" for="activo">Usuario activo</label>
+                  </div>
+                </div>
+              }
+            </div>
+            <button class="btn btn-primary mt-3 me-2" [disabled]="guardando">
+              {{ guardando ? 'Guardando…' : 'Guardar usuario' }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary mt-3" [disabled]="guardando" (click)="formulario = null">Cancelar</button>
+          </form>
+        }
+
+        <!-- CONFIRMAR ACTIVAR / INACTIVAR -->
+        @if (porCambiarEstado; as u) {
+          <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2">
+            @if (u.activo) {
+              <span>¿Inactivar a <strong>{{ u.username }}</strong>? No podrá iniciar sesión y se cerrarán sus sesiones abiertas.</span>
+            } @else {
+              <span>¿Activar de nuevo a <strong>{{ u.username }}</strong>?</span>
+            }
+            <button type="button" class="btn btn-sm" [class.btn-danger]="u.activo" [class.btn-success]="!u.activo"
+              [disabled]="guardando" (click)="cambiarEstado()">{{ u.activo ? 'Inactivar' : 'Activar' }}</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="guardando" (click)="porCambiarEstado = null">Cancelar</button>
+          </div>
+        }
+
+        <!-- FILTROS -->
+        <div class="row g-2 mb-3">
+          <div class="col-md-5">
+            <label class="form-label" for="busqueda">Buscar usuario</label>
+            <input id="busqueda" type="search" class="form-control" placeholder="Usuario, correo, perfil o ID"
+              [(ngModel)]="busqueda" (ngModelChange)="pagina = 1">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="filtroPerfil">Perfil</label>
+            <select id="filtroPerfil" class="form-select" [(ngModel)]="filtroPerfil" (ngModelChange)="pagina = 1">
+              <option value="">Todos</option>
+              @for (p of perfiles; track p.perfilId) { <option [value]="p.perfilId">{{ p.nombre }}</option> }
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" for="filtroEstado">Estado</label>
+            <select id="filtroEstado" class="form-select" [(ngModel)]="filtroEstado" (ngModelChange)="pagina = 1">
+              <option value="">Todos</option>
+              <option value="activo">Activos</option>
+              <option value="inactivo">Inactivos</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-secondary w-100" (click)="limpiarFiltros()">Limpiar</button>
+          </div>
+        </div>
+
+        <!-- TABLA -->
+        @if (cargando) {
+          <p class="text-muted" role="status">Cargando usuarios…</p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr><th>ID</th><th>Usuario</th><th>Correo electrónico</th><th>Perfil</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr>
+              </thead>
+              <tbody>
+                @for (u of visibles; track u.id) {
+                  <tr [class.text-muted]="!u.activo">
+                    <td>{{ u.id }}</td>
+                    <td>
+                      <strong>{{ u.username }}</strong>
+                      @if (u.id === usuarioActual) { <span class="badge text-bg-light ms-1">Tú</span> }
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge" [ngClass]="claseperfil(u.perfil)">{{ u.perfil }}</span></td>
+                    <td>
+                      <span class="badge" [class.text-bg-success]="u.activo" [class.text-bg-secondary]="!u.activo">
+                        {{ u.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td>{{ u.fechaCreacion | date: 'yyyy-MM-dd' }}</td>
+                    <td class="text-nowrap">
+                      <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="editar(u)">
+                        <i class="feather icon-edit-2"></i> Editar
+                      </button>
+                      @if (u.id !== usuarioActual) {
+                        <button type="button" class="btn btn-sm" [class.btn-outline-danger]="u.activo"
+                          [class.btn-outline-success]="!u.activo" (click)="porCambiarEstado = u">
+                          {{ u.activo ? 'Inactivar' : 'Activar' }}
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7" class="text-center text-muted">No hay usuarios que coincidan con la búsqueda.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <small class="text-muted">{{ filtrados.length }} usuario(s) · página {{ pagina }} de {{ totalPaginas }}</small>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="pagina === 1" (click)="pagina = pagina - 1">Anterior</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="pagina >= totalPaginas" (click)="pagina = pagina + 1">Siguiente</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -16,6 +16,11 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # index.html sin caché: tras cada actualización el navegador carga la versión nueva de la aplicación.
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }

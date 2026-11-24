@@ -1,0 +1,20 @@
+.usuarios-resumen {
+  display: flex;
+  gap: 1.25rem;
+  color: #647789;
+  font-size: 0.9rem;
+
+  strong {
+    color: #1a5cc0;
+  }
+}
+
+.usuarios-form label {
+  font-size: 0.9rem;
+}
+
+.usuarios-form small {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+}
