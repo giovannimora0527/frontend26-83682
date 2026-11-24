@@ -622,17 +622,16 @@
                 "
               >
 
-                <option [ngValue]="null">
-
-                  {{
-                  !formulario.get('clienteId')?.value
-                  ? 'Primero selecciona un cliente'
-                  : cargandoMascotas
-                  ? 'Cargando mascotas...'
-                  : 'Seleccionar mascota'
-                  }}
-
-                </option>
+                <!-- Una opción por estado: así el navegador siempre muestra el texto correcto del marcador. -->
+                @if (!formulario.get('clienteId')?.value) {
+                  <option [ngValue]="null">Primero selecciona un cliente</option>
+                } @else if (cargandoMascotas) {
+                  <option [ngValue]="null">Cargando mascotas...</option>
+                } @else if (mascotasDelCliente.length === 0) {
+                  <option [ngValue]="null">El cliente no tiene mascotas activas</option>
+                } @else {
+                  <option [ngValue]="null">Seleccionar mascota</option>
+                }
 
                 <option
                   *ngFor="let mascota of mascotasDelCliente"

@@ -99,3 +99,26 @@
 	font-weight: 600;
 	text-transform: uppercase;
 }
+
+/*
+ * Modales con formulario: cuando un <form> envuelve el cuerpo y el pie del modal, se convierte en
+ * columna flexible para que el cuerpo tenga barra de desplazamiento y los botones queden siempre visibles.
+ */
+.modal-content > form {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.modal-content > form > .modal-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+/* Modal abierto con la clase d-block: si la ventana es baja, el modal completo también se desplaza. */
+.modal.d-block {
+	overflow-y: auto;
+}
