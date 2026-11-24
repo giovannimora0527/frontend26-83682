@@ -48,11 +48,15 @@ const modulos: Routes = [
   ruta('formulas', 'Fórmulas médicas', FormulaMedicaComponent),
   ruta('mascotas', 'Mascotas', MascotaComponent),
   diferida('inventario', 'Inventario', () => import('./demo/pages/inventario/inventario.component').then((m) => m.InventarioComponent)),
+  diferida('inventario', 'Log de despachos', () =>
+    import('./demo/pages/despacho/despachos-inventario.component').then((m) => m.DespachosInventarioComponent), 'inventario/despachos'),
   diferida('inventario', 'Detalle del producto', () =>
     import('./demo/pages/inventario/producto-detalle/producto-detalle.component').then((m) => m.ProductoDetalleComponent), 'inventario/:id'),
   diferida('carga-inventario', 'Carga masiva', () =>
     import('./demo/pages/carga-inventario/carga-inventario.component').then((m) => m.CargaInventarioComponent)),
-  ruta('despacho', 'Despacho', EnConstruccionComponent),
+  diferida('despacho', 'Despacho', () => import('./demo/pages/despacho/despacho.component').then((m) => m.DespachoComponent)),
+  diferida('despacho', 'Preparación del despacho', () =>
+    import('./demo/pages/despacho/preparacion/preparacion.component').then((m) => m.PreparacionComponent), 'despacho/:formulaId'),
   ruta('facturacion', 'Facturación', EnConstruccionComponent),
   ruta('reportes', 'Reportes', EnConstruccionComponent)
 ];

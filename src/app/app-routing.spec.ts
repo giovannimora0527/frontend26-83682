@@ -19,7 +19,7 @@ describe('Rutas', () => {
   it('cada opción del menú tiene su ruta protegida por authGuard y menuGuard', () => {
     const opciones = NavigationItems.flatMap((grupo) => grupo.children ?? []);
     expect(inicio?.canActivateChild).toContain(authGuard);
-    expect(hijas.filter((ruta) => !ruta.path?.includes(':')).map((ruta) => [ruta.data?.['menu'], `/inicio/${ruta.path}`])).toEqual(opciones.map(({ id, url }) => [id, url]));
+    expect(hijas.filter((ruta) => !ruta.path?.includes('/')).map((ruta) => [ruta.data?.['menu'], `/inicio/${ruta.path}`])).toEqual(opciones.map(({ id, url }) => [id, url]));
     expect(hijas.every((ruta) => ruta.canActivate?.includes(menuGuard))).toBeTrue();
   });
 

@@ -1,0 +1,66 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="despachoTitulo">Despacho {{ despacho.numero }} <app-badge-estado [estado]="despacho.estado" /></h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="procesando" (click)="modal.close(false)"></button>
+</div>
+<div class="modal-body">
+  <dl class="row">
+    <dt class="col-5 col-md-3">Fórmula</dt>
+    <dd class="col-7 col-md-3">{{ despacho.formulaNumero }}</dd>
+    <dt class="col-5 col-md-3">Estado de la fórmula</dt>
+    <dd class="col-7 col-md-3"><app-badge-estado [estado]="despacho.estadoDespacho" /></dd>
+    <dt class="col-5 col-md-3">Fecha</dt>
+    <dd class="col-7 col-md-3">{{ despacho.fecha | fechaHora }}</dd>
+    <dt class="col-5 col-md-3">Despachó</dt>
+    <dd class="col-7 col-md-3">{{ despacho.usuario }}</dd>
+    <dt class="col-5 col-md-3">Mascota</dt>
+    <dd class="col-7 col-md-3">{{ despacho.mascotaNombre }}</dd>
+    <dt class="col-5 col-md-3">Propietario</dt>
+    <dd class="col-7 col-md-3">{{ despacho.clienteNombre }}</dd>
+    <dt class="col-5 col-md-3">Médico</dt>
+    <dd class="col-7 col-md-3">{{ despacho.medicoNombre }}</dd>
+    <dt class="col-5 col-md-3">Observación</dt>
+    <dd class="col-7 col-md-3">{{ despacho.observacion || '—' }}</dd>
+  </dl>
+  @if (despacho.revertido) {
+    <div class="alert alert-danger">
+      Revertido por {{ despacho.usuarioReversion }} el {{ despacho.fechaReversion | fechaHora }}. Motivo: {{ despacho.motivoReversion }}
+    </div>
+  }
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead><tr><th scope="col">Medicamento</th><th scope="col">Cantidad</th><th scope="col">Lote</th><th scope="col">Vencimiento</th><th scope="col">Facturado</th></tr></thead>
+      <tbody>
+        @for (item of despacho.items; track $index) {
+          <tr>
+            <td>{{ item.medicamentoNombre }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>{{ item.numeroLote }}</td>
+            <td>{{ (item.fechaVencimiento | date: 'dd/MM/yyyy') || 'No aplica' }}</td>
+            <td>{{ item.facturado ? 'Sí' : 'No' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="text-center">No se entregaron medicamentos</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (despacho.sinExistencias.length) {
+    <p class="text-danger mb-0">Sin existencias: {{ despacho.sinExistencias.join(', ') }}</p>
+  }
+</div>
+<div class="modal-footer">
+  @if (tieneComprobante) {
+    <app-boton-descarga [endpoint]="'despacho/' + despacho.id + '/comprobante/pdf'" etiqueta="Comprobante" />
+  }
+  <ng-container *appTieneRol="['ADMINISTRADOR']">
+    @if (cancelable) {
+      <button type="button" class="btn btn-sm btn-outline-danger mb-0" [disabled]="procesando" (click)="cancelarPendiente()">Cancelar lo pendiente</button>
+    }
+    @if (reversible) {
+      <button type="button" class="btn btn-sm btn-danger mb-0" [disabled]="procesando" (click)="revertir()">Revertir despacho</button>
+    } @else if (facturado && despacho.estado === 'CONFIRMADO') {
+      <span class="small text-muted">No se revierte: tiene medicamentos facturados.</span>
+    }
+  </ng-container>
+  <button type="button" class="btn btn-secondary" [disabled]="procesando" (click)="modal.close(false)">Cerrar</button>
+</div>

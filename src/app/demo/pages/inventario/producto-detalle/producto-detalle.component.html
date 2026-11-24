@@ -127,6 +127,8 @@
                             <a routerLink="/inicio/carga-inventario" [queryParams]="{ carga: movimiento.cargaId }">
                               {{ movimiento.referencia || 'Carga ' + movimiento.cargaId }}
                             </a>
+                          } @else if (movimiento.despachoId) {
+                            <button type="button" class="btn btn-link p-0 mb-0" [disabled]="abriendoDespacho" (click)="verDespacho(movimiento)">{{ movimiento.referencia }}</button>
                           } @else {
                             {{ movimiento.referencia || '—' }}
                           }

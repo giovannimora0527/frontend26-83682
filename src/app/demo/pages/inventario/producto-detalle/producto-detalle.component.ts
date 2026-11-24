@@ -4,6 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { finalize, Subscription } from 'rxjs';
+import Swal from 'sweetalert2';
+import { DespachoModalComponent } from '../../despacho/despacho-modal/despacho-modal.component';
+import { SIN_FILTRO } from '../../despacho/despacho.util';
+import { DespachoService } from '../../despacho/service/despacho.service';
 import { AuthService } from '../../login/service/auth.service';
 import { Lote, MovimientoInventario, Producto } from 'src/app/models/producto';
 import { BadgeEstadoComponent } from 'src/app/shared/components/badge-estado/badge-estado.component';
@@ -32,6 +36,7 @@ export class ProductoDetalleComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly modalService = inject(NgbModal);
   private readonly inventarioService = inject(InventarioService);
+  private readonly despachoService = inject(DespachoService);
   private modal?: NgbModalRef;
   private consultaMovimientos?: Subscription;
   private id = 0;
@@ -49,6 +54,7 @@ export class ProductoDetalleComponent {
   error = '';
   cargandoMovimientos = false;
   errorMovimientos = '';
+  abriendoDespacho = false;
 
   constructor() {
     this.destroyRef.onDestroy(() => this.modal?.dismiss());
@@ -121,6 +127,36 @@ export class ProductoDetalleComponent {
 
   ajustar(): void {
     this.abrir(AjusteFormComponent, 'ajusteTitulo');
+  }
+
+  /** El API no expone un despacho por id: se busca por su número en el historial. */
+  verDespacho(movimiento: MovimientoInventario): void {
+    if (this.abriendoDespacho) {
+      return;
+    }
+    this.abriendoDespacho = true;
+    const texto = (movimiento.referencia ?? '').split(' / ')[0];
+    this.despachoService.historial({ ...SIN_FILTRO, texto }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.abriendoDespacho = false)
+    ).subscribe({
+      next: (despachos) => {
+        const despacho = despachos.find(({ id }) => id === movimiento.despachoId);
+        if (!despacho) {
+          void Swal.fire('Despacho no encontrado', 'No fue posible encontrar el despacho.', 'error');
+          return;
+        }
+        this.modal = this.modalService.open(DespachoModalComponent, { size: 'lg', scrollable: true, ariaLabelledBy: 'despachoTitulo' });
+        this.modal.componentInstance.despacho = despacho;
+        this.modal.closed.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((cambio) => {
+          if (cambio) {
+            this.cargar();
+            this.cargarMovimientos();
+          }
+        });
+      },
+      error: (error) => void Swal.fire('No se pudo abrir el despacho', mensajeError(error, 'Intenta nuevamente.'), 'error')
+    });
   }
 
   private abrir(componente: Type<unknown>, titulo: string): void {

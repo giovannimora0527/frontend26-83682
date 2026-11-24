@@ -1,0 +1,58 @@
+<app-filtro-fechas (cambio)="filtrarFechas($event)" />
+<div class="row g-2 my-2">
+  <div class="col-md-8">
+    <input class="form-control" type="search" placeholder="Buscar por despacho, fórmula, propietario o mascota" aria-label="Buscar despacho"
+      [(ngModel)]="filtro.texto" (ngModelChange)="buscar()" />
+  </div>
+  <div class="col-md-4">
+    <select class="form-select" aria-label="Estado" [(ngModel)]="filtro.estado" (ngModelChange)="listar()">
+      <option value="">Todos los estados</option>
+      @for (estado of estados; track estado) {
+        <option [value]="estado">{{ estadosUi[estado].etiqueta }}</option>
+      }
+    </select>
+  </div>
+</div>
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando despachos...</p>
+} @else {
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead><tr>
+          @for (columna of columnas; track columna.clave) {
+            <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+              <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+            </th>
+          }
+          <th scope="col">Acciones</th>
+      </tr></thead>
+      <tbody>
+        @for (despacho of tabla.visibles; track despacho.id) {
+          <tr>
+            <td class="text-nowrap">{{ despacho.numero }}</td>
+            <td class="text-nowrap">{{ despacho.formulaNumero }}</td>
+            <td class="text-nowrap">{{ despacho.fecha | fechaHora }}</td>
+            <td>{{ despacho.mascotaNombre }}</td>
+            <td>{{ despacho.clienteNombre }}</td>
+            <td>{{ despacho.medicoNombre }}</td>
+            <td>{{ despacho.usuario }}</td>
+            <td>
+              @for (item of despacho.items; track $index) {
+                <div class="small">{{ item.medicamentoNombre }}: {{ item.cantidad }} (lote {{ item.numeroLote }})</div>
+              } @empty {
+                <span class="small text-muted">Sin entregas</span>
+              }
+            </td>
+            <td><app-badge-estado [estado]="despacho.estado" /><br /><app-badge-estado [estado]="despacho.estadoDespacho" /></td>
+            <td><button type="button" class="btn btn-sm btn-outline-secondary mb-0" (click)="ver(despacho)">Ver</button></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="10" class="text-center">No hay despachos con esos filtros</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+}

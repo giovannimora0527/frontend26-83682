@@ -36,9 +36,12 @@
         </select>
       </div>
       <div class="col-md-3 text-md-end">
-        <button *appTieneRol="['ADMINISTRADOR']" type="button" class="btn btn-outline-primary mb-0" (click)="abrirFormulario(null)">
-          <i class="fa fa-plus" aria-hidden="true"></i> Nuevo producto
-        </button>
+        <ng-container *appTieneRol="['ADMINISTRADOR']">
+          <button type="button" class="btn btn-outline-primary mb-1" (click)="abrirFormulario(null)">
+            <i class="fa fa-plus" aria-hidden="true"></i> Nuevo producto
+          </button>
+          <a class="btn btn-outline-secondary mb-0" routerLink="/inicio/inventario/despachos">Log de despachos</a>
+        </ng-container>
       </div>
       <div class="col-12 d-flex flex-wrap gap-3">
         <div class="form-check mb-0">

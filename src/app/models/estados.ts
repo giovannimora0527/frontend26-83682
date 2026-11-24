@@ -10,10 +10,11 @@ export type EstadoDespacho =
   | 'DESPACHADO'
   | 'PENDIENTE_DISPONIBILIDAD'
   | 'CANCELADO';
+export type EstadoPreparacion = 'EN_PREPARACION' | 'CONFIRMADO' | 'CANCELADO' | 'REVERTIDO';
 export type EstadoFactura = 'PENDIENTE' | 'PAGO_PARCIAL' | 'PAGADA' | 'ANULADA';
 export type EstadoStock = 'AGOTADO' | 'BAJO' | 'PROXIMO_VENCER' | 'VENCIDO' | 'DISPONIBLE';
 export type EstadoCarga = 'PREVISUALIZADA' | 'CONFIRMADA' | 'CONFIRMADA_CON_ERRORES' | 'DESCARTADA';
-export type Estado = EstadoCita | EstadoFormula | EstadoDespacho | EstadoFactura | EstadoStock | EstadoCarga;
+export type Estado = EstadoCita | EstadoFormula | EstadoDespacho | EstadoPreparacion | EstadoFactura | EstadoStock | EstadoCarga;
 
 export type TipoProducto = 'MEDICAMENTO' | 'INSUMO';
 export type TipoMovimiento =

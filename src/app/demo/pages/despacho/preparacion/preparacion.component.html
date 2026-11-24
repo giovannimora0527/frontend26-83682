@@ -1,0 +1,185 @@
+<a class="btn btn-sm btn-outline-secondary" routerLink="/inicio/despacho"><i class="fa fa-arrow-left" aria-hidden="true"></i> Volver a la bandeja</a>
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="cargar()">Reintentar</button></div>
+}
+@if (!datos) {
+  @if (cargando) {
+    <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando fórmula...</p>
+  }
+} @else {
+  <div class="card">
+    <div class="card-body">
+      <h2 class="h5">Fórmula {{ datos.numero }} <app-badge-estado [estado]="datos.estadoDespacho" /></h2>
+      <dl class="row mb-2">
+        <dt class="col-5 col-md-2">Fecha</dt><dd class="col-7 col-md-4">{{ datos.fecha | fechaHora }}</dd>
+        <dt class="col-5 col-md-2">Médico</dt><dd class="col-7 col-md-4">{{ datos.medicoNombre }}</dd>
+        <dt class="col-5 col-md-2">Propietario</dt><dd class="col-7 col-md-4">{{ datos.clienteNombre }} ({{ datos.clienteDocumento }})</dd>
+        <dt class="col-5 col-md-2">Mascota</dt><dd class="col-7 col-md-4">{{ datos.mascotaNombre }}</dd>
+        <dt class="col-5 col-md-2">Indicaciones</dt><dd class="col-7 col-md-10">{{ datos.indicacionesGenerales || 'Sin indicaciones generales' }}</dd>
+      </dl>
+      <p class="text-muted small mb-0"><i class="fa fa-lock" aria-hidden="true"></i> Prescrito por el médico; no editable.</p>
+    </div>
+  </div>
+
+  <div class="card"><div class="card-body">
+    @if (resultado) {
+      <div class="alert alert-success" role="status">
+        <p class="mb-2">Despacho <strong>{{ resultado.numero }}</strong> confirmado. La fórmula quedó en estado <app-badge-estado [estado]="resultado.estadoDespacho" /></p>
+        @if (resultado.sinExistencias.length) {
+          <p class="mb-2">Sin existencias: {{ resultado.sinExistencias.join(', ') }}</p>
+        }
+        <app-boton-descarga [endpoint]="'despacho/' + resultado.id + '/comprobante/pdf'" etiqueta="Comprobante PDF" />
+        <a class="btn btn-sm btn-outline-secondary mb-0" routerLink="/inicio/despacho">Volver a la bandeja</a>
+      </div>
+    }
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert" style="white-space: pre-line">{{ respuestaError }}</div>
+    }
+    <ul ngbNav #nav="ngbNav" class="nav-tabs" [(activeId)]="pestana" (activeIdChange)="cambiarPestana($event)" [animation]="false">
+      <li ngbNavItem="preparacion">
+        <button ngbNavLink type="button">Preparación</button>
+        <ng-template ngbNavContent>
+          @if (!pendiente) {
+            <div class="alert alert-info">La fórmula no tiene entregas pendientes.</div>
+          } @else if (!enCurso) {
+            <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <span>Inicia la preparación para indicar las cantidades.</span>
+              <button type="button" class="btn btn-sm btn-primary mb-0" [disabled]="procesando" (click)="preparar()">{{ procesando ? 'Iniciando...' : 'Iniciar preparación' }}</button>
+            </div>
+          } @else if (!esMia) {
+            <div class="alert alert-warning">La está preparando <strong>{{ datos.usuarioPreparacion }}</strong>. Solo esa persona o un administrador puede liberarla.</div>
+          }
+          <form [formGroup]="form" (ngSubmit)="confirmar()" novalidate>
+            <div formArrayName="detalles">
+              <!-- Se sigue el grupo del formulario: al recargar los lotes, los campos deben crearse con sus controles nuevos. -->
+              @for (grupo of detallesForm.controls; track grupo; let d = $index) {
+                @let detalle = datos.detalles[d];
+                <section class="border rounded p-3 mb-3" [formGroupName]="d">
+                  <h3 class="h6">{{ detalle.codigo }} - {{ detalle.nombre }} <i class="fa fa-lock text-muted small" title="Prescrito por el médico; no editable" aria-hidden="true"></i></h3>
+                  <p class="small mb-2">
+                    {{ detalle.dosis }} {{ detalle.unidadDosis }} cada {{ detalle.frecuenciaHoras }} h por {{ detalle.duracionDias }} días, vía {{ etiquetaVia(detalle.viaAdministracion) }}.
+                    {{ detalle.indicaciones }}
+                  </p>
+                  <div class="d-flex flex-wrap gap-3 mb-2">
+                    <span>Prescrito: <strong>{{ detalle.cantidadPrescrita }}</strong></span>
+                    <span>Despachado: <strong>{{ detalle.cantidadDespachada }}</strong></span>
+                    <span>Pendiente: <strong>{{ detalle.cantidadPendiente }}</strong></span>
+                    <span>Existencia vigente: <strong>{{ detalle.existenciaTotalVigente }}</strong></span>
+                  </div>
+                  @if (detalle.cantidadPendiente > 0 && detalle.existenciaTotalVigente < detalle.cantidadPendiente) {
+                    <div class="alert alert-danger py-2">Sin existencias suficientes</div>
+                  }
+                  @if (detalle.cantidadPendiente === 0) {
+                    <p class="text-success mb-0">Entregado por completo.</p>
+                  } @else if (detalle.lotes.length) {
+                    <div class="table-responsive" formArrayName="lotes">
+                      <table class="table table-sm align-middle">
+                        <thead>
+                          <tr>
+                            <th scope="col">Lote</th><th scope="col">Vencimiento</th><th scope="col">Días</th><th scope="col">Disponible</th>
+                            @if (esMia) {
+                              <th scope="col">Cantidad a entregar</th>
+                            }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (lote of detalle.lotes; track lote.loteId; let l = $index) {
+                            <tr [class.opacity-50]="lote.vencido" [class.table-danger]="errores(detalle, lote.loteId).length">
+                              <td>
+                                {{ lote.numeroLote }}
+                                @if (lote.vencido) {
+                                  <span class="badge bg-dark">Vencido</span>
+                                } @else if (lote.proximoVencer) {
+                                  <span class="badge bg-warning text-dark">Próximo a vencer</span>
+                                }
+                              </td>
+                              <td>{{ (lote.fechaVencimiento | date: 'dd/MM/yyyy') || 'No aplica' }}</td>
+                              <td>{{ diasParaVencer(lote.fechaVencimiento) ?? '—' }}</td>
+                              <td>{{ lote.cantidadDisponible }}</td>
+                              @if (esMia) {
+                                <td style="min-width: 130px">
+                                  <input type="number" [attr.min]="0" step="1" [attr.max]="lote.cantidadDisponible" class="form-control" [formControlName]="l"
+                                    [class.is-invalid]="control(d, l).invalid || errores(detalle, lote.loteId).length" [attr.aria-label]="'Cantidad a entregar del lote ' + lote.numeroLote" />
+                                  @if (mensajeLote(d, l)) {
+                                    <div class="text-danger small" role="alert">{{ mensajeLote(d, l) }}</div>
+                                  }
+                                  @for (mensaje of errores(detalle, lote.loteId); track mensaje) {
+                                    <div class="text-danger small" role="alert">{{ mensaje }}</div>
+                                  }
+                                </td>
+                              }
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    @if (esMia) {
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                          <button type="button" class="btn btn-sm btn-outline-primary mb-0" [disabled]="procesando" (click)="usarSugerencia(d)">Usar sugerencia FEFO</button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary mb-0" [disabled]="procesando" (click)="entregarCero(d)">Entregar 0</button>
+                        </div>
+                        <span>A entregar: <strong>{{ entrega(d) }}</strong> de {{ detalle.cantidadPendiente }}</span>
+                      </div>
+                      @if (detallesForm.at(d).hasError('superaPendiente')) {
+                        <div class="text-danger" role="alert">Supera lo pendiente ({{ detalle.cantidadPendiente }}).</div>
+                      }
+                    }
+                  } @else {
+                    <p class="text-muted mb-0">No hay lotes con existencias.</p>
+                  }
+                </section>
+              }
+            </div>
+            @if (esMia) {
+              <label for="despacho-observacion" class="form-label">Observación (opcional)</label>
+              <textarea id="despacho-observacion" rows="2" class="form-control" formControlName="observacion" maxlength="500"></textarea>
+              <div class="alert mt-3" [class.alert-secondary]="!impedimento" [class.alert-warning]="impedimento" role="status" id="despacho-resumen">{{ impedimento || resumen }}</div>
+            }
+            <div class="d-flex flex-wrap justify-content-end gap-2 mt-2">
+              @if (cancelable) {
+                <button type="button" class="btn btn-sm btn-outline-danger mb-0" [disabled]="procesando" (click)="cancelar()">Cancelar despacho</button>
+              }
+              @if (esMia) {
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-0" [disabled]="procesando" (click)="liberar()">Liberar preparación</button>
+                <button type="submit" class="btn btn-sm btn-success mb-0" [disabled]="procesando || cargando || !!impedimento">{{ procesando ? 'Procesando...' : 'Confirmar despacho' }}</button>
+              }
+            </div>
+          </form>
+        </ng-template>
+      </li>
+      <li ngbNavItem="historial">
+        <button ngbNavLink type="button">Historial de estados</button>
+        <ng-template ngbNavContent>
+          @if (errorHistorial) {
+            <div class="alert alert-danger" role="alert">{{ errorHistorial }} <button type="button" class="btn btn-link mb-0" (click)="cargarHistorial()">Reintentar</button></div>
+          } @else if (cargandoHistorial) {
+            <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando historial...</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead><tr><th scope="col">Fecha</th><th scope="col">Cambio</th><th scope="col">Usuario</th><th scope="col">Motivo</th></tr></thead>
+                <tbody>
+                  @for (cambio of historial; track cambio.id) {
+                    <tr>
+                      <td class="text-nowrap">{{ cambio.fecha | fechaHora }}</td>
+                      <td>
+                        <app-badge-estado [estado]="cambio.estadoAnterior ?? cambio.estadoFormulaAnterior ?? 'Creación'" /> →
+                        <app-badge-estado [estado]="cambio.estadoNuevo ?? cambio.estadoFormulaNuevo" />
+                      </td>
+                      <td>{{ cambio.usuario }}</td>
+                      <td>{{ cambio.motivo || '—' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="4" class="text-center">No hay cambios registrados</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </ng-template>
+      </li>
+    </ul>
+    <div class="pt-3" [ngbNavOutlet]="nav"></div>
+  </div></div>
+}

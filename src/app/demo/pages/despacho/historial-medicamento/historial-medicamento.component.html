@@ -1,0 +1,47 @@
+@if (errorProductos) {
+  <div class="alert alert-danger" role="alert">{{ errorProductos }} <button type="button" class="btn btn-link mb-0" (click)="cargarProductos()">Reintentar</button></div>
+}
+<label for="despacho-medicamento" class="form-label">Medicamento</label>
+<input id="despacho-medicamento" type="text" class="form-control mb-3" placeholder="Escribe el código o el nombre" autocomplete="off" [(ngModel)]="texto"
+  [ngbTypeahead]="buscar" [inputFormatter]="formato" [resultFormatter]="formato" [editable]="true" (selectItem)="elegir($event)" />
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando historial...</p>
+} @else if (seleccionado) {
+  <h3 class="h6">{{ formato(seleccionado) }}</h3>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th scope="col">Fecha</th><th scope="col">Despacho</th><th scope="col">Fórmula</th><th scope="col">Mascota</th><th scope="col">Propietario</th>
+          <th scope="col">Lote</th><th scope="col">Cantidad</th><th scope="col">Saldo del lote</th><th scope="col">Saldo</th><th scope="col">Movimiento</th>
+          <th scope="col">Despachó</th><th scope="col">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of tabla.visibles; track $index) {
+          <tr>
+            <td class="text-nowrap">{{ item.fecha | fechaHora }}</td>
+            <td class="text-nowrap">{{ item.despachoNumero }}</td>
+            <td class="text-nowrap">{{ item.formulaNumero }}</td>
+            <td>{{ item.mascotaNombre }}</td>
+            <td>{{ item.clienteNombre }}</td>
+            <td>{{ item.numeroLote }}</td>
+            <td class="fw-bold text-danger">−{{ item.cantidad }}</td>
+            <td>{{ item.saldoLote ?? '—' }}</td>
+            <td>{{ item.saldo ?? '—' }}</td>
+            <td class="text-nowrap">{{ item.movimientoId ?? '—' }}{{ item.movimientoReversionId ? ' (revertido en ' + item.movimientoReversionId + ')' : '' }}</td>
+            <td>{{ item.usuario }}</td>
+            <td><app-badge-estado [estado]="item.estado" /></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="12" class="text-center">El medicamento no se ha despachado</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+} @else {
+  <p class="text-muted">Elige un medicamento para ver sus dispensaciones.</p>
+}

@@ -14,8 +14,8 @@ export class BackendService {
     return this.http.get<T>(this.url(urlApi, endpoint, service), { params: routerParams });
   }
 
-  post<T>(urlApi: string, endpoint: string, service: string, data: unknown): Observable<T> {
-    return this.http.post<T>(this.url(urlApi, endpoint, service), data);
+  post<T>(urlApi: string, endpoint: string, service: string, data: unknown, headers?: Record<string, string>): Observable<T> {
+    return this.http.post<T>(this.url(urlApi, endpoint, service), data, { headers });
   }
 
   put<T>(urlApi: string, endpoint: string, service: string, data: unknown): Observable<T> {

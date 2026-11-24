@@ -1,0 +1,60 @@
+<app-filtro-fechas (cambio)="filtrarFechas($event)" />
+<div class="row g-2 my-2">
+  <div class="col-md-6">
+    <input class="form-control" type="search" placeholder="Buscar por número, propietario o mascota" aria-label="Buscar fórmula"
+      [(ngModel)]="filtro.texto" (ngModelChange)="buscar()" />
+  </div>
+  <div class="col-8 col-md-4">
+    <select class="form-select" aria-label="Estado del despacho" [(ngModel)]="filtro.estado" (ngModelChange)="listar()">
+      <option value="">Todas las pendientes</option>
+      @for (estado of estados; track estado) {
+        <option [value]="estado">{{ estadosUi[estado].etiqueta }}</option>
+      }
+    </select>
+  </div>
+  <div class="col-4 col-md-2 text-end">
+    <button type="button" class="btn btn-outline-secondary mb-0" [disabled]="cargando" (click)="listar()">Actualizar</button>
+  </div>
+</div>
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+}
+@if (!actualizado && cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando fórmulas...</p>
+} @else if (actualizado) {
+  <div class="table-responsive" [attr.aria-busy]="cargando">
+    <table class="table table-striped align-middle">
+      <thead><tr>
+          @for (columna of columnas; track columna.clave) {
+            <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+              <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+            </th>
+          }
+          <th scope="col">Acciones</th>
+      </tr></thead>
+      <tbody>
+        @for (formula of tabla.visibles; track formula.formulaId) {
+          <tr>
+            <td class="text-nowrap">{{ formula.numero }}</td>
+            <td class="text-nowrap">{{ formula.fecha | fechaHora }}</td>
+            <td>{{ formula.medicoNombre }}</td>
+            <td>{{ formula.clienteNombre }}</td>
+            <td>{{ formula.mascotaNombre }}</td>
+            <td>{{ formula.totalMedicamentos }}</td>
+            <td>
+              <app-badge-estado [estado]="formula.estadoDespacho" />
+              @if (formula.usuarioPreparacion) {
+                <div class="small text-muted">{{ formula.usuarioPreparacion }}</div>
+              }
+            </td>
+            <td><a class="btn btn-sm btn-success mb-0" [routerLink]="['/inicio/despacho', formula.formulaId]">Despachar</a></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8" class="text-center">No hay fórmulas pendientes con esos filtros</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+  <p class="small text-muted mb-0">Actualizado: {{ actualizado | fechaHora }}. Se refresca cada minuto.</p>
+}

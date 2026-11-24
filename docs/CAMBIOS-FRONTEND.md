@@ -158,3 +158,25 @@ Con `medico1`: 409 por otro día, iniciar, borrador, salida con cambios, servici
 ### Observación
 
 En una prueba, un cambio de Observaciones no quedó guardado después de rechazar la salida y pulsar "Guardar borrador". No se pudo reproducir en 14 intentos. La causa más probable es que coincidió con otro guardado; de ahí la cola.
+
+## Fase 7: despacho
+
+- **Despacho** (`/inicio/despacho`): bandeja con búsqueda, filtros y refresco cada minuto; log de despachos; historial por medicamento. `/inicio/despacho/:formulaId`: preparación, lotes FEFO, validaciones, confirmar, liberar, cancelar e historial de estados.
+- **Idempotencia**: la clave se conserva mientras no haya una respuesta definitiva (sin respuesta o 5xx) y se renueva después.
+- Los errores `items[n]` marcan en rojo la fila del lote; se recargan los lotes y se conserva lo escrito.
+- **ADMINISTRADOR**: abre el despacho desde el kardex o desde Inventario → "Log de despachos" (`/inicio/inventario/despachos`), y ahí puede revertir o cancelar lo pendiente.
+- El API no expone un despacho por id: el kardex lo busca por su número en el historial.
+
+### Decisiones
+
+- No se ofrece revertir despachos facturados, revertidos o sin entregas. Con entregas, DESPACHO_MEDICO no ve "Cancelar".
+- El estado previsto sigue la tabla de `reglas-negocio.md` y es solo informativo.
+
+### Errores propios encontrados y corregidos
+
+- Tras recargar los lotes, los campos seguían atados a los controles anteriores: la lista debe seguir al grupo del formulario. Tiene prueba.
+- `[max]` en el campo numérico revalidaba el control y borraba la marca roja.
+
+### Verificado contra el backend real (24/11/2026)
+
+FM-000010: preparar, liberar, 409 por lote, entrega parcial (DP-000004), entrega del resto con la respuesta cortada y reintento con la misma clave sin doble descuento (DP-000005), comprobante, historiales, log, kardex y reversión por admin. 360, 768 y 1366 px. Solo con pruebas automáticas: cancelar, otro usuario preparando, lotes vencidos y confirmar sin ítems.

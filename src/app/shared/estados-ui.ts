@@ -38,6 +38,8 @@ export const ESTADOS_UI: Record<Estado, EstadoUi> = {
   DESPACHADO: { etiqueta: 'Despachado', color: VERDE },
   PENDIENTE_DISPONIBILIDAD: { etiqueta: 'Pendiente por disponibilidad', color: ROJO },
   CANCELADO: { etiqueta: 'Cancelado', color: GRIS },
+  CONFIRMADO: { etiqueta: 'Confirmado', color: VERDE },
+  REVERTIDO: { etiqueta: 'Revertido', color: ROJO },
   PENDIENTE: { etiqueta: 'Pendiente', color: AMARILLO },
   PAGO_PARCIAL: { etiqueta: 'Pago parcial', color: NARANJA },
   PAGADA: { etiqueta: 'Pagada', color: VERDE },
