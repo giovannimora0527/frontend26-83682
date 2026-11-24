@@ -9,7 +9,6 @@ import { CitaComponent } from './demo/pages/cita/cita.component';
 import { ClienteComponent } from './demo/pages/cliente/cliente.component';
 import { HistoriaComponent } from './demo/pages/historia/historia.component';
 import { EspecializacionComponent } from './demo/pages/especializacion/especializacion.component';
-import { EnConstruccionComponent } from './demo/pages/en-construccion/en-construccion.component';
 import { LoginComponent } from './demo/pages/login/login.component';
 import { authGuard } from './guards/auth.guard';
 import { menuGuard } from './guards/menu.guard';
@@ -58,7 +57,7 @@ const modulos: Routes = [
   diferida('despacho', 'Preparación del despacho', () =>
     import('./demo/pages/despacho/preparacion/preparacion.component').then((m) => m.PreparacionComponent), 'despacho/:formulaId'),
   diferida('facturacion', 'Facturación', () => import('./demo/pages/facturacion/facturacion.component').then((m) => m.FacturacionComponent)),
-  ruta('reportes', 'Reportes', EnConstruccionComponent)
+  diferida('reportes', 'Reportes', () => import('./demo/pages/reportes/reportes.component').then((m) => m.ReportesComponent))
 ];
 
 export const routes: Routes = [

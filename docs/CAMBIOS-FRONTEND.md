@@ -190,3 +190,13 @@ FM-000010: preparar, liberar, 409 por lote, entrega parcial (DP-000004), entrega
 ### Verificado contra el backend real (24/11/2026)
 
 Con `secretaria`: tope de 10 %, factura FV-000001 con 5 %, PDF, pago mayor al saldo rechazado, pago parcial y resto por transferencia. Con `admin`: anulación; la cita volvió a Por facturar. 360, 768 y 1366 px. Solo con pruebas automáticas: 409 por servicio sin tarifa y descuento del 100 %.
+
+## Fase 9: reportes
+
+- **Reportes** (`/inicio/reportes`): catálogo agrupado, formulario según los filtros de cada reporte, vista previa con formato por tipo, totales, orden y paginación, y exportación a PDF y Excel con los filtros de la vista previa.
+- Cambiar un filtro descarta la vista previa y deshabilita la exportación.
+- Se eliminó `EnConstruccionComponent`: ya no queda ningún módulo sin pantalla.
+
+### Verificado contra el backend real (24/11/2026)
+
+Con `admin`: vista previa de los 21 reportes; reporte de facturas exportado a PDF y Excel. 360, 768 y 1366 px.

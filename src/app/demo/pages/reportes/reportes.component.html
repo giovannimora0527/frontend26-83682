@@ -1,0 +1,116 @@
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="cargarCatalogo()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando reportes...</p>
+} @else {
+  <div class="row">
+    <div class="col-lg-3">
+      @for (grupo of grupos; track grupo.nombre) {
+        <div class="card mb-3">
+          <div class="card-body p-2">
+            <h2 class="h6 px-2 pt-1">{{ grupo.nombre }}</h2>
+            <div class="list-group list-group-flush">
+              @for (reporte of grupo.reportes; track reporte.codigo) {
+                <button type="button" class="list-group-item list-group-item-action py-2" [class.active]="reporte === elegido"
+                  [attr.aria-pressed]="reporte === elegido" (click)="elegir(reporte); panel.scrollIntoView({ block: 'nearest' })">{{ reporte.titulo }}</button>
+              }
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <p>No hay reportes disponibles.</p>
+      }
+    </div>
+    <div class="col-lg-9" #panel>
+      <div class="card">
+        <div class="card-body">
+          @if (!elegido) {
+            <p class="text-muted mb-0">Elige un reporte.</p>
+          } @else {
+            <h2 class="h5">{{ elegido.titulo }}</h2>
+            @if (errorListas) {
+              <div class="alert alert-danger" role="alert">{{ errorListas }} <button type="button" class="btn btn-link mb-0" (click)="cargarListas()">Reintentar</button></div>
+            }
+            <form (ngSubmit)="consultar()" novalidate>
+              @if (usaFechas) {
+                @for (codigo of [elegido.codigo]; track codigo) {
+                  <app-filtro-fechas [inicial]="inicial" [obligatorio]="fechasObligatorias" (cambio)="cambiarFechas($event)" />
+                }
+              }
+              <div class="row g-2 mt-1">
+                @for (filtro of otrosFiltros; track elegido.codigo + filtro.clave) {
+                  @let lista = opciones(filtro);
+                  <div class="col-md-4">
+                    <label class="form-label" [for]="'filtro-' + filtro.clave">{{ titulo(filtro.clave) }}{{ filtro.obligatorio ? '' : ' (opcional)' }}</label>
+                    @if (lista) {
+                      <select class="form-select" [id]="'filtro-' + filtro.clave" [name]="filtro.clave" [class.is-invalid]="intentado && invalido(filtro)"
+                        [(ngModel)]="valores[filtro.clave]" (ngModelChange)="limpiar()">
+                        @if (tieneVacia(filtro)) {
+                          <option value="">{{ filtro.obligatorio ? 'Selecciona' : 'Todos' }}</option>
+                        }
+                        @for (opcion of lista; track opcion.valor) {
+                          <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <input class="form-control" [type]="filtro.clave === 'dias' ? 'number' : 'text'" [id]="'filtro-' + filtro.clave" [name]="filtro.clave"
+                        [class.is-invalid]="intentado && invalido(filtro)" [(ngModel)]="valores[filtro.clave]" (ngModelChange)="limpiar()" />
+                    }
+                    <div class="invalid-feedback">{{ filtro.clave === 'dias' ? 'Ingresa un número entero mayor que 0.' : 'Este filtro es obligatorio.' }}</div>
+                  </div>
+                }
+              </div>
+              <div class="d-flex flex-wrap gap-2 my-3">
+                <button type="submit" class="btn btn-sm btn-primary mb-0" [disabled]="consultando">{{ consultando ? 'Consultando...' : 'Vista previa' }}</button>
+                <app-boton-descarga [endpoint]="'reporte/' + elegido.codigo + '/exportar'" [params]="aplicados" [formatos]="['pdf', 'xlsx']" [enviarFormato]="true" [deshabilitado]="!reporte" />
+              </div>
+            </form>
+            @if (errorReporte) {
+              <div class="alert alert-danger" role="alert" style="white-space: pre-line">{{ errorReporte }}</div>
+            } @else if (consultando) {
+              <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Generando vista previa...</p>
+            } @else if (reporte) {
+              <p class="small text-muted mb-1">Generado el {{ reporte.generadoEn | fechaHora }} por {{ reporte.generadoPor }}. Registros: {{ reporte.filas.length }}</p>
+              <div class="table-responsive">
+                <table class="table table-striped table-sm align-middle">
+                  <thead>
+                    <tr>
+                      @for (columna of reporte.columnas; track columna.clave) {
+                        <th scope="col" [class.text-end]="esNumerica(columna)" [attr.aria-sort]="tabla.ariaSort('c.' + columna.clave)">
+                          <app-boton-orden [tabla]="tabla" [columna]="'c.' + columna.clave">{{ columna.titulo }}</app-boton-orden>
+                        </th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (fila of tabla.visibles; track fila.indice) {
+                      <tr>
+                        @for (columna of reporte.columnas; track columna.clave) {
+                          <td [class.text-end]="esNumerica(columna)" [class.text-nowrap]="columna.tipo !== 'texto'">{{ fila.valores[columna.clave] | valorReporte: columna.tipo }}</td>
+                        }
+                      </tr>
+                    } @empty {
+                      <tr><td class="text-center" [attr.colspan]="reporte.columnas.length">No hay datos con estos filtros</td></tr>
+                    }
+                  </tbody>
+                  @if (hayTotales && reporte.filas.length) {
+                    <tfoot>
+                      <tr>
+                        @for (columna of reporte.columnas; track columna.clave; let primera = $first) {
+                          <th class="text-nowrap" [class.text-end]="esNumerica(columna)">
+                            {{ (reporte.totales[columna.clave] | valorReporte: columna.tipo) || (primera ? 'Total' : '') }}
+                          </th>
+                        }
+                      </tr>
+                    </tfoot>
+                  }
+                </table>
+              </div>
+              <app-paginacion [tabla]="tabla" />
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
