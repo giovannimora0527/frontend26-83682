@@ -23,7 +23,6 @@ export class MascotaService {
   }
 
   actualizarMascota(mascota: Mascota): Observable<unknown> {
-    console.log('Actualizando mascota:', mascota);
     return this.backendService.post(environment.apiUrlAuth, this.api, "actualizar", mascota);
   }
 

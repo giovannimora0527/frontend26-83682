@@ -197,7 +197,6 @@ export class MascotaComponent {
       .subscribe(
         {
           next: (data) => {
-            console.log(data);
             this.listMascotas = data;
             this.paginaActual = 1;
           },

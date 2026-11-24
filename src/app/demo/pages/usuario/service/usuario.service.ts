@@ -8,17 +8,11 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root'
 })
 export class UsuarioService {
-  private api = `usuario`;
+  private api = 'usuario';
 
-  constructor(private backendService: BackendService) { 
-    this.testService();
-  }
+  constructor(private readonly backendService: BackendService) { }
 
-  testService() {
-    this.backendService.get(environment.apiUrlAuth, this.api, "test");
-  }
-
-  getUsuarios(): Observable<Usuario[]> {
-    return this.backendService.get(environment.apiUrlAuth, this.api, "listar");
+  listarUsuarios(): Observable<Usuario[]> {
+    return this.backendService.get(environment.apiUrlAuth, this.api, 'listar-ordenado');
   }
 }

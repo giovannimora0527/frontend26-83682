@@ -1,25 +1,15 @@
-﻿import { Injectable } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { catchError, map, Observable, of, tap, timeout } from 'rxjs';
 import { AuthRs } from 'src/app/models/auth-rs';
 import { LoginRs } from 'src/app/models/login-rs';
 import { TokenRq } from 'src/app/models/token-rq';
 import { BackendService } from 'src/app/services/backend.service';
+import { getJwtPayload, JwtPayload } from 'src/app/utils/jwt.util';
 import { environment } from 'src/environments/environment';
 
 export interface LoginRequest {
   username: string;
   password: string;
-}
-
-export interface ValidateTokenRequest {
-  username: string;
-  token: string;
-}
-
-export interface JwtResponse {
-  token?: string;
-  jwt?: string;
-  accessToken?: string;
 }
 
 @Injectable({
@@ -29,7 +19,7 @@ export class AuthService {
   private api = 'auth';
   static readonly TOKEN_KEY = 'token';
 
-  constructor(private backendService: BackendService) { }
+  constructor(private readonly backendService: BackendService) { }
 
   login(data: LoginRequest): Observable<AuthRs> {
     return this.backendService.post(environment.apiUrlAuth, this.api, 'login', data);
@@ -38,36 +28,54 @@ export class AuthService {
   validateOtp(data: TokenRq): Observable<LoginRs> {
     return this.backendService
       .post<LoginRs>(environment.apiUrlAuth, this.api, 'validate-token', data)
-      .pipe(tap((resp) => this.guardarToken({ token: resp?.token })));
+      .pipe(tap((resp) => this.guardarSesion(resp?.token)));
   }
 
-  validateToken(data: ValidateTokenRequest): Observable<JwtResponse> {
-    return this.backendService
-      .post<JwtResponse>(environment.apiUrlAuth, this.api, 'validate-token', data)
-      .pipe(tap((resp) => this.guardarToken(resp)));
-  }
+  // TODO: recuperar contraseña. El backend no expone auth/recover-password y el examen no lo pide.
+  // recuperarPassword(email: string): Observable<unknown> {
+  //   return this.backendService.post(environment.apiUrlAuth, this.api, 'recover-password', { email });
+  // }
 
-  recuperarPassword(email: string): Observable<unknown> {
-    return this.backendService.post(environment.apiUrlAuth, this.api, 'recover-password', { email });
-  }
-
-  guardarToken(resp: JwtResponse): void {
-    const jwt = resp?.token || resp?.jwt || resp?.accessToken;
-    if (!jwt) {
+  guardarSesion(token: string | null | undefined): void {
+    if (!token) {
       throw new Error('La respuesta no contiene un token JWT');
     }
-    sessionStorage.setItem(AuthService.TOKEN_KEY, jwt);
+    sessionStorage.setItem(AuthService.TOKEN_KEY, token);
   }
 
   getToken(): string | null {
     return sessionStorage.getItem(AuthService.TOKEN_KEY);
   }
 
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+  /** Claims del token actual, o null si no hay token o no se puede decodificar. */
+  obtenerUsuario(): JwtPayload | null {
+    try {
+      return getJwtPayload();
+    } catch {
+      return null;
+    }
   }
 
-  logout(): void {
+  estaVencido(): boolean {
+    const usuario = this.obtenerUsuario();
+    return !usuario || usuario.exp * 1000 <= Date.now();
+  }
+
+  isAuthenticated(): boolean {
+    return !this.estaVencido();
+  }
+
+  limpiarSesion(): void {
     sessionStorage.removeItem(AuthService.TOKEN_KEY);
+  }
+
+  /** Invalida la sesión en el backend; la local se limpia aunque la llamada falle o no responda. */
+  cerrarSesion(): Observable<void> {
+    return this.backendService.post<unknown>(environment.apiUrlAuth, this.api, 'cerrar-sesion', null).pipe(
+      timeout(5000),
+      catchError(() => of(undefined)),
+      map(() => undefined),
+      tap(() => this.limpiarSesion())
+    );
   }
 }

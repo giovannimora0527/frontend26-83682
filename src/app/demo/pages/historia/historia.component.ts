@@ -269,7 +269,8 @@ export class HistoriaComponent {
 
     const mascotaId = historia.historia.mascota?.mascotaId;
     if (mascotaId == null) {
-      this.errorCatalogos = 'La historia no tiene una mascota asociada para consultar sus citas.';
+      this.historiaAnotacion = null;
+      void Swal.fire('Historia sin mascota', 'La historia no tiene una mascota asociada para consultar sus citas.', 'warning');
       return;
     }
     this.cargarCatalogos(forkJoin({ citas: this.citaService.listarCitasPorMascota(mascotaId) }));

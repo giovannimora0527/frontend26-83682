@@ -118,7 +118,7 @@
                             <dd class="col-sm-8">
                                 <span class="badge" [class.bg-success]="mascota.activo === true"
                                     [class.bg-secondary]="mascota.activo !== true">
-                                    {{ mascota.activo == null ? 'No informado' : mascota.activo ? 'Activo' : 'Inactivo' }}
+                                    {{ (mascota.activo ?? null) === null ? 'No informado' : mascota.activo ? 'Activo' : 'Inactivo' }}
                                 </span>
                             </dd>
                             <dt class="col-sm-4">Fecha de registro</dt>
@@ -229,7 +229,7 @@
                     <dt class="col-sm-4">Género</dt>
                     <dd class="col-sm-8">{{ cliente.genero || 'No informado' }}</dd>
                     <dt class="col-sm-4">Estado del cliente</dt>
-                    <dd class="col-sm-8">{{ cliente.activo == null ? 'No informado' : cliente.activo ? 'Activo' : 'Inactivo' }}</dd>                    
+                    <dd class="col-sm-8">{{ (cliente.activo ?? null) === null ? 'No informado' : cliente.activo ? 'Activo' : 'Inactivo' }}</dd>                    
                 </dl>
             </ng-template>
 
@@ -337,14 +337,14 @@
                                             [class.is-invalid]="fila.controls.medicoId.touched && fila.controls.medicoId.invalid"
                                             [attr.aria-describedby]="'error-anotacion-medico-' + i">
                                             <option [ngValue]="null" disabled>
-                                                {{ fila.controls.citaId.value == null ? 'Selecciona primero una cita' : 'La cita no tiene veterinario asignado' }}
+                                                {{ fila.controls.citaId.value === null ? 'Selecciona primero una cita' : 'La cita no tiene veterinario asignado' }}
                                             </option>
                                             <option *ngFor="let medico of medicosDeCita(fila.controls.citaId.value)" [ngValue]="medico.id">
                                                 {{ nombreCompleto(medico) }}{{ medico.especializacion?.nombre ? ' - ' + medico.especializacion?.nombre : '' }}
                                             </option>
                                         </select>
                                         <div class="invalid-feedback" [id]="'error-anotacion-medico-' + i">
-                                            {{ fila.controls.citaId.value == null ? 'Selecciona primero una cita.' : 'La cita seleccionada no tiene veterinario asignado.' }}
+                                            {{ fila.controls.citaId.value === null ? 'Selecciona primero una cita.' : 'La cita seleccionada no tiene veterinario asignado.' }}
                                         </div>
                                     </div>
                                     <div class="col-12">

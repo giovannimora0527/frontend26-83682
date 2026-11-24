@@ -37,7 +37,7 @@ export class CitaComponent {
 
 
   // Variables para la paginación, ordenamiento y búsqueda en la datatable.
-  listEspecializaciones: Cita[] = [];
+  listCitas: Cita[] = [];
   listMascotas: Mascota[] = [];
   listMedicos: Medico[] = [];
   cargandoMascotas = false;
@@ -54,7 +54,7 @@ export class CitaComponent {
   columnaOrden: ColumnaOrden = 'mascota';
   direccionOrden: 'asc' | 'desc' = 'asc';
 
-  // Formulario para crear o editar especializacion.
+  // Formulario para crear o editar cita.
   form!: FormGroup;
   citaSelected: Cita | null = null;
   enviando = false;
@@ -97,7 +97,7 @@ export class CitaComponent {
     this.errorCitas = '';
     this.citaService.listarCitas().subscribe({
       next: (citas) => {
-        this.listEspecializaciones = citas;
+        this.listCitas = citas;
         this.paginaActual = Math.min(this.paginaActual, this.totalPaginas || 1);
       },
       error: (err) => {
@@ -191,7 +191,7 @@ export class CitaComponent {
    */
   get citasFiltradas(): Cita[] {
     const termino = this.normalizarTexto(this.terminoBusqueda.trim());
-    const filtradas = this.listEspecializaciones.filter((cita) => {
+    const filtradas = this.listCitas.filter((cita) => {
       if (!termino) {
         return true;
       }
@@ -281,10 +281,10 @@ export class CitaComponent {
   }
 
    /**
-     * Metodos para la gestion de especializaciones (crear, editar, guardar).
+     * Metodos para la gestion de citas (crear, editar, guardar).
      */
   
-    // Evento para abrir el modal de crear o editar especializacion, dependiendo del modo recibido.
+    // Evento para abrir el modal de crear o editar cita, dependiendo del modo recibido.
     nuevaCita(modo: string) {
       this.titleModal = modo === 'C' ? 'Crear Cita' : 'Editar Cita';
       this.modoFormulario = modo;

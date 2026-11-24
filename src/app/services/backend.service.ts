@@ -1,104 +1,23 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+/** Peticiones genéricas al backend. El token y los errores comunes los manejan los interceptores. */
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class BackendService {
-  constructor(private http: HttpClient) { }
+  constructor(private readonly http: HttpClient) { }
 
-  construirHeader() {
-    // Aqui obtenemos el token desde el session storage
-    const tokenRecuperado = sessionStorage.getItem('token');
-    if (tokenRecuperado != '') {
-      const headers = new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, DELETE',
-        Authorization: 'Bearer ' + tokenRecuperado,
-      });
-      return headers;
-    } else {
-      const headers = new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, DELETE',
-      });
-      return headers;
-    }
+  get<T>(urlApi: string, endpoint: string, service: string, routerParams?: HttpParams): Observable<T> {
+    return this.http.get<T>(`${urlApi}/${endpoint}/${service}`, { params: routerParams });
   }
 
-  // Servicio generico para realizar peticiones GET al backend.
-  get<T>(
-    urlApi: string,
-    endpoint: string,
-    service: string,
-    routerParams?: HttpParams
-  ) {
-    const tokenRecuperado = sessionStorage.getItem('token') || ''; // Evita `null`
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: tokenRecuperado ? `Bearer ${tokenRecuperado}` : '',
-    });
-    return this.http.get<T>(`${urlApi}/${endpoint}/${service}`, {
-      params: routerParams,
-      headers: headers,
-    });
+  post<T>(urlApi: string, endpoint: string, service: string, data: unknown): Observable<T> {
+    return this.http.post<T>(`${urlApi}/${endpoint}/${service}`, data);
   }
 
-
-  // Servicio generico para realizar peticiones POST al backend.
-  post<T>(
-    urlApi: string,
-    endpoint: string,
-    service: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any
-  ): Observable<T> {
-    const tokenRecuperado = sessionStorage.getItem('token') || ''; // Evita `null`
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: tokenRecuperado ? `Bearer ${tokenRecuperado}` : '',
-    });
-    return this.http.post<T>(`${urlApi}/${endpoint}/${service}`, data, {
-      headers: headers,
-    });
-  }
-
-  // Servicio generico para realizar peticiones PUT al backend.
-  put<T>(
-    urlApi: string,
-    endpoint: string,
-    service: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any
-  ): Observable<T> {
-    const tokenRecuperado = sessionStorage.getItem('token') || ''; // Evita `null`
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: tokenRecuperado ? `Bearer ${tokenRecuperado}` : '',
-    });
-    return this.http.put<T>(`${urlApi}/${endpoint}/${service}`, data, {
-      headers: headers,
-    });
-  }
-
-  // Servicio generico para realizar peticiones POST al backend con archivos.
-  postFile<T>(
-    urlApi: string,
-    endpoint: string,
-    service: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any
-  ): Observable<T> {
-    const tokenRecuperado = sessionStorage.getItem('token') || ''; // Evita `null`
-    const headers = new HttpHeaders({
-      mimeType: 'multipart/form-data',
-      Authorization: tokenRecuperado ? `Bearer ${tokenRecuperado}` : '',
-    });
-    return this.http.post<T>(`${urlApi}/${endpoint}/${service}`, data, {
-      headers: headers,
-    });
+  put<T>(urlApi: string, endpoint: string, service: string, data: unknown): Observable<T> {
+    return this.http.put<T>(`${urlApi}/${endpoint}/${service}`, data);
   }
 }

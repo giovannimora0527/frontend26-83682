@@ -46,15 +46,6 @@ describe('HistoriaService', () => {
     expect(backendService.post).toHaveBeenCalledOnceWith(environment.apiUrlAuth, 'historia-clinica', 'guardar', solicitud);
   });
 
-  it('should update a history using PUT', () => {
-    backendService.put.and.returnValue(of(historia));
-    const solicitud = { id: 1, mascotaId: 1 };
-
-    service.actualizarHistoria(solicitud).subscribe(resultado => expect(resultado).toEqual(historia));
-
-    expect(backendService.put).toHaveBeenCalledOnceWith(environment.apiUrlAuth, 'historia-clinica', 'actualizar', solicitud);
-  });
-
   it('should propagate backend errors', () => {
     const error = new Error('Error al listar historias');
     backendService.get.and.returnValue(throwError(() => error));

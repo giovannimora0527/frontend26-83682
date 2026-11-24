@@ -75,7 +75,7 @@ describe('CitaComponent', () => {
       ['Otro', 'rgb(233, 236, 239)']
     ];
     for (const [estado, color] of casos) {
-      component.listEspecializaciones = [{ ...cita, estado }];
+      component.listCitas = [{ ...cita, estado }];
       fixture.detectChanges();
       const distintivo: HTMLElement = fixture.nativeElement.querySelector('.estado-cita');
       expect(distintivo.textContent?.trim()).toBe(estado.trim().toUpperCase());
@@ -94,7 +94,7 @@ describe('CitaComponent', () => {
   });
 
   it('shows five rows per page and wires page navigation', () => {
-    component.listEspecializaciones = Array.from({ length: 6 }, (_, index) => ({ ...cita, id: index + 1 }));
+    component.listCitas = Array.from({ length: 6 }, (_, index) => ({ ...cita, id: index + 1 }));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(5);
     const botones: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.page-link'));
@@ -108,7 +108,7 @@ describe('CitaComponent', () => {
 
   it('sorts by pet name in both directions', () => {
     const otra: Cita = { ...cita, id: 2, mascota: { mascotaId: 8, nombreMascota: 'Beto' } };
-    component.listEspecializaciones = [cita, otra];
+    component.listCitas = [cita, otra];
     expect(component.citasFiltradas).toEqual([otra, cita]);
     component.ordenarPor('mascota');
     expect(component.citasFiltradas).toEqual([cita, otra]);
@@ -118,7 +118,7 @@ describe('CitaComponent', () => {
     component.terminoBusqueda = 'inexistente';
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('tbody').textContent).toContain('No se encontraron citas');
-    component.listEspecializaciones = [];
+    component.listCitas = [];
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('tbody').textContent).toContain('No hay citas registradas');
   });
@@ -208,7 +208,7 @@ describe('CitaComponent', () => {
     const aviso = spyOn(Swal, 'fire');
     for (const estado of ['cancelada', 'CANCELADA', ' Cancelada ']) {
       const cancelada = { ...cita, estado };
-      component.listEspecializaciones = [cancelada];
+      component.listCitas = [cancelada];
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.btn-outline-info').getAttribute('aria-label'))
         .toBe('No se puede editar una cita cancelada');
@@ -221,7 +221,7 @@ describe('CitaComponent', () => {
   it('opens the details of each row including cancelled appointments without changing the form', () => {
     const mostrar = jasmine.createSpy('show');
     component.modalDetalleInstance = { show: mostrar, hide: jasmine.createSpy('hide') };
-    component.listEspecializaciones = [cita, { ...cita, id: 2, estado: 'cancelada' }];
+    component.listCitas = [cita, { ...cita, id: 2, estado: 'cancelada' }];
     const valores = component.form.getRawValue();
     fixture.detectChanges();
     const botones: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.btn-ver-cita'));

@@ -26,7 +26,7 @@ export class MedicoService {
   }
 
   actualizarMedico(medico: MedicoRq & { id: number }): Observable<unknown> {
-    return this.backendService.put(environment.apiUrlAuth, this.api, 'actualizar', medico);
+    return this.backendService.post(environment.apiUrlAuth, this.api, 'actualizar', medico);
   }
 
   listarMedicosDisponiblesPorFecha(fechaInicio: Date, fechaFin: Date): Observable<Medico[]> {

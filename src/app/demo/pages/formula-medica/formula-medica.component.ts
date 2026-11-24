@@ -122,7 +122,6 @@ export class FormulaMedicaComponent {
       .subscribe(
         {
           next: (data) => {
-            console.log(data);
             this.listFormulas = data;
             this.paginaActual = 1;
           },
@@ -166,7 +165,8 @@ export class FormulaMedicaComponent {
       }
 
       const valores = [
-        formula.medicamento.nombre,
+        formula.medicamento?.nombre,
+        formula.indicaciones,
         formula.dosis,
         formula.duracion,
         formula.frecuencia,
@@ -195,7 +195,7 @@ export class FormulaMedicaComponent {
   private obtenerValorOrden(formula: Formula, columna: ColumnaOrden): string | number {
     switch (columna) {
       case 'nombre':
-        return formula.medicamento.nombre ?? '';
+        return formula.medicamento?.nombre ?? '';
       case 'dosis':
         return formula.dosis ?? '';
       case 'duracion':
@@ -203,9 +203,9 @@ export class FormulaMedicaComponent {
       case 'frecuencia':
         return formula.frecuencia ?? '';
       case 'medicamento':
-        return formula.medicamento.nombre ?? '';
+        return formula.medicamento?.nombre ?? '';
       case 'indicaciones':
-        return formula.indicaciones ?? 0;
+        return formula.indicaciones ?? '';
       case 'cliente':
         return `${formula.cita?.cliente?.nombres ?? ''} ${formula.cita?.cliente?.apellidos ?? ''}`;
       case 'fechaCreacionRegistro':

@@ -1,111 +1,46 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Price](https://img.shields.io/badge/price-FREE-0098f7.svg)](https://codedthemes.com/item/datta-able-angular-lite/)
-[![GitHub package version](https://img.shields.io/github/package-json/v/codedthemes/datta-able-free-angular-admin-template)](https://github.com/codedthemes/datta-able-free-angular-admin-template/)
+# Clínica Veterinaria Uniminuto — Frontend
 
-| -------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------- |
-| **9** Demo pages                                                                                   | **45+** demo pages                                                |
-| -                                                                                                  | ✓ Multi-language                                                  |
-| -                                                                                                  | ✓ Dark/Light Mode 🌓                                              |
-| -                                                                                                  | ✓ TypeScript version                                              |
-| -                                                                                                  | ✓ 6+ color Options                                                |
-| -                                                                                                  | ✓ RTL                                                             |
-| ✓ MIT License                                                                                      | ✓ [Pro License](https://codedthemes.com/item/datta-able-angular/?utm_source=free_demo&utm_medium=codedthemes&utm_campaign=button_download_premium) |
+Aplicación web para gestionar una clínica veterinaria: citas, mascotas, médicos, especializaciones, fórmulas e historias médicas. Consume el API REST del backend (Spring Boot).
 
-#### Preview
+## Tecnologías
 
-- [Demo](https://codedthemes.com/demos/admin-templates/datta-able/angular/free/dashboard)
+Angular 19 (componentes standalone), TypeScript 5.6, RxJS 7.8, Bootstrap 5.3, ng-bootstrap 18, SweetAlert2, Karma/Jasmine y ESLint. La interfaz parte de la plantilla Datta Able (MIT).
 
-#### Download
+## Requisitos
 
-- [Download from GitHub](https://github.com/codedthemes/datta-able-free-angular-admin-template)
+- Node.js 20 o superior y npm
+- Google Chrome (para las pruebas)
+- El backend en `http://localhost:8080/clinica/v1`, con el origen `http://localhost:4200` permitido en `CORS_ORIGINS`
 
-## Datta Able Pro version
-
-#### Preview
-
-- [Demo](https://codedthemes.com/demos/admin-templates/datta-able/angular/default/)
-
-#### Purchase
-
-- [Purchase from CodedThemes](https://codedthemes.com/item/datta-able-angular/?utm_source=free_demo&utm_medium=codedthemes&utm_campaign=button_download_premium)
-
-## Table of contents
-
-- [Getting Started](#getting-started)
-- [Documentation](#documentation)
-- [Technology Stack](#technology-stack)
-- [Author](#author)
-- [Issues?](#issues)
-- [License](#license)
-- [More Free Angular Templates](#more-free-angular-dashboard-templates)
-- [More Pro Angular Templates](#more-premium-angular-dashboard-templates)
-- [Follow us](#follow-us)
-
-## Getting Started
-
-1. Clone from Github
+## Ejecución local
 
 ```
-git clone https://github.com/codedthemes/datta-able-free-angular-admin-template.git
+npm ci
+npm start
 ```
 
-2. Install packages
+La aplicación queda en `http://localhost:4200`. El inicio de sesión pide usuario, contraseña y un código OTP enviado por correo.
 
-```
-yarn
-```
+## Comandos
 
-3. Run project
+| Comando | Qué hace |
+|---|---|
+| `npm start` | Servidor de desarrollo |
+| `npm run build` | Compilación de producción en `dist/` |
+| `npm test -- --watch=false --browsers=ChromeHeadless` | Pruebas |
+| `npm run lint` | Análisis estático |
 
-```
-yarn start
-```
+La URL del API se define en `src/environments/`: absoluta en desarrollo y relativa (`/clinica/v1`) en producción.
 
-## Documentation
+## Estructura
 
-[Datta Able Angular Documentation](https://codedthemes.gitbook.io/datta-angular/) helps you with installation, deployment, and troubleshooting.
+| Carpeta en `src/app` | Contenido |
+|---|---|
+| `demo/pages` | Un módulo por carpeta, con su servicio |
+| `guards`, `interceptors` | Control de acceso, token y errores HTTP |
+| `models` | Datos que se envían y reciben del API |
+| `services` | `BackendService`, acceso HTTP común |
+| `shared`, `utils` | Utilidades de tablas y JWT |
+| `theme` | Menú, barra superior y componentes visuales |
 
-## Technology Stack
-
-- Bootstrap 5
-- Angular 18
-
-## Author
-
-Datta Able is developed by Team [CodedThemes](https://codedthemes.com).
-
-## Issues
-
-To report a bug, please submit an [issue](https://github.com/codedthemes/datta-able-free-angular-admin-template/issues) on Github. We will respond as soon as possible to resolve the issue.
-
-## License
-
-- Licensed cover under [MIT](https://github.com/codedthemes/datta-able-free-angular-admin-template/blob/master/LICENSE)
-
-## Datta Able - React version
-
-- [Free](https://lite.codedthemes.com/datta-able/react/default/dashboard/default)
-- [Premium](https://codedthemes.com/item/datta-able-react-admin-template/?utm_source=free_demo&utm_medium=codedthemes&utm_campaign=button_download_premium)
-
-## More Free Angular Dashboard Templates
-
-- [Mantis Angular](https://codedthemes.com/item/mantis-angular-free-admin-template/)
-- [Gradient Able Angular](https://codedthemes.com/item/gradient-able-angular-free-admin-template/)
-- [Next Angular](https://codedthemes.com/item/next-free-admin-template/)
-- [Berry Angular](https://codedthemes.com/item/berry-angular-free-admin-template/)
-
-## More Premium Angular Dashboard Templates
-
-- [Mantis Angular Pro](https://codedthemes.com/item/mantis-angular-admin-template/?utm_source=free_demo&utm_medium=codedthemes&utm_campaign=button_download_premium)
-- [Gradient Able Angular Pro](https://codedthemes.com/item/gradient-able-angular-admin-template/?utm_source=free_demo&utm_medium=codedthemes&utm_campaign=button_download_premium)
-- [Next Angular Pro](https://codedthemes.com/item/next-angular-admin-template/)
-- [Berry Angular Pro](https://codedthemes.com/item/berry-angular-admin-dashboard-template/?utm_source=free_demo&utm_medium=codedthemes&utm_campaign=button_download_premium)
-
-## Follow us
-
-- Website [https://codedthemes.com/demos/admin-templates/datta-able/angular/default](https://codedthemes.com/demos/admin-templates/datta-able/angular/default)
-- Blog [https://blog.codedthemes.com/](https://blog.codedthemes.com/)
-- CodedThemes [https://codedthemes.com](https://codedthemes.com)
-- Dribbble [https://dribbble.com/codedthemes](https://dribbble.com/codedthemes)
-- Facebook [https://www.facebook.com/codedthemes](https://www.facebook.com/codedthemes)
-- Twitter [https://twitter.com/codedthemes](https://twitter.com/codedthemes)
+Los cambios se registran en [docs/CAMBIOS-FRONTEND.md](docs/CAMBIOS-FRONTEND.md).

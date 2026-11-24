@@ -19,7 +19,7 @@ export class AdminComponent {
   private readonly router = inject(Router);
 
   // public props
-  navCollapsed: any;
+  navCollapsed = false;
   navCollapsedMob: boolean;
   windowWidth: number;
 

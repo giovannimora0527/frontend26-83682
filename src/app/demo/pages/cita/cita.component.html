@@ -73,10 +73,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngIf="!errorCitas && listEspecializaciones.length === 0">
+                        <tr *ngIf="!errorCitas && listCitas.length === 0">
                             <td colspan="6" class="text-center">No hay citas registradas</td>
                         </tr>
-                        <tr *ngIf="listEspecializaciones.length > 0 && citasFiltradas.length === 0">
+                        <tr *ngIf="listCitas.length > 0 && citasFiltradas.length === 0">
                             <td colspan="6" class="text-center">No se encontraron citas</td>
                         </tr>
                         <tr *ngFor="let cita of citasPaginadas">

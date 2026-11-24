@@ -21,8 +21,4 @@ export class HistoriaService {
   crearHistoria(historia: HistoriaRq): Observable<Historia> {
     return this.backendService.post<Historia>(environment.apiUrlAuth, this.api, 'guardar', historia);
   }
-
-  actualizarHistoria(historia: HistoriaRq & { id: number }): Observable<Historia> {
-    return this.backendService.put<Historia>(environment.apiUrlAuth, this.api, 'actualizar', historia);
-  }
 }

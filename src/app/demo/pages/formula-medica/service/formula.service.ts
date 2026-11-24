@@ -32,7 +32,6 @@ export class FormulaService {
   }
 
   actualizarFormula(formula: Formula): Observable<unknown> {
-    console.log('Actualizando formula:', formula);
     return this.backendService.post(environment.apiUrlAuth, this.api, "actualizar", formula);
   }
 }

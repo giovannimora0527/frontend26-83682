@@ -35,12 +35,12 @@ describe('MedicoService', () => {
     crear.flush({ mensaje: 'Creado' });
     service.actualizarMedico({ ...datos, id: 3 }).subscribe();
     const actualizar = http.expectOne(`${environment.apiUrlAuth}/medico/actualizar`);
-    expect(actualizar.request.method).toBe('PUT');
+    expect(actualizar.request.method).toBe('POST');
     expect(actualizar.request.body).toEqual({ ...datos, id: 3 });
     actualizar.flush({ mensaje: 'Actualizado' });
   });
 
-  it('requests availability with local date-time query parameters and JSON content type', () => {
+  it('requests availability with local date-time query parameters and no request body', () => {
     let recibidos: unknown;
     service.listarMedicosDisponiblesPorFecha(
       new Date(2026, 9, 15, 10, 30),
@@ -53,7 +53,6 @@ describe('MedicoService', () => {
     expect(solicitud.request.method).toBe('GET');
     expect(solicitud.request.params.get('fechaInicio')).toBe('2026-10-15T10:30:00');
     expect(solicitud.request.params.get('fechaFin')).toBe('2026-10-15T10:45:00');
-    expect(solicitud.request.headers.get('Content-Type')).toBe('application/json');
     expect(solicitud.request.body).toBeNull();
     solicitud.flush([]);
     expect(recibidos).toEqual([]);

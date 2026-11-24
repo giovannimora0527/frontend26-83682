@@ -13,15 +13,7 @@ export class AnotacionHistoriaService {
 
   constructor(private readonly backendService: BackendService) { }
 
-  listar(): Observable<AnotacionHistoria[]> {
-    return this.backendService.get<AnotacionHistoria[]>(environment.apiUrlAuth, this.api, 'listar');
-  }
-
   crearAnotacionHistoria(anotacion: AnotacionHistoriaRq): Observable<AnotacionHistoria> {
     return this.backendService.post<AnotacionHistoria>(environment.apiUrlAuth, this.api, 'crear', anotacion);
-  }
-
-  actualizarAnotacionHistoria(anotacion: AnotacionHistoriaRq & { id: number }): Observable<AnotacionHistoria> {
-    return this.backendService.put<AnotacionHistoria>(environment.apiUrlAuth, this.api, 'actualizar', anotacion);
   }
 }

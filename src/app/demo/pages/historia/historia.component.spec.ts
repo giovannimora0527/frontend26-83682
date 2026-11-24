@@ -1,4 +1,5 @@
-﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TemplateRef } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { HistoriaMedica } from 'src/app/models/historia-medica';
 import { AnotacionHistoria } from 'src/app/models/anotacion-historia';
@@ -730,5 +731,15 @@ describe('HistoriaComponent', () => {
     historiaService.listar.and.returnValue(of([crearHistoria(1)]));
     component.listarHistorias();
     expect(component.paginaActual).toBe(1);
+  });
+
+  it('should warn instead of failing silently when the history has no pet', () => {
+    const alerta = Swal.fire as unknown as jasmine.Spy;
+    component.abrirNuevaAnotacion(
+      { historia: { id: 1, fechaCreacion: '2026-01-01', mascota: {} }, anotaciones: [] },
+      {} as TemplateRef<unknown>
+    );
+    expect(alerta.calls.mostRecent().args[0] as unknown).toBe('Historia sin mascota');
+    expect(component.historiaAnotacion).toBeNull();
   });
 });

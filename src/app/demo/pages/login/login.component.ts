@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,7 +10,7 @@ import { AuthRs } from 'src/app/models/auth-rs';
 import { TokenRq } from 'src/app/models/token-rq';
 import { LoginRs } from 'src/app/models/login-rs';
 
-type Paso = 'credenciales' | 'otp' | 'recuperar';
+type Paso = 'credenciales' | 'otp';
 
 @Component({
   selector: 'app-login',
@@ -27,7 +27,6 @@ export class LoginComponent {
 
   loginForm: FormGroup;
   otpForm: FormGroup;
-  recuperarForm: FormGroup;
   authRs?: AuthRs;
 
   constructor(
@@ -41,9 +40,6 @@ export class LoginComponent {
     });
     this.otpForm = this.fb.group({
       token: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]{6}$/)]]
-    });
-    this.recuperarForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]]
     });
   }
 
@@ -88,10 +84,13 @@ export class LoginComponent {
       this.otpForm.markAllAsTouched();
       return;
     }
+    if (!this.authRs) {
+      this.irA('credenciales');
+      return;
+    }
     this.cargando = true;
-    let tokenRq: TokenRq;
-    tokenRq = {
-      usuarioId: this.authRs?.usuarioId!,
+    const tokenRq: TokenRq = {
+      usuarioId: this.authRs.usuarioId,
       username: this.loginForm.value.username,
       token: this.otpForm.value.token
     };
@@ -111,25 +110,26 @@ export class LoginComponent {
     this.login();
   }
 
-  recuperarPassword(): void {
-    if (this.recuperarForm.invalid) {
-      this.recuperarForm.markAllAsTouched();
-      return;
-    }
-    this.cargando = true;
-    this.authService.recuperarPassword(this.recuperarForm.value.email).subscribe({
-      next: () => {
-        this.cargando = false;
-        Swal.fire({
-          icon: 'success',
-          title: 'Correo enviado',
-          text: 'Revisa tu bandeja de entrada para restablecer tu contraseña.'
-        });
-        this.irA('credenciales');
-      },
-      error: (err: HttpErrorResponse) => this.manejarError(err, 'No fue posible enviar el correo de recuperación')
-    });
-  }
+  // TODO: recuperar contraseña. El backend no expone auth/recover-password y el examen no lo pide.
+  // recuperarPassword(): void {
+  //   if (this.recuperarForm.invalid) {
+  //     this.recuperarForm.markAllAsTouched();
+  //     return;
+  //   }
+  //   this.cargando = true;
+  //   this.authService.recuperarPassword(this.recuperarForm.value.email).subscribe({
+  //     next: () => {
+  //       this.cargando = false;
+  //       Swal.fire({
+  //         icon: 'success',
+  //         title: 'Correo enviado',
+  //         text: 'Revisa tu bandeja de entrada para restablecer tu contraseña.'
+  //       });
+  //       this.irA('credenciales');
+  //     },
+  //     error: (err: HttpErrorResponse) => this.manejarError(err, 'No fue posible enviar el correo de recuperación')
+  //   });
+  // }
 
   soloAlfanumericos(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -143,7 +143,6 @@ export class LoginComponent {
     this.paso = paso;
     if (paso === 'credenciales') {
       this.otpForm.reset();
-      this.recuperarForm.reset();
     }
   }
 

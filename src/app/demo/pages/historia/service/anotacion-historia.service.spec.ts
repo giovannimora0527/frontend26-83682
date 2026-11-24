@@ -44,14 +44,6 @@ describe('AnotacionHistoriaService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should list annotations', () => {
-    backendService.get.and.returnValue(of([anotacion]));
-
-    service.listar().subscribe(resultado => expect(resultado).toEqual([anotacion]));
-
-    expect(backendService.get).toHaveBeenCalledOnceWith(environment.apiUrlAuth, 'anotacion-historia', 'listar');
-  });
-
   it('should create an annotation sending related ids', () => {
     backendService.post.and.returnValue(of(anotacion));
     const solicitud = {
@@ -64,23 +56,13 @@ describe('AnotacionHistoriaService', () => {
     expect(backendService.post).toHaveBeenCalledOnceWith(environment.apiUrlAuth, 'anotacion-historia', 'crear', solicitud);
   });
 
-  it('should update an annotation using PUT', () => {
-    backendService.put.and.returnValue(of(anotacion));
-    const solicitud = {
-      id: 1, historiaId: 1, medicoId: 3, citaId: 1, descripcion: 'Control',
-      diagnostico: 'Infección urinaria', observaciones: 'Control en una semana'
-    };
-
-    service.actualizarAnotacionHistoria(solicitud).subscribe(resultado => expect(resultado).toEqual(anotacion));
-
-    expect(backendService.put).toHaveBeenCalledOnceWith(environment.apiUrlAuth, 'anotacion-historia', 'actualizar', solicitud);
-  });
-
   it('should propagate backend errors', () => {
-    const error = new Error('Error al listar anotaciones');
-    backendService.get.and.returnValue(throwError(() => error));
+    const error = new Error('Error al crear la anotación');
+    backendService.post.and.returnValue(throwError(() => error));
 
-    service.listar().subscribe({
+    service.crearAnotacionHistoria({
+      historiaId: 1, medicoId: 3, citaId: 1, descripcion: 'Control', diagnostico: 'Infección', observaciones: 'Control'
+    }).subscribe({
       next: () => fail('Expected a backend error'),
       error: recibido => expect(recibido).toBe(error)
     });
