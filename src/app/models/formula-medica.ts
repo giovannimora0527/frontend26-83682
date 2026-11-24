@@ -22,15 +22,21 @@ export interface FormulaDetalle extends FormulaDetalleRq {
   medicamentoCodigo: string;
   medicamentoNombre: string;
   cantidadDespachada: number;
+  cantidadSugerida?: number;
 }
 
 export interface FormulaMedica {
   id: number;
-  numero: string;
+  /** null mientras está en BORRADOR. */
+  numero: string | null;
   fecha: string;
+  fechaConfirmacion: string | null;
   citaId: number;
+  medicoId: number;
   medicoNombre: string;
+  clienteId: number;
   clienteNombre: string;
+  mascotaId: number;
   mascotaNombre: string;
   indicacionesGenerales: string | null;
   estadoFormula: EstadoFormula;

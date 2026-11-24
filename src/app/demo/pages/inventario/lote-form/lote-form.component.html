@@ -1,0 +1,16 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="loteTitulo">Registrar entrada: {{ producto.nombre }}</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+</div>
+<form class="modal-body" id="formLote" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  @if (respuestaError) {
+    <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+  }
+  <fieldset [disabled]="enviando">
+    <app-campos-lote [formulario]="form" [esMedicamento]="esMedicamento" />
+  </fieldset>
+</form>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+  <button type="submit" form="formLote" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : 'Registrar entrada' }}</button>
+</div>

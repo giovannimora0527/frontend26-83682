@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { construirParams, descargarArchivo, errorDeCampo, mensajeError } from './http.util';
+import { construirParams, descargarArchivo, mensajeError } from './http.util';
 
 describe('http.util', () => {
   it('omite los parámetros vacíos y conserva 0 y false', () => {
@@ -12,8 +12,11 @@ describe('http.util', () => {
       error: { message: 'Datos inválidos', detalles: [{ campo: 'codigo', mensaje: 'Ya existe' }] }
     });
     expect(mensajeError(error, 'x')).toBe('Datos inválidos\ncodigo: Ya existe');
-    expect(errorDeCampo(error, 'codigo')).toBe('Ya existe');
-    expect(errorDeCampo(error, 'otro')).toBeNull();
+  });
+
+  it('no repite un detalle que ya está en el mensaje', () => {
+    const error = new HttpErrorResponse({ status: 409, error: { message: 'Ya existe', detalles: [{ campo: 'codigo', mensaje: 'Ya existe' }] } });
+    expect(mensajeError(error, 'x')).toBe('Ya existe');
   });
 
   it('usa el mensaje predeterminado si el cuerpo no tiene el formato esperado', () => {

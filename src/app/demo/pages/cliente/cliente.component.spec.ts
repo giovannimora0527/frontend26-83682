@@ -5,6 +5,7 @@ import { of, Subject, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { AuthService } from '../login/service/auth.service';
 import { Cliente } from 'src/app/models/cliente';
+import { RespuestaApi } from 'src/app/models/respuesta';
 import { ClienteComponent } from './cliente.component';
 import { ClienteService } from './service/cliente.service';
 
@@ -25,8 +26,8 @@ describe('ClienteComponent', () => {
     service = jasmine.createSpyObj<ClienteService>('ClienteService',
       ['listarClientes', 'crearCliente', 'actualizarCliente', 'listarMascotas', 'listarFacturas']);
     service.listarClientes.and.returnValue(of([cliente, { ...cliente, id: 5, nombres: 'Ana', numeroDocumento: '2002', correo: null }]));
-    service.crearCliente.and.returnValue(of({}));
-    service.actualizarCliente.and.returnValue(of({}));
+    service.crearCliente.and.returnValue(of({ status: 200, message: 'ok', data: cliente }));
+    service.actualizarCliente.and.returnValue(of(cliente));
     spyOn(Swal, 'fire');
     TestBed.configureTestingModule({
       providers: [{ provide: ClienteService, useValue: service }, { provide: AuthService, useValue: { tieneMenu: () => true } }]
@@ -94,7 +95,7 @@ describe('ClienteComponent', () => {
 
   it('muestra el documento duplicado junto al campo y permite corregirlo', () => {
     service.crearCliente.and.returnValue(throwError(() =>
-      new HttpErrorResponse({ status: 409, error: { message: 'El documento ya existe' } })));
+      new HttpErrorResponse({ status: 409, error: { message: 'x', detalles: [{ campo: 'numeroDocumento', mensaje: 'El documento ya existe' }] } })));
     llenar();
     component.guardarCliente();
     expect(component.form.controls.numeroDocumento.errors).toEqual({ servidor: 'El documento ya existe' });
@@ -113,7 +114,7 @@ describe('ClienteComponent', () => {
   });
 
   it('evita el doble envío', () => {
-    const respuesta = new Subject<unknown>();
+    const respuesta = new Subject<RespuestaApi<Cliente>>();
     service.crearCliente.and.returnValue(respuesta);
     llenar();
     component.guardarCliente();
@@ -123,15 +124,15 @@ describe('ClienteComponent', () => {
     expect(component.enviando).toBeFalse();
   });
 
-  it('muestra las mascotas y trata el 404 como lista vacía', () => {
+  it('muestra las mascotas y el error de la consulta', () => {
     service.listarMascotas.and.returnValue(of([{ mascotaId: 1, nombreMascota: 'Firulais' }]));
     boton('Mascotas').click();
     TestBed.inject(ApplicationRef).tick();
     expect(service.listarMascotas).toHaveBeenCalledOnceWith(5);
     expect(document.querySelector('ngb-modal-window')?.textContent).toContain('Firulais');
-    service.listarMascotas.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    service.listarMascotas.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404, error: { message: 'El cliente no existe' } })));
     boton('Mascotas').click();
-    expect(component.errorConsulta).toBe('');
+    expect(component.errorConsulta).toBe('El cliente no existe');
     expect(component.mascotas).toEqual([]);
   });
 

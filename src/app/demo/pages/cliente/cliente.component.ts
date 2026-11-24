@@ -1,5 +1,4 @@
 import { DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, TemplateRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -181,17 +180,8 @@ export class ClienteComponent {
           ? 'El cliente fue creado correctamente.' : 'El cliente fue actualizado correctamente.', 'success');
       },
       error: (error: unknown) => {
-        const mensaje = mensajeError(error, 'No fue posible guardar el cliente.');
-        if (marcarErroresServidor(this.form, error)) {
-          return;
-        }
-        // El único duplicado posible es el número de documento.
-        if (error instanceof HttpErrorResponse && error.status === 409) {
-          this.form.controls.numeroDocumento.setErrors({ servidor: mensaje });
-          this.form.controls.numeroDocumento.markAsTouched();
-        } else {
-          this.respuestaError = mensaje;
-        }
+        this.respuestaError = marcarErroresServidor(this.form, error)
+          ? '' : mensajeError(error, 'No fue posible guardar el cliente.');
       }
     });
   }
@@ -207,11 +197,7 @@ export class ClienteComponent {
     this.errorConsulta = '';
     this.cargandoConsulta = true;
     const modal = this.abrir(contenido, 'consultaTitulo');
-    const manejarError = (error: unknown) => {
-      // El backend puede responder 404 cuando el cliente no tiene registros.
-      this.errorConsulta = error instanceof HttpErrorResponse && error.status === 404
-        ? '' : mensajeError(error, 'No fue posible cargar la información.');
-    };
+    const manejarError = (error: unknown) => this.errorConsulta = mensajeError(error, 'No fue posible cargar la información.');
     const opciones = <T>(origen: Observable<T>) => origen.pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.cargandoConsulta = false)

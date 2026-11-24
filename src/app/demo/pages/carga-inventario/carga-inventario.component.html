@@ -1,0 +1,173 @@
+<div class="card">
+  <div class="card-body">
+    <ul ngbNav #nav="ngbNav" [(activeId)]="pestana" (activeIdChange)="cambiarPestana($event)" class="nav-tabs">
+      <li ngbNavItem="asistente">
+        <button ngbNavLink type="button">Nueva carga</button>
+        <ng-template ngbNavContent>
+          <ol class="list-unstyled d-flex flex-wrap gap-2 mb-4" aria-label="Pasos de la carga">
+            @for (titulo of pasos; track titulo; let i = $index) {
+              <li class="d-flex align-items-center gap-2" [attr.aria-current]="paso === i ? 'step' : null">
+                <span class="badge rounded-pill" [class.bg-primary]="paso === i" [class.bg-success]="paso > i" [class.bg-secondary]="paso < i">{{ i + 1 }}</span>
+                <span [class.fw-bold]="paso === i">{{ titulo }}</span>
+                @if (i < pasos.length - 1) {
+                  <i class="fa fa-chevron-right text-muted small" aria-hidden="true"></i>
+                }
+              </li>
+            }
+          </ol>
+          @if (error) {
+            <div class="alert alert-danger" role="alert" style="white-space: pre-line">{{ error }}</div>
+          }
+          @switch (paso) {
+            @case (0) {
+              <div class="mb-3">
+                <app-boton-descarga class="d-inline-block me-1" endpoint="inventario/carga/plantilla" [formatos]="['xlsx']" [enviarFormato]="true" etiqueta="Descargar plantilla Excel" />
+                <app-boton-descarga class="d-inline-block" endpoint="inventario/carga/plantilla" [formatos]="['csv']" [enviarFormato]="true" etiqueta="Descargar plantilla CSV" />
+              </div>
+              <div class="border border-2 rounded p-4 text-center" style="border-style: dashed !important" [class.border-primary]="arrastrando"
+                (dragover)="arrastrar($event, true)" (dragleave)="arrastrar($event, false)" (drop)="soltar($event)">
+                <i class="fa fa-file-arrow-up fs-1 text-primary" aria-hidden="true"></i>
+                <p class="mb-2">Arrastra aquí el archivo o elígelo (.xlsx o .csv, máximo 5 MB)</p>
+                <input #entrada type="file" class="d-none" id="archivoCarga" accept=".xlsx,.csv" aria-label="Archivo de inventario" (change)="seleccionar($event)" />
+                <button type="button" class="btn btn-outline-primary" [disabled]="procesando" (click)="entrada.click()">Elegir archivo</button>
+                @if (archivo) {
+                  <p class="mb-0"><strong>{{ archivo.name }}</strong></p>
+                }
+                @if (errorArchivo) {
+                  <p class="text-danger mb-0" role="alert">{{ errorArchivo }}</p>
+                }
+              </div>
+              <div class="text-end mt-3">
+                <button type="button" class="btn btn-primary" [disabled]="!archivo || procesando" (click)="previsualizar()">
+                  {{ procesando ? 'Validando archivo...' : 'Ver vista previa' }}
+                </button>
+              </div>
+              <h3 class="h6 mt-3">Columnas requeridas, en este orden</h3>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead><tr><th scope="col">#</th><th scope="col">Encabezado</th><th scope="col">Formato</th></tr></thead>
+                  <tbody>
+                    @for (columna of columnasArchivo; track columna[0]) {
+                      <tr><td>{{ $index + 1 }}</td><td><code>{{ columna[0] }}</code></td><td>{{ columna[1] }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            @case (1) {
+              @if (carga) {
+                <p>Archivo: <strong>{{ carga.nombreArchivo }}</strong> (carga {{ carga.cargaId }})</p>
+                <app-filas-carga [carga]="carga" />
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                  <button type="button" class="btn btn-outline-danger" [disabled]="procesando" (click)="descartar()">Descartar carga</button>
+                  <button type="button" class="btn btn-primary" [disabled]="procesando || carga.filasValidas === 0" (click)="paso = 2">Continuar</button>
+                </div>
+              }
+            }
+            @case (2) {
+              @if (carga) {
+                <div class="alert alert-warning">
+                  Se importarán <strong>{{ carga.filasValidas }}</strong> registros válidos; los <strong>{{ carga.filasConError }}</strong> con error se omitirán.
+                </div>
+                <div class="d-flex flex-wrap justify-content-end gap-2">
+                  <button type="button" class="btn btn-secondary" [disabled]="procesando" (click)="paso = 1">Volver</button>
+                  <button type="button" class="btn btn-outline-danger" [disabled]="procesando" (click)="descartar()">Descartar carga</button>
+                  <button type="button" class="btn btn-primary" [disabled]="procesando" (click)="confirmar()">
+                    {{ procesando ? 'Procesando...' : 'Confirmar carga' }}
+                  </button>
+                </div>
+              }
+            }
+            @case (3) {
+              @if (carga) {
+                <div class="alert" [class.alert-success]="filasNoImportadas === 0" [class.alert-warning]="filasNoImportadas > 0" role="status">
+                  Se importaron <strong>{{ carga.filasImportadas }}</strong> de {{ carga.filasValidas }} filas válidas.
+                  @if (filasNoImportadas > 0) {
+                    {{ filasNoImportadas }} fallaron al importar; el motivo está en la tabla.
+                  }
+                </div>
+                <app-filas-carga [carga]="carga" />
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                  <button type="button" class="btn btn-outline-primary" (click)="reiniciar()">Nueva carga</button>
+                  <a class="btn btn-primary" routerLink="/inicio/inventario">Ir al inventario</a>
+                </div>
+              }
+            }
+          }
+        </ng-template>
+      </li>
+      <li ngbNavItem="historial">
+        <button ngbNavLink type="button">Historial de cargas</button>
+        <ng-template ngbNavContent>
+          <app-filtro-fechas (cambio)="filtrarHistorial($event)" />
+          @if (errorHistorial) {
+            <div class="alert alert-danger mt-2" role="alert">
+              {{ errorHistorial }} <button type="button" class="btn btn-link mb-0" (click)="listarHistorial()">Reintentar</button>
+            </div>
+          } @else if (cargandoHistorial) {
+            <p class="text-center mt-3" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando historial...</p>
+          } @else {
+            <div class="table-responsive mt-2">
+              <table class="table table-striped align-middle">
+                <thead>
+                  <tr>
+                    <th scope="col">Carga</th><th scope="col">Fecha</th><th scope="col">Archivo</th><th scope="col">Usuario</th><th scope="col">Total</th>
+                    <th scope="col">Válidas</th><th scope="col">Con error</th><th scope="col">Importadas</th><th scope="col">Estado</th><th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of historial.visibles; track item.cargaId) {
+                    <tr>
+                      <td>{{ item.cargaId }}</td>
+                      <td class="text-nowrap">{{ item.fecha | fechaHora }}</td>
+                      <td>{{ item.nombreArchivo }}</td>
+                      <td>{{ item.usuario }}</td>
+                      <td>{{ item.totalFilas }}</td>
+                      <td class="text-success">{{ item.filasValidas }}</td>
+                      <td class="text-danger">{{ item.filasConError }}</td>
+                      <td>{{ item.filasImportadas }}</td>
+                      <td><app-badge-estado [estado]="item.estado" /></td>
+                      <td>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0" [disabled]="cargandoDetalle" (click)="verDetalle(item.cargaId)">
+                          <i class="fa fa-eye" aria-hidden="true"></i> Ver
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="10" class="text-center">No hay cargas en el período</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <app-paginacion [tabla]="historial" />
+          }
+        </ng-template>
+      </li>
+    </ul>
+    <div class="pt-3" [ngbNavOutlet]="nav"></div>
+  </div>
+</div>
+
+<ng-template #detalleCarga let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="cargaTitulo">Carga {{ cargaDetalle?.cargaId }}: {{ cargaDetalle?.nombreArchivo }}</h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" (click)="modal.close()"></button>
+  </div>
+  @if (cargaDetalle; as detalle) {
+    <div class="modal-body">
+      <p>
+        <app-badge-estado [estado]="detalle.estado" /> Subida por {{ detalle.usuario }} el {{ detalle.fecha | fechaHora }}.
+        @if (detalle.fechaConfirmacion) {
+          Confirmada por {{ detalle.usuarioConfirmacion }} el {{ detalle.fechaConfirmacion | fechaHora }}: {{ detalle.filasImportadas }} filas importadas.
+        }
+      </p>
+      <app-filas-carga [carga]="detalle" />
+    </div>
+  }
+  <div class="modal-footer">
+    @if (cargaDetalle?.estado === 'PREVISUALIZADA') {
+      <button type="button" class="btn btn-primary" (click)="retomar(cargaDetalle!)">Retomar carga</button>
+    }
+    <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+  </div>
+</ng-template>

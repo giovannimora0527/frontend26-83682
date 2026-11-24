@@ -1,0 +1,126 @@
+<div class="row g-3 mb-3">
+  @for (tarjeta of tarjetas; track tarjeta.clave) {
+    <div class="col-6 col-lg-3">
+      <button type="button" class="card w-100 h-100 text-start mb-0 p-3 border-start border-4" [style.border-left-color]="estadosUi[tarjeta.estado].color + ' !important'"
+        [class.shadow]="estado === tarjeta.estado" [attr.aria-pressed]="estado === tarjeta.estado" (click)="filtrarPorAlerta(tarjeta.estado)">
+        <span class="text-muted small"><i class="fa" [class]="tarjeta.icono" aria-hidden="true"></i> {{ tarjeta.titulo }}</span>
+        <strong class="fs-3">{{ alertas ? alertas[tarjeta.clave] : '—' }}</strong>
+        @if (estado === tarjeta.estado) {
+          <span class="small">Filtro aplicado; pulsa para quitarlo</span>
+        }
+      </button>
+    </div>
+  }
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <input class="form-control" type="search" placeholder="Buscar producto" aria-label="Buscar producto"
+          [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+      </div>
+      <div class="col-6 col-md-2">
+        <select class="form-select" aria-label="Tipo de producto" [(ngModel)]="tipo" (ngModelChange)="aplicarFiltros()">
+          <option value="">Todos los tipos</option>
+          <option value="MEDICAMENTO">Medicamento</option>
+          <option value="INSUMO">Insumo</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <select class="form-select" aria-label="Estado de existencias" [(ngModel)]="estado" (ngModelChange)="aplicarFiltros()">
+          <option value="">Todos los estados</option>
+          @for (opcion of estados; track opcion) {
+            <option [value]="opcion">{{ estadosUi[opcion].etiqueta }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-3 text-md-end">
+        <button *appTieneRol="['ADMINISTRADOR']" type="button" class="btn btn-outline-primary mb-0" (click)="abrirFormulario(null)">
+          <i class="fa fa-plus" aria-hidden="true"></i> Nuevo producto
+        </button>
+      </div>
+      <div class="col-12 d-flex flex-wrap gap-3">
+        <div class="form-check mb-0">
+          <input type="checkbox" id="soloDisponibles" class="form-check-input" [(ngModel)]="soloDisponibles" (ngModelChange)="aplicarFiltros()" />
+          <label for="soloDisponibles" class="form-check-label">Solo disponibles</label>
+        </div>
+        <div class="form-check mb-0">
+          <input type="checkbox" id="soloActivos" class="form-check-input" [(ngModel)]="soloActivos" (ngModelChange)="aplicarFiltros()" />
+          <label for="soloActivos" class="form-check-label">Solo activos</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-body" [attr.aria-busy]="cargando">
+    @if (errorListado) {
+      <div class="alert alert-danger" role="alert">
+        {{ errorListado }} <button type="button" class="btn btn-link mb-0" (click)="recargar()">Reintentar</button>
+      </div>
+    } @else if (cargando && !hayProductos) {
+      <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando inventario...</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle small">
+          <thead>
+            <tr>
+              @for (columna of columnas; track columna.clave) {
+                <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+                  <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+                </th>
+                @if (columna.clave === 'cantidad') {
+                  <th scope="col">Acciones</th>
+                }
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (producto of tabla.visibles; track producto.id) {
+              <tr [class.opacity-50]="!producto.activo">
+                <td><a [routerLink]="['/inicio/inventario', producto.id]">{{ producto.codigo }}</a></td>
+                <td>{{ producto.nombre }}</td>
+                <td>
+                  @for (estadoStock of producto.estadosStock; track estadoStock) {
+                    <app-badge-estado class="d-block mb-1" [estado]="estadoStock" />
+                  }
+                  @if (!producto.activo) {
+                    <span class="badge bg-secondary">Inactivo</span>
+                  }
+                </td>
+                <td class="text-end">{{ producto.cantidadDisponible }}</td>
+                <td class="text-nowrap">
+                  <a class="btn btn-sm btn-outline-secondary mb-0" [routerLink]="['/inicio/inventario', producto.id]">
+                    <i class="fa fa-eye" aria-hidden="true"></i> Ver
+                  </a>
+                  <ng-container *appTieneRol="['ADMINISTRADOR']">
+                    <button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="abrirFormulario(producto)">
+                      <i class="fa fa-edit" aria-hidden="true"></i> Editar
+                    </button>
+                    <button type="button" class="btn btn-sm mb-0" [class.btn-outline-danger]="producto.activo"
+                      [class.btn-outline-success]="!producto.activo" [disabled]="cambiandoEstado" (click)="cambiarEstado(producto)">
+                      {{ producto.activo ? 'Inactivar' : 'Activar' }}
+                    </button>
+                  </ng-container>
+                </td>
+                <td>{{ producto.tipoProducto === 'MEDICAMENTO' ? 'Medicamento' : 'Insumo' }}</td>
+                <td>{{ producto.presentacion }}</td>
+                <td class="text-end">{{ producto.stockMinimo }}</td>
+                <td class="text-end text-nowrap">{{ producto.precioCompraUltimo | moneda }}</td>
+                <td class="text-end text-nowrap">{{ producto.precioVenta | moneda }}</td>
+                <td>{{ producto.proximoVencimiento | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ producto.registroInvima || 'No aplica' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="12" class="text-center">
+                  {{ hayProductos ? 'No se encontraron productos con esos filtros' : 'No hay productos registrados' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-paginacion [tabla]="tabla" />
+    }
+  </div>
+</div>

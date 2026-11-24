@@ -9,6 +9,7 @@ import { Especializacion } from 'src/app/models/especializacion';
 
 import Swal from 'sweetalert2';
 
+import { marcarErroresServidor } from 'src/app/shared/utils/formulario.util';
 import { mensajeError } from 'src/app/shared/utils/http.util';
 import { EspecializacionService } from './service/especializacion.service';
 
@@ -282,7 +283,8 @@ export class EspecializacionComponent {
       },
       error: (error) => {
         this.enviando = false;
-        this.respuestaError = mensajeError(error, 'No fue posible guardar la especialización.');
+        this.respuestaError = marcarErroresServidor(this.form, error)
+          ? '' : mensajeError(error, 'No fue posible guardar la especialización.');
       }
     });
   }

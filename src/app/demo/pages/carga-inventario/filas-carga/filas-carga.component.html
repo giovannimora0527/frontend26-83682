@@ -1,0 +1,72 @@
+<div class="row g-2 mb-3 text-center">
+  <div class="col-4"><div class="border rounded p-2"><strong class="fs-4">{{ carga().totalFilas }}</strong><div class="small">Filas</div></div></div>
+  <div class="col-4"><div class="border border-success rounded p-2 text-success"><strong class="fs-4">{{ carga().filasValidas }}</strong><div class="small">Válidas</div></div></div>
+  <div class="col-4"><div class="border border-danger rounded p-2 text-danger"><strong class="fs-4">{{ carga().filasConError }}</strong><div class="small">Con error</div></div></div>
+</div>
+<div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+  <div class="btn-group flex-wrap" role="group" aria-label="Filas a mostrar">
+    @for (opcion of vistas(); track opcion.clave) {
+      <button type="button" class="btn btn-sm mb-0" [class.btn-primary]="vista() === opcion.clave" [class.btn-outline-primary]="vista() !== opcion.clave"
+        [attr.aria-pressed]="vista() === opcion.clave" (click)="vista.set(opcion.clave)">{{ opcion.titulo }}</button>
+    }
+  </div>
+  @if (carga().filasConError > 0 || carga().estado === 'CONFIRMADA_CON_ERRORES') {
+    <div>
+      <span class="small me-2">Informe de errores:</span>
+      <app-boton-descarga [endpoint]="'inventario/carga/' + carga().cargaId + '/errores/archivo'" [formatos]="['xlsx', 'csv']" [enviarFormato]="true" />
+    </div>
+  }
+</div>
+<input class="form-control mb-2" type="search" placeholder="Buscar en las filas" aria-label="Buscar en las filas"
+  [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th scope="col" [attr.aria-sort]="tabla.ariaSort('fila')"><app-boton-orden [tabla]="tabla" columna="fila">Fila</app-boton-orden></th>
+        <th scope="col">Estado</th>
+        <th scope="col">Acción</th>
+        <th scope="col">Detalle</th>
+        @for (columna of columnas; track columna.clave) {
+          <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+            <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (fila of tabla.visibles; track fila.fila) {
+        <tr [class.table-danger]="conError(fila)">
+          <td>{{ fila.fila }}</td>
+          <td>
+            <span class="badge" [class.bg-success]="!conError(fila)" [class.bg-danger]="conError(fila)">
+              {{ !fila.valida ? 'Con error' : fila.errorImportacion ? 'No importada' : fila.importada ? 'Importada' : 'Válida' }}
+            </span>
+          </td>
+          <td class="text-nowrap">{{ fila.accion === 'NUEVO_PRODUCTO' ? 'Nuevo producto' : fila.accion === 'NUEVO_LOTE' ? 'Nuevo lote' : '—' }}</td>
+          <td>
+            @if (fila.errores.length || fila.advertencias.length || fila.errorImportacion) {
+              <ul class="list-unstyled small mb-0">
+                @for (error of fila.errores; track $index) {
+                  <li class="text-danger"><strong>{{ error.campo }}</strong> → {{ error.mensaje }}</li>
+                }
+                @for (advertencia of fila.advertencias; track $index) {
+                  <li class="text-warning-emphasis"><strong>{{ advertencia.campo }}</strong> (advertencia) → {{ advertencia.mensaje }}</li>
+                }
+                @if (fila.errorImportacion) {
+                  <li class="text-danger">{{ fila.errorImportacion }}</li>
+                }
+              </ul>
+            }
+          </td>
+          @for (columna of columnas; track columna.clave) {
+            <td>{{ fila.datos[columna.clave] }}</td>
+          }
+        </tr>
+      } @empty {
+        <tr><td colspan="11" class="text-center">No hay filas para mostrar</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+<app-paginacion [tabla]="tabla" />

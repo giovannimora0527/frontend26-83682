@@ -1,0 +1,44 @@
+<div class="row g-3" [formGroup]="form">
+      <div class="col-md-6">
+        <label for="lote-numero" class="form-label">Número de lote</label>
+        <input id="lote-numero" type="text" class="form-control" formControlName="numeroLote" maxlength="50"
+          [class.is-invalid]="esInvalido(form.controls.numeroLote)" aria-describedby="lote-numero-error" />
+        <div class="invalid-feedback" id="lote-numero-error">{{ form.controls.numeroLote.errors?.['servidor'] ?? 'Ingresa el número de lote (máximo 50 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="lote-cantidad" class="form-label">Cantidad</label>
+        <input id="lote-cantidad" type="number" class="form-control" formControlName="cantidad" min="1" step="1"
+          [class.is-invalid]="esInvalido(form.controls.cantidad)" aria-describedby="lote-cantidad-error" />
+        <div class="invalid-feedback" id="lote-cantidad-error">{{ form.controls.cantidad.errors?.['servidor'] ?? 'Ingresa un entero mayor que 0.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="lote-precio" class="form-label">Precio de compra (COP)</label>
+        <input id="lote-precio" type="number" class="form-control" formControlName="precioCompra" min="0" step="0.01"
+          [class.is-invalid]="esInvalido(form.controls.precioCompra)" aria-describedby="lote-precio-error" />
+        <div class="invalid-feedback" id="lote-precio-error">{{ form.controls.precioCompra.errors?.['servidor'] ?? 'Ingresa un valor de 0 en adelante, con máximo 2 decimales.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="lote-compra" class="form-label">Fecha de compra</label>
+        <input id="lote-compra" type="date" class="form-control" formControlName="fechaCompra" [max]="hoy"
+          [class.is-invalid]="esInvalido(form.controls.fechaCompra) || (form.controls.fechaCompra.touched && (form.hasError('compraFutura')))" aria-describedby="lote-compra-error" />
+        <div class="invalid-feedback" id="lote-compra-error">{{ form.controls.fechaCompra.errors?.['servidor'] ?? (form.hasError('compraFutura') ? 'La fecha de compra no puede ser futura.' : 'Ingresa la fecha de compra.') }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="lote-ingreso" class="form-label">Fecha de ingreso</label>
+        <input id="lote-ingreso" type="date" class="form-control" formControlName="fechaIngreso" [max]="hoy"
+          [class.is-invalid]="esInvalido(form.controls.fechaIngreso) || (form.controls.fechaIngreso.touched && (form.hasError('ingresoInvalido')))" aria-describedby="lote-ingreso-error" />
+        <div class="invalid-feedback" id="lote-ingreso-error">{{ form.controls.fechaIngreso.errors?.['servidor'] ?? (form.hasError('ingresoInvalido') ? 'Debe estar entre la fecha de compra y hoy.' : 'Ingresa la fecha de ingreso.') }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="lote-vence" class="form-label">Fecha de vencimiento{{ esMedicamento() ? '' : ' (opcional)' }}</label>
+        <input id="lote-vence" type="date" class="form-control" formControlName="fechaVencimiento" [min]="hoy"
+          [class.is-invalid]="esInvalido(form.controls.fechaVencimiento) || (form.controls.fechaVencimiento.touched && (form.hasError('vencimientoObligatorio') || form.hasError('loteVencido') || form.hasError('vencimientoInvalido')))" aria-describedby="lote-vence-error" />
+        <div class="invalid-feedback" id="lote-vence-error">{{ form.controls.fechaVencimiento.errors?.['servidor'] ?? (form.hasError('vencimientoObligatorio') ? 'Los medicamentos exigen fecha de vencimiento.' : form.hasError('loteVencido') ? 'No se reciben lotes vencidos.' : form.hasError('vencimientoInvalido') ? 'Debe ser posterior a la fecha de compra.' : 'Ingresa una fecha válida.') }}</div>
+      </div>
+      <div class="col-12">
+        <label for="lote-observacion" class="form-label">Observación (opcional)</label>
+        <input id="lote-observacion" type="text" class="form-control" formControlName="observacion" maxlength="500"
+          [class.is-invalid]="esInvalido(form.controls.observacion)" aria-describedby="lote-observacion-error" />
+        <div class="invalid-feedback" id="lote-observacion-error">{{ form.controls.observacion.errors?.['servidor'] ?? 'Máximo 500 caracteres.' }}</div>
+      </div>
+</div>

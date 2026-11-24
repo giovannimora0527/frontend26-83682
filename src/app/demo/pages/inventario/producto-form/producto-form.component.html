@@ -1,0 +1,109 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="productoTitulo">{{ producto ? 'Editar producto' : 'Crear producto' }}</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+</div>
+<form class="modal-body" id="formProducto" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  @if (respuestaError) {
+    <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+  }
+  <fieldset [disabled]="enviando">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="producto-codigo" class="form-label">Código</label>
+        <input id="producto-codigo" type="text" class="form-control" formControlName="codigo" maxlength="8" style="text-transform: uppercase" autocomplete="off"
+          [class.is-invalid]="esInvalido(form.controls.codigo)" aria-describedby="producto-codigo-error" />
+        <div class="invalid-feedback" id="producto-codigo-error">{{ form.controls.codigo.errors?.['servidor'] ?? 'El código debe tener exactamente 8 letras o números.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-nombre" class="form-label">Nombre</label>
+        <input id="producto-nombre" type="text" class="form-control" formControlName="nombre" maxlength="100"
+          [class.is-invalid]="esInvalido(form.controls.nombre)" aria-describedby="producto-nombre-error" />
+        <div class="invalid-feedback" id="producto-nombre-error">{{ form.controls.nombre.errors?.['servidor'] ?? 'Ingresa el nombre (máximo 100 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-tipo" class="form-label">Tipo</label>
+        <select id="producto-tipo" class="form-select" formControlName="tipoProducto" [class.is-invalid]="esInvalido(form.controls.tipoProducto)">
+          <option value="" disabled>Selecciona un tipo</option>
+          <option value="MEDICAMENTO">Medicamento</option>
+          <option value="INSUMO">Insumo</option>
+        </select>
+        <div class="invalid-feedback">{{ form.controls.tipoProducto.errors?.['servidor'] ?? 'Selecciona el tipo de producto.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-invima" class="form-label">Registro Invima{{ esMedicamento ? '' : ' (opcional)' }}</label>
+        <input id="producto-invima" type="text" class="form-control" formControlName="registroInvima" maxlength="50"
+          [class.is-invalid]="esInvalido(form.controls.registroInvima)" aria-describedby="producto-invima-error" />
+        <div class="invalid-feedback" id="producto-invima-error">{{ form.controls.registroInvima.errors?.['servidor'] ?? 'El registro Invima es obligatorio para los medicamentos.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-presentacion" class="form-label">Presentación (opcional)</label>
+        <input id="producto-presentacion" type="text" class="form-control" formControlName="presentacion" maxlength="100"
+          [class.is-invalid]="esInvalido(form.controls.presentacion)" aria-describedby="producto-presentacion-error" />
+        <div class="invalid-feedback" id="producto-presentacion-error">{{ form.controls.presentacion.errors?.['servidor'] ?? 'Máximo 100 caracteres.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-unidad" class="form-label">Unidad de medida</label>
+        <input id="producto-unidad" type="text" class="form-control" formControlName="unidadMedida" maxlength="30" placeholder="tableta, frasco, unidad..."
+          [class.is-invalid]="esInvalido(form.controls.unidadMedida)" aria-describedby="producto-unidad-error" />
+        <div class="invalid-feedback" id="producto-unidad-error">{{ form.controls.unidadMedida.errors?.['servidor'] ?? 'Ingresa la unidad (máximo 30 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-precio" class="form-label">Precio de venta (COP)</label>
+        <input id="producto-precio" type="number" class="form-control" formControlName="precioVenta" min="0" step="0.01"
+          [class.is-invalid]="esInvalido(form.controls.precioVenta)" aria-describedby="producto-precio-error" />
+        <div class="invalid-feedback" id="producto-precio-error">{{ form.controls.precioVenta.errors?.['servidor'] ?? 'Ingresa un valor de 0 en adelante, con máximo 2 decimales.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-impuesto" class="form-label">Impuesto</label>
+        <select id="producto-impuesto" class="form-select" formControlName="impuestoId">
+          <option [ngValue]="null">Sin impuesto</option>
+          @for (impuesto of impuestos; track impuesto.id) {
+            <option [ngValue]="impuesto.id">{{ impuesto.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-stock" class="form-label">Stock mínimo</label>
+        <input id="producto-stock" type="number" class="form-control" formControlName="stockMinimo" min="0" step="1"
+          [class.is-invalid]="esInvalido(form.controls.stockMinimo)" aria-describedby="producto-stock-error" />
+        <div class="invalid-feedback" id="producto-stock-error">{{ form.controls.stockMinimo.errors?.['servidor'] ?? 'Ingresa un entero de 0 en adelante.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="producto-pedido" class="form-label">Fecha del próximo pedido (opcional)</label>
+        <input id="producto-pedido" type="date" class="form-control" formControlName="fechaProximoPedido" 
+          [class.is-invalid]="esInvalido(form.controls.fechaProximoPedido)" aria-describedby="producto-pedido-error" />
+        <div class="invalid-feedback" id="producto-pedido-error">{{ form.controls.fechaProximoPedido.errors?.['servidor'] ?? 'Ingresa una fecha válida.' }}</div>
+      </div>
+      <div class="col-12">
+        <label for="producto-descripcion" class="form-label">Descripción (opcional)</label>
+        <input id="producto-descripcion" type="text" class="form-control" formControlName="descripcion" maxlength="1000"
+          [class.is-invalid]="esInvalido(form.controls.descripcion)" aria-describedby="producto-descripcion-error" />
+        <div class="invalid-feedback" id="producto-descripcion-error">{{ form.controls.descripcion.errors?.['servidor'] ?? 'Máximo 1000 caracteres.' }}</div>
+      </div>
+      @if (producto) {
+        <div class="col-12">
+          <div class="alert alert-info mb-0">
+            Aquí no se cambian las cantidades. Usa "Registrar entrada" para ingresar un lote o "Ajuste" para corregir existencias.
+          </div>
+        </div>
+      } @else {
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" id="producto-incluir-lote" class="form-check-input" formControlName="incluirLote" />
+            <label for="producto-incluir-lote" class="form-check-label">Registrar un lote inicial</label>
+          </div>
+        </div>
+      }
+    </div>
+    @if (!producto && form.controls.incluirLote.value) {
+      <section class="border rounded p-3 mt-3">
+        <h3 class="h6">Lote inicial</h3>
+        <app-campos-lote [formulario]="form.controls.loteInicial" [esMedicamento]="esMedicamento" />
+      </section>
+    }
+  </fieldset>
+</form>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+  <button type="submit" form="formProducto" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : producto ? 'Actualizar producto' : 'Guardar producto' }}</button>
+</div>

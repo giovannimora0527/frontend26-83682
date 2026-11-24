@@ -1,8 +1,10 @@
 export interface Usuario {
   id: number;
   username: string;
-  /** Nombre del perfil (o su código). */
+  /** Nombre del perfil. */
   rol: string;
+  rolCodigo: string;
+  perfilId: number;
   email: string;
   fechaCreacion?: string;
   activo: boolean;

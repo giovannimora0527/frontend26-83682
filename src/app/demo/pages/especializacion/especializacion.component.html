@@ -134,19 +134,17 @@
                             <label for="nombreEspecializacion" class="form-label">Nombre de la especialización</label>
                             <input id="nombreEspecializacion" class="form-control" formControlName="nombre">
                             <div class="text-danger" *ngIf="f['nombre'].touched && f['nombre'].invalid">
-                                Ingresa el nombre de la especialización.</div>
+                                {{ f['nombre'].errors?.['servidor'] ?? 'Ingresa el nombre de la especialización.' }}</div>
                         </div>
                         <div class="col-md-6">
                             <label for="codigoEspecializacion" class="form-label">Codigo</label>
                             <input id="codigoEspecializacion" class="form-control" type="text" formControlName="codigoEspecializacion">
-                            <div class="text-danger" *ngIf="f['codigoEspecializacion'].touched && f['codigoEspecializacion'].invalid">Ingresa un codigo
-                                válido.</div>
+                            <div class="text-danger" *ngIf="f['codigoEspecializacion'].touched && f['codigoEspecializacion'].invalid">{{ f['codigoEspecializacion'].errors?.['servidor'] ?? 'Ingresa un código de mínimo 6 caracteres.' }}</div>
                         </div>  
                          <div class="col-md-6">
                             <label for="descripcion" class="form-label">Descripción</label>
                             <input id="descripcion" class="form-control" type="text" formControlName="descripcion">
-                            <div class="text-danger" *ngIf="f['descripcion'].touched && f['descripcion'].invalid">Ingresa una descripción
-                                válida.</div>
+                            <div class="text-danger" *ngIf="f['descripcion'].touched && f['descripcion'].invalid">{{ f['descripcion'].errors?.['servidor'] ?? 'Ingresa una descripción válida.' }}</div>
                         </div>                                         
                     </div>
                     <div class="alert alert-danger mt-3 mb-0" *ngIf="respuestaError" role="alert">{{ respuestaError }}

@@ -17,14 +17,12 @@ export function mensajeError(error: unknown, predeterminado: string): string {
   if (!cuerpo || typeof cuerpo.message !== 'string' || !cuerpo.message) {
     return predeterminado;
   }
-  const detalles = (Array.isArray(cuerpo.detalles) ? cuerpo.detalles : []).map(({ campo, mensaje }) => `${campo}: ${mensaje}`);
-  return [cuerpo.message, ...detalles].join('\n');
-}
-
-/** Mensaje de error de un campo concreto, si el backend lo informó. */
-export function errorDeCampo(error: unknown, campo: string): string | null {
-  const cuerpo = error instanceof HttpErrorResponse ? (error.error as Partial<ErrorApi> | null) : null;
-  return (Array.isArray(cuerpo?.detalles) ? cuerpo.detalles : []).find((detalle) => detalle.campo === campo)?.mensaje ?? null;
+  const mensaje = cuerpo.message;
+  // El backend suele repetir en message el texto de los detalles.
+  const detalles = (Array.isArray(cuerpo.detalles) ? cuerpo.detalles : [])
+    .filter((detalle) => !mensaje.includes(detalle.mensaje))
+    .map(({ campo, mensaje }) => `${campo}: ${mensaje}`);
+  return [mensaje, ...detalles].join('\n');
 }
 
 function nombreArchivo(response: HttpResponse<Blob>, predeterminado: string): string {

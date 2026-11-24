@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, TemplateRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -10,11 +9,11 @@ import { Perfil } from 'src/app/models/perfil';
 import { Usuario, UsuarioRq } from 'src/app/models/usuario';
 import { BotonOrdenComponent } from 'src/app/shared/components/boton-orden/boton-orden.component';
 import { PaginacionComponent } from 'src/app/shared/components/paginacion/paginacion.component';
-import { codigoRol, nombreRol } from 'src/app/shared/estados-ui';
+import { nombreRol } from 'src/app/shared/estados-ui';
 import { FechaHoraPipe } from 'src/app/shared/pipes/formato.pipes';
 import { esInvalido, marcarErroresServidor } from 'src/app/shared/utils/formulario.util';
 import { mensajeError } from 'src/app/shared/utils/http.util';
-import { normalizarTexto, Tabla } from 'src/app/shared/utils/tabla.util';
+import { Tabla } from 'src/app/shared/utils/tabla.util';
 import { UsuarioService } from './service/usuario.service';
 
 const CLAVE_SEGURA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
@@ -108,17 +107,14 @@ export class UsuarioComponent {
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.cargandoPerfiles = false)
     ).subscribe({
-      next: (perfiles) => {
-        this.perfiles = perfiles;
-        this.seleccionarPerfilActual();
-      },
+      next: (perfiles) => this.perfiles = perfiles,
       error: (error) => this.errorPerfiles = mensajeError(error, 'No fue posible cargar los perfiles.')
     });
   }
 
   get esPerfilMedico(): boolean {
     const perfil = this.perfiles.find(({ id }) => id === this.form.controls.perfilId.value);
-    return codigoRol(perfil?.codigo ?? perfil?.nombre) === 'MEDICO';
+    return perfil?.codigo === 'MEDICO';
   }
 
   esUsuarioActual(usuario: Usuario): boolean {
@@ -135,8 +131,7 @@ export class UsuarioComponent {
   abrirEdicion(usuario: Usuario, contenido: TemplateRef<unknown>): void {
     this.modoFormulario = 'E';
     this.usuarioSelected = usuario;
-    this.form.reset({ username: usuario.username, email: usuario.email });
-    this.seleccionarPerfilActual();
+    this.form.reset({ username: usuario.username, email: usuario.email, perfilId: usuario.perfilId });
     this.abrir(contenido);
   }
 
@@ -170,7 +165,8 @@ export class UsuarioComponent {
         void Swal.fire('Operación exitosa', id === undefined
           ? 'El usuario fue creado correctamente.' : 'El usuario fue actualizado correctamente.', 'success');
       },
-      error: (error: unknown) => this.mostrarError(error)
+      error: (error: unknown) => this.respuestaError = marcarErroresServidor(this.form, error)
+        ? '' : mensajeError(error, 'No fue posible guardar el usuario.')
     });
   }
 
@@ -200,16 +196,6 @@ export class UsuarioComponent {
     });
   }
 
-  private seleccionarPerfilActual(): void {
-    if (this.modoFormulario !== 'E' || !this.usuarioSelected || this.form.controls.perfilId.value !== null) {
-      return;
-    }
-    const { rol } = this.usuarioSelected;
-    const codigo = codigoRol(rol);
-    const perfil = this.perfiles.find((opcion) => opcion.codigo === rol || opcion.nombre === rol || (codigo !== null && opcion.codigo === codigo));
-    this.form.controls.perfilId.setValue(perfil?.id ?? null);
-  }
-
   private abrir(contenido: TemplateRef<unknown>): void {
     const { password } = this.form.controls;
     password.setValidators([
@@ -223,24 +209,5 @@ export class UsuarioComponent {
     this.modal = this.modalService.open(contenido, {
       size: 'lg', backdrop: 'static', keyboard: false, scrollable: true, ariaLabelledBy: 'usuarioTitulo'
     });
-  }
-
-  private mostrarError(error: unknown): void {
-    if (marcarErroresServidor(this.form, error)) {
-      return;
-    }
-    const mensaje = mensajeError(error, 'No fue posible guardar el usuario.');
-    // El 409 no trae el campo: se distingue por el texto ("nombre de usuario" o "correo").
-    if (error instanceof HttpErrorResponse && error.status === 409) {
-      const texto = normalizarTexto(mensaje);
-      const control = texto.includes('correo') ? this.form.controls.email
-        : texto.includes('usuario') ? this.form.controls.username : null;
-      if (control) {
-        control.setErrors({ servidor: mensaje });
-        control.markAsTouched();
-        return;
-      }
-    }
-    this.respuestaError = mensaje;
   }
 }

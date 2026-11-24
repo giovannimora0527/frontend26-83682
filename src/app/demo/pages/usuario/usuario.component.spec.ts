@@ -14,8 +14,8 @@ describe('UsuarioComponent', () => {
   let service: jasmine.SpyObj<UsuarioService>;
   let alerta: jasmine.Spy;
   const usuarios: Usuario[] = [
-    { id: 1, username: 'admin', email: 'admin@x.test', rol: 'Administrador', activo: true },
-    { id: 2, username: 'secre', email: 'secre@x.test', rol: 'Recepcion', activo: true }
+    { id: 1, username: 'admin', email: 'admin@x.test', rol: 'Administrador', rolCodigo: 'ADMINISTRADOR', perfilId: 1, activo: true },
+    { id: 2, username: 'secre', email: 'secre@x.test', rol: 'Recepcion', rolCodigo: 'SECRETARIA', perfilId: 2, activo: true }
   ];
   const valido = { username: ' nuevo ', email: 'nuevo@x.test', perfilId: 2, password: 'Clave2026*', confirmacion: 'Clave2026*' };
 
@@ -24,9 +24,9 @@ describe('UsuarioComponent', () => {
       ['listarUsuarios', 'listarPerfiles', 'crearUsuario', 'actualizarUsuario', 'cambiarEstado']);
     service.listarUsuarios.and.returnValue(of(usuarios));
     service.listarPerfiles.and.returnValue(of([
-      { id: 1, codigo: 'ADMINISTRADOR', nombre: 'Administrador' },
-      { id: 2, codigo: 'SECRETARIA', nombre: 'Recepcion' },
-      { id: 3, codigo: 'MEDICO', nombre: 'Medico' }
+      { id: 1, codigo: 'ADMINISTRADOR', nombre: 'Administrador', activo: true },
+      { id: 2, codigo: 'SECRETARIA', nombre: 'Recepcion', activo: true },
+      { id: 3, codigo: 'MEDICO', nombre: 'Medico', activo: true }
     ]));
     service.crearUsuario.and.returnValue(of({}));
     service.actualizarUsuario.and.returnValue(of({}));
@@ -78,7 +78,7 @@ describe('UsuarioComponent', () => {
     expect(service.crearUsuario).not.toHaveBeenCalled();
   });
 
-  it('edita sin contraseña y preselecciona el perfil por su nombre', () => {
+  it('edita sin contraseña y preselecciona su perfil', () => {
     pulsar('Editar', 1);
     expect(component.form.controls.perfilId.value).toBe(2);
     component.guardarUsuario();
@@ -94,7 +94,7 @@ describe('UsuarioComponent', () => {
 
   for (const [mensaje, campo] of [['El correo electrónico ya existe', 'email'], ['El nombre de usuario ya existe', 'username']] as const) {
     it(`muestra junto al campo: ${mensaje}`, () => {
-      service.crearUsuario.and.returnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { message: mensaje } })));
+      service.crearUsuario.and.returnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'x', detalles: [{ campo, mensaje }] } })));
       pulsar('Nuevo usuario');
       component.form.setValue(valido);
       component.guardarUsuario();

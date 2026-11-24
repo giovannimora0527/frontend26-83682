@@ -9,6 +9,9 @@ import { CitaComponent } from './demo/pages/cita/cita.component';
 import { ClienteComponent } from './demo/pages/cliente/cliente.component';
 import { HistoriaComponent } from './demo/pages/historia/historia.component';
 import { EspecializacionComponent } from './demo/pages/especializacion/especializacion.component';
+import { InventarioComponent } from './demo/pages/inventario/inventario.component';
+import { ProductoDetalleComponent } from './demo/pages/inventario/producto-detalle/producto-detalle.component';
+import { CargaInventarioComponent } from './demo/pages/carga-inventario/carga-inventario.component';
 import { EnConstruccionComponent } from './demo/pages/en-construccion/en-construccion.component';
 import { LoginComponent } from './demo/pages/login/login.component';
 import { authGuard } from './guards/auth.guard';
@@ -34,8 +37,9 @@ const modulos: Routes = [
   ruta('historias', 'Historias clínicas', HistoriaComponent),
   ruta('formulas', 'Fórmulas médicas', FormulaMedicaComponent),
   ruta('mascotas', 'Mascotas', MascotaComponent),
-  ruta('inventario', 'Inventario', EnConstruccionComponent),
-  ruta('carga-inventario', 'Carga masiva', EnConstruccionComponent),
+  ruta('inventario', 'Inventario', InventarioComponent),
+  ruta('inventario', 'Detalle del producto', ProductoDetalleComponent, 'inventario/:id'),
+  ruta('carga-inventario', 'Carga masiva', CargaInventarioComponent),
   ruta('despacho', 'Despacho', EnConstruccionComponent),
   ruta('facturacion', 'Facturación', EnConstruccionComponent),
   ruta('reportes', 'Reportes', EnConstruccionComponent)
@@ -54,7 +58,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
     canActivateChild: [authGuard],
     data: { title: 'Inicio' },
-    children: [...modulos, { path: '**', redirectTo: '/inicio' }]
+    // La ruta vacía evita que el comodín capture /inicio y se redirija a sí mismo.
+    children: [{ path: '', pathMatch: 'full', children: [] }, ...modulos, { path: '**', redirectTo: '/inicio' }]
   },
   { path: '**', redirectTo: 'login' }
 ];

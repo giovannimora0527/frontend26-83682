@@ -1,0 +1,150 @@
+<a class="btn btn-sm btn-outline-secondary" routerLink="/inicio/inventario"><i class="fa fa-arrow-left" aria-hidden="true"></i> Volver al inventario</a>
+
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="cargar()">Reintentar</button></div>
+} @else if (!producto) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando producto...</p>
+} @else {
+  <div class="card">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <h2 class="h5 mb-1">{{ producto.codigo }} - {{ producto.nombre }}</h2>
+        @for (estado of producto.estadosStock; track estado) {
+          <app-badge-estado class="me-1" [estado]="estado" />
+        }
+        @if (!producto.activo) {
+          <span class="badge bg-secondary">Inactivo</span>
+        }
+      </div>
+      <div *appTieneRol="['ADMINISTRADOR']">
+        <button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="editar()"><i class="fa fa-edit" aria-hidden="true"></i> Editar</button>
+        <button type="button" class="btn btn-sm btn-outline-primary mb-0" [disabled]="!producto.activo" (click)="registrarEntrada()">
+          <i class="fa fa-plus" aria-hidden="true"></i> Registrar entrada
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-warning mb-0" [disabled]="!producto.lotes?.length" (click)="ajustar()">
+          <i class="fa fa-sliders" aria-hidden="true"></i> Ajuste
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-6 col-md-3">Tipo</dt>
+        <dd class="col-6 col-md-3">{{ producto.tipoProducto === 'MEDICAMENTO' ? 'Medicamento' : 'Insumo' }}</dd>
+        <dt class="col-6 col-md-3">Presentación</dt>
+        <dd class="col-6 col-md-3">{{ producto.presentacion || 'No informada' }}</dd>
+        <dt class="col-6 col-md-3">Unidad de medida</dt>
+        <dd class="col-6 col-md-3">{{ producto.unidadMedida }}</dd>
+        <dt class="col-6 col-md-3">Registro Invima</dt>
+        <dd class="col-6 col-md-3">{{ producto.registroInvima || 'No aplica' }}</dd>
+        <dt class="col-6 col-md-3">Cantidad disponible</dt>
+        <dd class="col-6 col-md-3">{{ producto.cantidadDisponible }}</dd>
+        <dt class="col-6 col-md-3">Stock mínimo</dt>
+        <dd class="col-6 col-md-3">{{ producto.stockMinimo }}</dd>
+        <dt class="col-6 col-md-3">Precio de venta</dt>
+        <dd class="col-6 col-md-3">{{ producto.precioVenta | moneda }} (IVA {{ producto.porcentajeIva }} %)</dd>
+        <dt class="col-6 col-md-3">Último precio de compra</dt>
+        <dd class="col-6 col-md-3">{{ (producto.precioCompraUltimo | moneda) || 'Sin compras' }}</dd>
+        <dt class="col-6 col-md-3">Costo promedio</dt>
+        <dd class="col-6 col-md-3">{{ (producto.precioCompraPromedio | moneda) || 'Sin existencias' }}</dd>
+        <dt class="col-6 col-md-3">Próximo vencimiento</dt>
+        <dd class="col-6 col-md-3">{{ (producto.proximoVencimiento | date: 'dd/MM/yyyy') || 'No aplica' }}</dd>
+        <dt class="col-6 col-md-3">Próximo pedido</dt>
+        <dd class="col-6 col-md-3">{{ (producto.fechaProximoPedido | date: 'dd/MM/yyyy') || 'Sin programar' }}</dd>
+        <dt class="col-6 col-md-3">Descripción</dt>
+        <dd class="col-6 col-md-3">{{ producto.descripcion || 'No informada' }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <ul ngbNav #nav="ngbNav" [(activeId)]="pestana" class="nav-tabs">
+        <li ngbNavItem="lotes">
+          <button ngbNavLink type="button">Lotes</button>
+          <ng-template ngbNavContent>
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead>
+                  <tr>
+                    <th scope="col">Lote</th><th scope="col">Compra</th><th scope="col">Ingreso</th><th scope="col">Vencimiento</th>
+                    <th scope="col">Días para vencer</th><th scope="col">Precio de compra</th><th scope="col">Cantidad inicial</th>
+                    <th scope="col">Disponible</th><th scope="col">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (lote of producto.lotes; track lote.id) {
+                    <tr>
+                      <td>{{ lote.numeroLote }}</td>
+                      <td>{{ lote.fechaCompra | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ lote.fechaIngreso | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ (lote.fechaVencimiento | date: 'dd/MM/yyyy') || 'No aplica' }}</td>
+                      <td>{{ lote.diasParaVencer ?? 'No aplica' }}</td>
+                      <td>{{ lote.precioCompra | moneda }}</td>
+                      <td>{{ lote.cantidadInicial }}</td>
+                      <td>{{ lote.cantidadDisponible }}</td>
+                      <td><app-badge-estado [estado]="estadoLote(lote)" /></td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="9" class="text-center">El producto no tiene lotes</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </ng-template>
+        </li>
+        <li ngbNavItem="kardex">
+          <button ngbNavLink type="button">Kardex / movimientos</button>
+          <ng-template ngbNavContent>
+            <app-filtro-fechas (cambio)="filtrarMovimientos($event)" />
+            @if (errorMovimientos) {
+              <div class="alert alert-danger mt-2" role="alert">
+                {{ errorMovimientos }} <button type="button" class="btn btn-link mb-0" (click)="cargarMovimientos()">Reintentar</button>
+              </div>
+            } @else if (cargandoMovimientos) {
+              <p class="text-center mt-3" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando movimientos...</p>
+            } @else {
+              <div class="table-responsive mt-2">
+                <table class="table align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Lote</th><th scope="col">Cantidad</th>
+                      <th scope="col">Saldo</th><th scope="col">Usuario</th><th scope="col">Referencia</th><th scope="col">Motivo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (movimiento of kardex.visibles; track movimiento.id) {
+                      <tr>
+                        <td class="text-nowrap">{{ movimiento.fecha | fechaHora }}</td>
+                        <td>{{ etiquetas[movimiento.tipo] }}</td>
+                        <td>{{ movimiento.numeroLote }}</td>
+                        <td class="fw-bold" [class.text-success]="!esSalida(movimiento.tipo)" [class.text-danger]="esSalida(movimiento.tipo)">
+                          {{ esSalida(movimiento.tipo) ? '−' : '+' }}{{ movimiento.cantidad }}
+                        </td>
+                        <td>{{ movimiento.saldo }}</td>
+                        <td>{{ movimiento.usuario }}</td>
+                        <td>
+                          @if (movimiento.cargaId && puedeVerCargas) {
+                            <a routerLink="/inicio/carga-inventario" [queryParams]="{ carga: movimiento.cargaId }">
+                              {{ movimiento.referencia || 'Carga ' + movimiento.cargaId }}
+                            </a>
+                          } @else {
+                            {{ movimiento.referencia || '—' }}
+                          }
+                        </td>
+                        <td>{{ movimiento.motivo || '—' }}</td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="8" class="text-center">No hay movimientos en el período</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <app-paginacion [tabla]="kardex" />
+            }
+          </ng-template>
+        </li>
+      </ul>
+      <div class="pt-3" [ngbNavOutlet]="nav"></div>
+    </div>
+  </div>
+}

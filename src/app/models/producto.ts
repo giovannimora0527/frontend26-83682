@@ -20,6 +20,7 @@ export interface LoteRq {
   fechaCompra: string;
   fechaIngreso: string;
   fechaVencimiento: string | null;
+  observacion?: string | null;
 }
 
 interface DatosProducto {
@@ -29,16 +30,17 @@ interface DatosProducto {
   descripcion: string | null;
   presentacion: string | null;
   unidadMedida: string;
+  requiereInvima: boolean;
   registroInvima: string | null;
   precioVenta: number;
-  porcentajeIva: number;
+  impuestoId: number | null;
   stockMinimo: number;
   fechaProximoPedido: string | null;
 }
 
 export interface Producto extends DatosProducto {
   id: number;
-  requiereInvima: boolean;
+  porcentajeIva: number;
   activo: boolean;
   cantidadDisponible: number;
   precioCompraUltimo: number | null;
@@ -64,14 +66,21 @@ export interface MovimientoInventario {
   fecha: string;
   tipo: TipoMovimiento;
   medicamentoId: number;
-  medicamentoNombre?: string;
+  medicamentoCodigo: string;
+  medicamentoNombre: string;
   loteId: number;
   numeroLote: string;
   cantidad: number;
+  saldoLote: number;
   saldo: number;
+  costoUnitario: number | null;
   usuario: string;
-  motivo?: string | null;
-  referencia?: string | null;
+  formulaId: number | null;
+  despachoId: number | null;
+  cargaId: number | null;
+  movimientoRevertidoId: number | null;
+  referencia: string | null;
+  motivo: string | null;
 }
 
 export interface AlertasInventario {
@@ -79,4 +88,11 @@ export interface AlertasInventario {
   bajoStock: number;
   proximosVencer: number;
   vencidos: number;
+}
+
+export interface Disponibilidad {
+  medicamentoId: number;
+  cantidadDisponibleVigente: number;
+  cantidadVencida: number;
+  lotesVigentes: Lote[];
 }

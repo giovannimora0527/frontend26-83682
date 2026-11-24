@@ -1,0 +1,51 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="ajusteTitulo">Ajuste de inventario: {{ producto.nombre }}</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+</div>
+<form class="modal-body" id="formAjuste" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  @if (respuestaError) {
+    <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+  }
+  <fieldset [disabled]="enviando">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="ajuste-lote" class="form-label">Lote</label>
+        <select id="ajuste-lote" class="form-select" formControlName="loteId" [class.is-invalid]="esInvalido(form.controls.loteId)">
+          <option [ngValue]="null" disabled>{{ producto.lotes?.length ? 'Selecciona un lote' : 'El producto no tiene lotes' }}</option>
+          @for (opcion of producto.lotes; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.numeroLote }} (disponible: {{ opcion.cantidadDisponible }})</option>
+          }
+        </select>
+        <div class="invalid-feedback">{{ form.controls.loteId.errors?.['servidor'] ?? 'Selecciona el lote.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="ajuste-tipo" class="form-label">Tipo de ajuste</label>
+        <select id="ajuste-tipo" class="form-select" formControlName="tipo" [class.is-invalid]="esInvalido(form.controls.tipo)">
+          <option value="" disabled>Selecciona un tipo</option>
+          <option value="AJUSTE_POSITIVO">Positivo (suma)</option>
+          <option value="AJUSTE_NEGATIVO">Negativo (resta)</option>
+        </select>
+        <div class="invalid-feedback">{{ form.controls.tipo.errors?.['servidor'] ?? 'Selecciona el tipo de ajuste.' }}</div>
+      </div>
+      <div class="col-12">
+        <label for="ajuste-cantidad" class="form-label">Cantidad</label>
+        <input id="ajuste-cantidad" type="number" class="form-control" formControlName="cantidad" min="1" step="1"
+          [class.is-invalid]="esInvalido(form.controls.cantidad)" aria-describedby="ajuste-cantidad-error" />
+        <div class="invalid-feedback" id="ajuste-cantidad-error">{{ form.controls.cantidad.errors?.['servidor'] ?? 'Ingresa un entero mayor que 0.' }}</div>
+      </div>
+      @if (superaDisponible) {
+        <div class="col-12 text-danger" role="alert">El lote solo tiene {{ lote?.cantidadDisponible }} unidades disponibles.</div>
+      }
+      <div class="col-12">
+        <label for="ajuste-motivo" class="form-label">Motivo</label>
+        <textarea id="ajuste-motivo" rows="3" class="form-control" formControlName="motivo" maxlength="500"
+          [class.is-invalid]="esInvalido(form.controls.motivo)" aria-describedby="ajuste-motivo-error"></textarea>
+        <div class="invalid-feedback" id="ajuste-motivo-error">{{ form.controls.motivo.errors?.['servidor'] ?? 'El motivo es obligatorio.' }}</div>
+      </div>
+    </div>
+  </fieldset>
+</form>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+  <button type="submit" form="formAjuste" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : 'Registrar ajuste' }}</button>
+</div>

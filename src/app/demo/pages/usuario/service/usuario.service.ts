@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Perfil } from 'src/app/models/perfil';
 import { Usuario, UsuarioRq } from 'src/app/models/usuario';
 import { BackendService } from 'src/app/services/backend.service';
@@ -17,14 +17,8 @@ export class UsuarioService {
     return this.backendService.get(environment.apiUrlAuth, this.api, 'listar-ordenado');
   }
 
-  /** La entidad del backend identifica el perfil con perfilId; se admite también id. */
   listarPerfiles(): Observable<Perfil[]> {
-    return this.backendService
-      .get<(Omit<Perfil, 'id'> & { id?: number; perfilId?: number })[]>(environment.apiUrlAuth, 'perfil', 'listar')
-      .pipe(map((perfiles) => perfiles.flatMap(({ id, perfilId, codigo, nombre }) => {
-        const identificador = id ?? perfilId;
-        return identificador === undefined ? [] : [{ id: identificador, codigo, nombre }];
-      })));
+    return this.backendService.get(environment.apiUrlAuth, 'perfil', 'listar');
   }
 
   crearUsuario(usuario: UsuarioRq): Observable<unknown> {

@@ -86,9 +86,29 @@ Los claims `rol` (código), `medicoId` y `menus` (con `name`) ya cumplen C3.
 | Perfil | `/perfil/listar` | la entidad usa `perfilId` | acepta `id` o `perfilId` |
 | Vínculo médico-usuario | opcional | no se puede quitar (sin `usuarioId` conserva el actual) | se puede cambiar, no quitar |
 
-### Pendiente en el backend (revisado sobre 4363b46 y su árbol de trabajo)
+### Resuelto por el backend (28d89e5)
 
-- No existen todavía: `PATCH /usuario/{id}/estado`, `GET /perfil/listar`, `GET/PUT /medico/{id}/horarios`, `PATCH /especializacion/{id}/estado` y `GET /factura/cliente/{id}`. Sin `/perfil/listar` no se pueden crear ni editar usuarios.
-- `db/03_datos_iniciales.sql` usa el código de menú `citas`; debe ser `cita`.
-- Los duplicados (409) no traen `detalles`: el campo se deduce del mensaje. Conviene agregar `detalles`.
-- La entidad `Cita` pasa a `fechaInicio`, `fechaFin` y estados en mayúsculas, y `/formula-medica/guardar` y `/actualizar` cambian. Citas, Historias y Fórmulas se adaptan en las fases 5 y 6; hasta entonces no funcionan del todo con ese backend.
+Perfiles, estado de usuarios y especializaciones, horarios, facturas por cliente, código de menú `cita` y 409 con `detalles`. `POST /cliente/guardar` responde `{status, message, data}`; `POST /cliente/{id}` sigue respondiendo el cliente sin envoltura.
+
+## Fase 4: inventario y carga masiva
+
+- Modelos ajustados a `docs/api.md` del backend (producto, movimiento, carga, perfil, usuario, fórmula y factura). No había datos simulados en la aplicación.
+- Los duplicados se muestran junto al campo en clientes, usuarios, médicos, especializaciones, productos, lotes y ajustes (`marcarErroresServidor`).
+- **Inventario** (`/inicio/inventario` y `/inicio/inventario/:id`): alertas que filtran, detalle con lotes y kardex, crear, editar, activar, entradas y ajustes. Solo ADMINISTRADOR ve las acciones de escritura.
+- **Carga masiva** (`/inicio/carga-inventario`): asistente de 4 pasos, historial, informe de errores y retomar una carga sin confirmar. El kardex enlaza con la carga de origen.
+- Corregido: la ruta comodín de `/inicio` se redirigía a sí misma y fallaba en modo desarrollo.
+
+### Decisiones
+
+- "Solo disponibles" exige existencias vigentes, porque `cantidadDisponible` incluye los lotes vencidos.
+- El listado se filtra en el navegador; las alertas cuentan solo productos activos, así que al pulsarlas se activa "Solo activos".
+- `/impuesto/listar` aún no existe (fase de tarifas del backend): mientras tanto se ofrecen los impuestos que ya tienen los productos. El cambio será automático.
+
+### Verificado contra el backend real (24/11/2026)
+
+Con OTP de Mailpit y Chrome: los cuatro roles entran y ven solo sus menús. Fase 3 completa con duplicados. Producto con lote inicial, entrada, ajuste y kardex. `carga_inventario_60` en xlsx y csv: 60 filas, 55 válidas y 5 con error (filas 11, 21, 32, 41 y 51). Encabezados incorrectos: 400 con faltantes y sobrantes. DESPACHO_MEDICO: solo lectura.
+
+### Pendiente para otras fases
+
+- El enlace del kardex al despacho se agrega en la fase 7.
+- Citas, Historias y Fórmulas todavía usan el modelo anterior (fases 5 y 6). `/medico/listar-disponibles` sigue con `fechaInicio` y `fechaFin` en el backend.

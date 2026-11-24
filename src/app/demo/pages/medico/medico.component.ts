@@ -15,7 +15,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AuthService } from '../login/service/auth.service';
 import { UsuarioService } from '../usuario/service/usuario.service';
 import { Usuario } from 'src/app/models/usuario';
-import { codigoRol } from 'src/app/shared/estados-ui';
+import { marcarErroresServidor } from 'src/app/shared/utils/formulario.util';
 import { mensajeError } from 'src/app/shared/utils/http.util';
 import { HorariosMedicoComponent } from './horarios-medico/horarios-medico.component';
 
@@ -97,7 +97,7 @@ export class MedicoComponent {
   listarUsuarios(): void {
     this.errorUsuarios = '';
     this.usuarioService.listarUsuarios().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: usuarios => this.listUsuarios = usuarios.filter(({ rol }) => codigoRol(rol) === 'MEDICO'),
+      next: usuarios => this.listUsuarios = usuarios.filter(({ rolCodigo }) => rolCodigo === 'MEDICO'),
       error: error => this.errorUsuarios = mensajeError(error, 'No fue posible cargar los usuarios.')
     });
   }
@@ -323,8 +323,8 @@ export class MedicoComponent {
           ? 'El médico fue creado correctamente.' : 'El médico fue actualizado correctamente.', 'success');
       },
       error: error => {
-        this.respuestaError = mensajeError(error, 'No fue posible guardar el médico. Revisa los datos e inténtalo de nuevo.');
-        console.error('Error al guardar el médico:', error);
+        this.respuestaError = marcarErroresServidor(this.form, error)
+          ? '' : mensajeError(error, 'No fue posible guardar el médico. Revisa los datos e inténtalo de nuevo.');
       }
     });
   }

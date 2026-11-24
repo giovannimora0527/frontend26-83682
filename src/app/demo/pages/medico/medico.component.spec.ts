@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MedicoService } from './service/medico.service';
 import { EspecializacionService } from '../especializacion/service/especializacion.service';
 import { Medico } from 'src/app/models/medico';
@@ -33,10 +34,10 @@ describe('MedicoComponent', () => {
         {
           provide: UsuarioService, useValue: {
             listarUsuarios: () => of([
-              { id: 10, username: 'medico1', rol: 'Medico', activo: true },
-              { id: 11, username: 'medico2', rol: 'MEDICO', activo: true },
-              { id: 12, username: 'inactivo', rol: 'Medico', activo: false },
-              { id: 13, username: 'admin', rol: 'Administrador', activo: true }
+              { id: 10, username: 'medico1', rolCodigo: 'MEDICO', activo: true },
+              { id: 11, username: 'medico2', rolCodigo: 'MEDICO', activo: true },
+              { id: 12, username: 'inactivo', rolCodigo: 'MEDICO', activo: false },
+              { id: 13, username: 'admin', rolCodigo: 'ADMINISTRADOR', activo: true }
             ])
           }
         },
@@ -226,5 +227,16 @@ describe('MedicoComponent', () => {
     expect(component.especializacionesDisponibles.map(e => e.id)).toEqual([5]);
     component.abrirEdicion(medico);
     expect(component.especializacionesDisponibles.map(e => e.id)).toEqual([3, 5]);
+  });
+
+  it('shows the duplicate document next to its field', () => {
+    medicoService.crearMedico.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 409, error: { message: 'x', detalles: [{ campo: 'numeroDocumento', mensaje: 'Documento repetido' }] }
+    })));
+    completarFormulario();
+    component.guardarMedico();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#error-numeroDocumento')?.textContent?.trim()).toBe('Documento repetido');
+    expect(component.respuestaError).toBe('');
   });
 });

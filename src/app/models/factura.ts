@@ -59,9 +59,11 @@ export interface Factura extends TotalesFactura {
   citaId: number;
   clienteId: number;
   clienteNombre: string;
+  clienteDocumento: string;
   mascotaId: number;
   mascotaNombre: string;
   medicoNombre: string;
+  especialidadNombre: string;
   pagado: number;
   saldo: number;
   estado: EstadoFactura;

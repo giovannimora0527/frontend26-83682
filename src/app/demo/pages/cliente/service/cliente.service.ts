@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { Cliente, ClienteRq } from 'src/app/models/cliente';
 import { Factura } from 'src/app/models/factura';
 import { Mascota } from 'src/app/models/mascota';
+import { RespuestaApi } from 'src/app/models/respuesta';
 import { BackendService } from 'src/app/services/backend.service';
 import { construirParams } from 'src/app/shared/utils/http.util';
 import { environment } from 'src/environments/environment';
@@ -19,11 +20,12 @@ export class ClienteService {
     return this.backendService.get(environment.apiUrlAuth, this.api, 'listar');
   }
 
-  crearCliente(cliente: ClienteRq): Observable<unknown> {
+  crearCliente(cliente: ClienteRq): Observable<RespuestaApi<Cliente>> {
     return this.backendService.post(environment.apiUrlAuth, this.api, 'guardar', cliente);
   }
 
-  actualizarCliente(id: number, cliente: ClienteRq): Observable<unknown> {
+  /** A diferencia de crear, responde el cliente sin envoltura. */
+  actualizarCliente(id: number, cliente: ClienteRq): Observable<Cliente> {
     return this.backendService.post(environment.apiUrlAuth, this.api, String(id), cliente);
   }
 
