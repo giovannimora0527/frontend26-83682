@@ -133,6 +133,28 @@ export class AgendaService {
   }
 
   /**
+   * Elimina una ausencia que aún no ha terminado (null = médico autenticado).
+   *
+   * @param medico médico o null para el médico autenticado.
+   * @param id identificador de la ausencia.
+   * @returns observable con el horario y las ausencias actualizadas.
+   */
+  eliminarAusencia(medico: number | null, id: number) {
+    return this.http.delete<HorarioMedico>(this.medico(medico) + '/ausencias/' + id);
+  }
+
+  /**
+   * Ausencias del médico autenticado en un rango, para mostrarlas como bloqueos en el calendario.
+   *
+   * @param desde fecha inicial AAAA-MM-DD.
+   * @param hasta fecha final AAAA-MM-DD.
+   * @returns observable con las ausencias.
+   */
+  ausenciasPropias(desde: string, hasta: string) {
+    return this.http.get<Ausencia[]>(this.api + '/mia/ausencias', { params: { desde, hasta } });
+  }
+
+  /**
    * Cambia la actividad mediante la API del backend.
    *
    * @param medico médico.

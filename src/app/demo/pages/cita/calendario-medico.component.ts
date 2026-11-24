@@ -1,14 +1,14 @@
 import { HistorialMascotaComponent } from './historial-mascota.component';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AgendaService, CambioCita, errorAgenda, EventoMedico, hoyBogota, RevisionCita } from '../../../services/agenda.service';
+import { AgendaService, Ausencia, CambioCita, errorAgenda, EventoMedico, hoyBogota, RevisionCita } from '../../../services/agenda.service';
 import { AtencionClinicaComponent } from './atencion-clinica.component';
 import { AgendaConfiguracionComponent } from './agenda-configuracion.component';
 
 /** Tipo «Vista»: valores permitidos para vista. */
 type Vista = 'dia' | 'semana' | 'mes';
 /** Modelo de datos «DiaCalendario» que se intercambia con el backend. */
-interface DiaCalendario { fecha: string; dia: number; nombre: string; otroMes: boolean; citas: EventoMedico[]; }
+interface DiaCalendario { fecha: string; dia: number; nombre: string; otroMes: boolean; citas: EventoMedico[]; ausencias: Ausencia[]; }
 
 /** Pantalla «calendario médico» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
@@ -144,8 +144,18 @@ export class CalendarioMedicoComponent implements OnInit {
     this.evento = null;
     this.dias = fechas.map(dia => ({
       fecha: this.iso(dia), dia: dia.getUTCDate(), nombre: this.formatoDia.format(dia),
-      otroMes: this.vista === 'mes' && dia.getUTCMonth() !== this.fechaUtc(this.fecha).getUTCMonth(), citas: []
+      otroMes: this.vista === 'mes' && dia.getUTCMonth() !== this.fechaUtc(this.fecha).getUTCMonth(), citas: [], ausencias: []
     }));
+    this.agenda.ausenciasPropias(this.desde, this.hasta).subscribe({
+      next: ausencias => {
+        if (solicitud !== this.consulta) return;
+        for (const dia of this.dias) {
+          const siguiente = this.iso(new Date(this.fechaUtc(dia.fecha).getTime() + 86400000));
+          dia.ausencias = ausencias.filter(a => a.inicio.slice(0, 10) < siguiente && a.fin.slice(0, 19) > dia.fecha + 'T00:00:00');
+        }
+      },
+      error: () => undefined
+    });
     this.agenda.eventos(this.desde, this.hasta, this.estado).subscribe({
       next: resultados => {
         if (solicitud !== this.consulta) return;
@@ -225,6 +235,25 @@ export class CalendarioMedicoComponent implements OnInit {
    *
    * @param cita cita seleccionada.
    */
+  /**
+   * Texto del bloqueo de una ausencia en un día del calendario.
+   *
+   * @param a ausencia.
+   * @param fecha día de la celda (AAAA-MM-DD).
+   * @returns horario de la ausencia en ese día ("Todo el día" si lo cubre completo).
+   */
+  horarioAusencia(a: Ausencia, fecha: string): string {
+    const desde = a.inicio.slice(0, 10) < fecha ? '00:00' : a.inicio.slice(11, 16);
+    const hasta = a.fin.slice(0, 10) > fecha ? '24:00' : a.fin.slice(11, 16);
+    return desde === '00:00' && hasta === '24:00' ? 'Todo el día' : desde + '–' + hasta;
+  }
+
+  /** Abre o cierra la configuración de horarios y ausencias; al cerrarla refresca el calendario. */
+  alternarHorario() {
+    this.verHorario = !this.verHorario;
+    if (!this.verHorario) this.cargar();
+  }
+
   reservada(cita: EventoMedico) { return ['pendiente', 'programada', 'confirmada'].includes(cita.estado); }
 
   /** Fechas vista. */

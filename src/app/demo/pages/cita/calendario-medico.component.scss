@@ -44,3 +44,16 @@
 .evento[data-estado="cancelada"] { background: #fdecec; color: #792122; border-color: #d59e9e; }
 .evento[data-estado="atendida"] { background: #fff3da; color: #5f4818; border-color: #c3a76c; }
 .evento[data-estado="finalizada"] { background: #eeeafb; color: #403173; border-color: #ad9ed3; }
+
+/* Bloqueo por ausencia del médico (vacaciones, incapacidad…): no se agendan citas en ese periodo. */
+.ausencia {
+  display: flex;
+  flex-direction: column;
+  margin: 0.25rem;
+  padding: 0.3rem 0.5rem;
+  border-left: 3px solid #9aa5b1;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #4a5563;
+  background: repeating-linear-gradient(135deg, #eef1f4, #eef1f4 6px, #e3e7ec 6px, #e3e7ec 12px);
+}

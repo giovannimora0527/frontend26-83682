@@ -46,6 +46,16 @@ export class AgendaConfiguracionComponent implements OnChanges {
     this.ejecutar(this.servicio.registrarAusencia(this.medico, this.ausencia), 'Ausencia registrada.', true);
   }
 
+  /**
+   * Elimina una ausencia vigente o futura, previa confirmación.
+   *
+   * @param a ausencia seleccionada.
+   */
+  eliminarAusencia(a: Ausencia) {
+    if (!a.id || !confirm(`¿Eliminar la ausencia "${a.motivo}"? El médico volverá a quedar disponible en ese periodo.`)) return;
+    this.ejecutar(this.servicio.eliminarAusencia(this.medico, a.id), 'Ausencia eliminada.');
+  }
+
   /** Alterna actividad. */
   alternarActividad() {
     if (this.medico === null || !this.datos || !confirm('¿Cambiar el estado del médico?')) return;
