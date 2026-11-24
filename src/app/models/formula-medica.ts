@@ -23,6 +23,9 @@ export interface FormulaDetalle extends FormulaDetalleRq {
   medicamentoNombre: string;
   cantidadDespachada: number;
   cantidadSugerida?: number;
+  presentacion?: string | null;
+  cantidadDisponibleVigente?: number;
+  alcanza?: boolean;
 }
 
 export interface FormulaMedica {

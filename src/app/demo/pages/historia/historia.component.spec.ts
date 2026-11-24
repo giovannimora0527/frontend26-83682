@@ -44,7 +44,7 @@ describe('HistoriaComponent', () => {
       descripcion,
       cita: {
         id: 1,
-        fechaHora: '2025-10-16T21:30:00',
+        fechaInicio: '2025-10-16T21:30:00',
         motivo: 'Consulta general',
         estado: 'PROGRAMADA'
       },
@@ -74,11 +74,11 @@ describe('HistoriaComponent', () => {
     ]));
     citaService = jasmine.createSpyObj<CitaService>('CitaService', ['listarCitasPorMascota']);
     citaService.listarCitasPorMascota.and.returnValue(of([
-      { id: 1, fechaHora: '2026-02-01T10:00:00', estado: 'PROGRAMADA', motivo: 'Usada',
+      { id: 1, fechaInicio: '2026-02-01T10:00:00', estado: 'PROGRAMADA', motivo: 'Usada',
         medico: { id: 4, nombres: 'Inés', apellidos: 'Mora' } as Medico },
-      { id: 2, fechaHora: '2026-02-02T10:00:00', estado: 'PROGRAMADA', motivo: 'Vacuna',
+      { id: 2, fechaInicio: '2026-02-02T10:00:00', estado: 'PROGRAMADA', motivo: 'Vacuna',
         medico: { id: 3, nombres: 'Carlos', apellidos: 'Martínez', especializacion: { id: 3, nombre: 'Pediatría' } } as Medico },
-      { id: 5, fechaHora: '2026-02-03T10:00:00', estado: 'PROGRAMADA', motivo: 'Sin médico' }
+      { id: 5, fechaInicio: '2026-02-03T10:00:00', estado: 'PROGRAMADA', motivo: 'Sin médico' }
     ]));
     spyOn(Swal, 'fire');
     await TestBed.configureTestingModule({
@@ -112,7 +112,7 @@ describe('HistoriaComponent', () => {
     const anotacion = crearAnotacion(historia, '2026-01-02T10:00:00', 'Control');
     const formula: Formula = {
       id: 4,
-      cita: { id: 1, fechaHora: '2025-10-16T21:30:00', motivo: 'Consulta general', estado: 'PROGRAMADA' },
+      cita: { id: 1, fechaInicio: '2025-10-16T21:30:00', motivo: 'Consulta general', estado: 'PROGRAMADA' },
       dosis: 'Una pastilla cada 12 horas.',
       frecuencia: 'Cada 4 horas',
       duracion: 'El tratamiento dura por 3 semanas',
@@ -587,7 +587,7 @@ describe('HistoriaComponent', () => {
   it('should use the latest annotation appointment even when appointments have a different date order', () => {
     const historia = crearHistoria(1);
     const antigua = crearAnotacion(historia, '2026-02-01T12:00:00', 'Anotacion antigua');
-    antigua.cita = { fechaHora: '2026-12-01T10:00:00', motivo: 'Vacunación', estado: 'CANCELADA' };
+    antigua.cita = { fechaInicio: '2026-12-01T10:00:00', motivo: 'Vacunación', estado: 'CANCELADA' };
     const reciente = crearAnotacion(historia, '2026-03-01T12:00:00', 'Anotacion reciente');
     historia.anotaciones = [antigua, reciente];
     component.listHistorias = [historia];
@@ -603,7 +603,7 @@ describe('HistoriaComponent', () => {
     const reciente = crearAnotacion(historia, '2026-03-01T12:00:00', 'Problemas urinarios');
     historia.anotaciones = [antigua, reciente];
     component.listHistorias = [historia];
-    for (const cita of [undefined, null, { fechaHora: '2026-03-01T12:00:00', motivo: null, estado: ' ' }]) {
+    for (const cita of [undefined, null, { fechaInicio: '2026-03-01T12:00:00', motivo: null, estado: ' ' }]) {
       reciente.cita = cita;
       expect(component.historiasFiltradas[0].motivo).toBe('No informado');
       expect(component.historiasFiltradas[0].estado).toBe('No informado');
@@ -618,7 +618,7 @@ describe('HistoriaComponent', () => {
     historiaB.historia.mascota.activo = false;
     const anotacionA = crearAnotacion(historiaA, '2026-01-02T10:00:00', 'A');
     const anotacionB = crearAnotacion(historiaB, '2026-01-03T10:00:00', 'B');
-    anotacionB.cita = { fechaHora: '2026-01-03T10:00:00', motivo: 'Vacunación', estado: 'CANCELADA' };
+    anotacionB.cita = { fechaInicio: '2026-01-03T10:00:00', motivo: 'Vacunación', estado: 'CANCELADA' };
     historiaA.anotaciones = [anotacionA];
     historiaB.anotaciones = [anotacionB];
     component.listHistorias = [historiaA, historiaB];

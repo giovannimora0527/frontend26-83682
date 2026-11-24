@@ -1,0 +1,62 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="historialTitulo">{{ titulo }}</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" (click)="modal.close()"></button>
+</div>
+<div class="modal-body" [attr.aria-busy]="cargando">
+  @if (cargando) {
+    <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando historial...</p>
+  } @else if (error) {
+    <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="cargar()">Reintentar</button></div>
+  } @else if (mascotaId !== null) {
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Médico</th><th scope="col">Servicio</th><th scope="col">Motivo</th></tr></thead>
+        <tbody>
+          @for (cita of citas; track cita.id) {
+            <tr>
+              <td class="text-nowrap">{{ cita.fechaInicio | fechaHora }}</td>
+              <td><app-badge-estado [estado]="cita.estado" /></td>
+              <td>{{ cita.medico?.nombres }} {{ cita.medico?.apellidos }}</td>
+              <td>{{ cita.servicio?.nombre || 'No informado' }}</td>
+              <td>
+                {{ cita.motivo }}
+                @if (cita.motivoCancelacion) {
+                  <div class="small text-muted">Cancelada: {{ cita.motivoCancelacion }}</div>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="5" class="text-center">La mascota no tiene citas</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Fecha del cambio</th><th scope="col">Cambio</th><th scope="col">Usuario</th><th scope="col">Motivo</th></tr></thead>
+        <tbody>
+          @for (cambio of cambios; track cambio.id) {
+            <tr>
+              <td class="text-nowrap">{{ cambio.fecha | fechaHora }}</td>
+              <td>
+                @if (cambio.estadoAnterior === null) {
+                  Creación <app-badge-estado [estado]="cambio.estadoNuevo" />
+                } @else if (cambio.fechaInicioAnterior && cambio.fechaInicioNueva) {
+                  Reprogramada: {{ cambio.fechaInicioAnterior | fechaHora }} → {{ cambio.fechaInicioNueva | fechaHora }}
+                } @else {
+                  <app-badge-estado [estado]="cambio.estadoAnterior" /> → <app-badge-estado [estado]="cambio.estadoNuevo" />
+                }
+              </td>
+              <td>{{ cambio.usuario }}</td>
+              <td>{{ cambio.motivo || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="text-center">La cita no tiene cambios registrados</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+<div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button></div>

@@ -1,0 +1,27 @@
+.leyenda {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 2px;
+}
+
+:host ::ng-deep {
+  .fc-event {
+    cursor: pointer;
+  }
+
+  .fc .fc-non-business {
+    background: rgba(108, 117, 125, 0.18);
+  }
+
+  @media (max-width: 767px) {
+    .fc .fc-toolbar {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .fc .fc-toolbar-title {
+      font-size: 1.1rem;
+    }
+  }
+}

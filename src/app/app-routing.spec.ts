@@ -14,7 +14,7 @@ class PantallaComponent {}
 
 describe('Rutas', () => {
   const inicio = routes.find((ruta) => ruta.path === 'inicio');
-  const hijas = inicio?.children?.filter((ruta) => ruta.component) ?? [];
+  const hijas = inicio?.children?.filter((ruta) => ruta.component || ruta.loadComponent) ?? [];
 
   it('cada opción del menú tiene su ruta protegida por authGuard y menuGuard', () => {
     const opciones = NavigationItems.flatMap((grupo) => grupo.children ?? []);

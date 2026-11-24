@@ -1,0 +1,82 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="detalleCitaTitulo">{{ evento.title }}</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="procesando" (click)="modal.close(false)"></button>
+</div>
+<div class="modal-body">
+  @if (error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  }
+  <dl class="row">
+    <dt class="col-sm-4">Estado</dt>
+    <dd class="col-sm-8 text-break"><app-badge-estado [estado]="evento.estado" /></dd>
+    <dt class="col-sm-4">Inicio</dt>
+    <dd class="col-sm-8 text-break">{{ evento.start | fechaHora }}</dd>
+    <dt class="col-sm-4">Fin</dt>
+    <dd class="col-sm-8 text-break">{{ evento.end | fechaHora }}</dd>
+    <dt class="col-sm-4">Servicio</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.servicioNombre || 'No informado' }}</dd>
+    <dt class="col-sm-4">Motivo</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.motivo }}</dd>
+    @if (evento.estado === 'CANCELADA') {
+    <dt class="col-sm-4">Motivo de cancelación</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.motivoCancelacion || 'No informado' }}</dd>
+    }
+  </dl>
+  <h3 class="h6">Mascota</h3>
+  <dl class="row">
+    <dt class="col-sm-4">Nombre</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.mascotaNombre }}</dd>
+    <dt class="col-sm-4">Especie y raza</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.especie }} - {{ evento.extendedProps.raza }}</dd>
+    <dt class="col-sm-4">Edad</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.edad ?? 'No informada' }}</dd>
+  </dl>
+  <h3 class="h6">Propietario</h3>
+  <dl class="row mb-0">
+    <dt class="col-sm-4">Nombre</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.clienteNombre }}</dd>
+    <dt class="col-sm-4">Documento</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.clienteDocumento || 'No informado' }}</dd>
+    <dt class="col-sm-4">Teléfono</dt>
+    <dd class="col-sm-8 text-break">{{ evento.extendedProps.clienteTelefono || 'No informado' }}</dd>
+  </dl>
+
+  @if (reprogramando) {
+    <div class="border rounded p-3 mt-3">
+      <label for="nuevaFechaCita" class="form-label">Nueva fecha y hora de inicio</label>
+      <div class="d-flex flex-wrap gap-2">
+        <input id="nuevaFechaCita" type="datetime-local" step="900" class="form-control w-auto" [(ngModel)]="nuevaFecha" [disabled]="procesando" />
+        <button type="button" class="btn btn-primary mb-0" [disabled]="procesando" (click)="reprogramar()">Guardar nueva fecha</button>
+      </div>
+      <div class="form-text">La hora de fin se recalcula con la duración del servicio.</div>
+    </div>
+  }
+  @if (evento.estado === 'ATENDIDA') {
+    <h3 class="h6 mt-3">Documentos</h3>
+    @if (errorDocumentos) {
+      <div class="text-danger" role="alert">{{ errorDocumentos }}</div>
+    }
+    @if (atencionId !== null) {
+      <div class="mb-2"><app-boton-descarga [endpoint]="'atencion/' + atencionId + '/prefactura/pdf'" etiqueta="Prefactura" /></div>
+    }
+    @for (formula of formulas; track formula.id) {
+      <div class="mb-2"><app-boton-descarga [endpoint]="'formula-medica/' + formula.id + '/pdf'" [etiqueta]="'Fórmula ' + formula.numero" /></div>
+    }
+  }
+</div>
+<div class="modal-footer flex-wrap">
+  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verHistorialMascota()">Historial de la mascota</button>
+  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verHistorialEstados()">Historial de estados</button>
+  @if (esEditable(evento.estado)) {
+    @if (evento.estado === 'PROGRAMADA') {
+      <button type="button" class="btn btn-sm btn-primary" [disabled]="procesando" (click)="confirmar()">Confirmar</button>
+    }
+    <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="procesando" (click)="mostrarReprogramar()">Reprogramar</button>
+    <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="procesando" (click)="cancelar()">Cancelar cita</button>
+    <button type="button" class="btn btn-sm btn-success" [disabled]="procesando" (click)="irAtencion()">Iniciar atención</button>
+  } @else if (evento.estado === 'EN_ATENCION') {
+    <button type="button" class="btn btn-sm btn-success" (click)="irAtencion()">Continuar atención</button>
+  } @else if (evento.estado === 'ATENDIDA') {
+    <button type="button" class="btn btn-sm btn-outline-success" (click)="irAtencion()">Ver atención</button>
+  }
+</div>

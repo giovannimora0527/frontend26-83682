@@ -112,3 +112,26 @@ Con OTP de Mailpit y Chrome: los cuatro roles entran y ven solo sus menús. Fase
 
 - El enlace del kardex al despacho se agrega en la fase 7.
 - Citas, Historias y Fórmulas todavía usan el modelo anterior (fases 5 y 6). `/medico/listar-disponibles` sigue con `fechaInicio` y `fechaFin` en el backend.
+
+## Fase 5: calendario y citas
+
+- Dependencias: FullCalendar 6.1.22 (compatible con Angular 19; la versión 7 no usa los mismos paquetes). Calendario, inventario y carga masiva se descargan solo al visitarlos.
+- **Calendario** (`/inicio/calendario`, solo MEDICO): mes, semana, día y agenda; eventos y contadores desde la API por rango visible; horario de atención sombreado; crear, reprogramar (arrastrando o desde el detalle), confirmar y cancelar con motivo; historiales; reporte Excel. Ante un 409 se muestra el mensaje del backend y el evento vuelve a su lugar.
+- "Iniciar", "Continuar" y "Ver atención" llevan a `/inicio/atencion/:citaId` (en construcción hasta la fase 6). Nunca se envía EN_ATENCION ni ATENDIDA por PATCH.
+- **Citas**: servicio con su duración, estados del contrato, transición a Confirmada o Cancelada, cancelación por PATCH con motivo e historial de la mascota. `listar-disponibles` usa `inicio` y `fin`.
+- Modelos de cita, calendario y atención según `docs/api.md`. Historias y Fórmulas leen `fechaInicio`.
+
+### Decisiones
+
+- Redimensionar solo el final de una cita se revierte con un aviso, porque la duración la define el servicio.
+- Los contadores cubren el rango visible; en la vista de mes incluye los días contiguos que se muestran.
+- Al editar una cita se ofrece siempre el médico asignado, aunque la propia cita lo marque ocupado; el backend valida el cruce. Las citas antiguas sin servicio conservan 30 minutos.
+- No se hizo el calendario de solo lectura para ADMINISTRADOR y SECRETARIA (opcional en el enunciado).
+
+### Verificado contra el backend real (24/11/2026)
+
+Crear en una franja, choque (409 junto al campo), arrastrar, cancelar el arrastre, 409 al arrastrar sobre una cita ocupada (revierte), reprogramar fuera de horario, confirmar, cancelar, historiales, vistas, Excel, y Citas con Recepcion. 360, 768 y 1366 px. Sin probar contra el backend real: los documentos de una cita atendida (prefactura y fórmulas).
+
+### Pruebas
+
+Las pruebas de Citas se ajustaron al contrato (duración por servicio, estados y cancelación).

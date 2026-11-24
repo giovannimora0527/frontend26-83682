@@ -34,6 +34,11 @@ export class MedicoService {
     return this.backendService.get(environment.apiUrlAuth, this.api, `${medicoId}/horarios`);
   }
 
+  /** Horarios del médico autenticado. */
+  misHorarios(): Observable<Horario[]> {
+    return this.backendService.get(environment.apiUrlAuth, this.api, 'mis-horarios');
+  }
+
   /** Reemplaza la lista completa de horarios del médico. */
   guardarHorarios(medicoId: number, horarios: Horario[]): Observable<unknown> {
     return this.backendService.put(environment.apiUrlAuth, this.api, `${medicoId}/horarios`, horarios);
@@ -41,8 +46,8 @@ export class MedicoService {
 
   listarMedicosDisponiblesPorFecha(fechaInicio: Date, fechaFin: Date): Observable<Medico[]> {
     const params: HttpParams = new HttpParams()
-      .set('fechaInicio', formatDate(fechaInicio, "yyyy-MM-dd'T'HH:mm:ss", 'en-US'))
-      .set('fechaFin', formatDate(fechaFin, "yyyy-MM-dd'T'HH:mm:ss", 'en-US'));
+      .set('inicio', formatDate(fechaInicio, "yyyy-MM-dd'T'HH:mm:ss", 'en-US'))
+      .set('fin', formatDate(fechaFin, "yyyy-MM-dd'T'HH:mm:ss", 'en-US'));
     return this.backendService.get(environment.apiUrlAuth, this.api, "listar-disponibles", params);
   }
 }

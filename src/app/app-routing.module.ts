@@ -9,9 +9,6 @@ import { CitaComponent } from './demo/pages/cita/cita.component';
 import { ClienteComponent } from './demo/pages/cliente/cliente.component';
 import { HistoriaComponent } from './demo/pages/historia/historia.component';
 import { EspecializacionComponent } from './demo/pages/especializacion/especializacion.component';
-import { InventarioComponent } from './demo/pages/inventario/inventario.component';
-import { ProductoDetalleComponent } from './demo/pages/inventario/producto-detalle/producto-detalle.component';
-import { CargaInventarioComponent } from './demo/pages/carga-inventario/carga-inventario.component';
 import { EnConstruccionComponent } from './demo/pages/en-construccion/en-construccion.component';
 import { LoginComponent } from './demo/pages/login/login.component';
 import { authGuard } from './guards/auth.guard';
@@ -25,6 +22,14 @@ const ruta = (menu: string, title: string, component: Type<unknown>, path = menu
   data: { title, menu }
 });
 
+/** Igual que ruta, pero la pantalla se descarga solo cuando se visita. */
+const diferida = (menu: string, title: string, loadComponent: Route['loadComponent'], path = menu): Route => ({
+  path,
+  loadComponent,
+  canActivate: [menuGuard],
+  data: { title, menu }
+});
+
 const modulos: Routes = [
   ruta('usuarios', 'Usuarios', UsuarioComponent),
   ruta('clientes', 'Clientes', ClienteComponent),
@@ -32,14 +37,17 @@ const modulos: Routes = [
   ruta('especializaciones', 'Especializaciones', EspecializacionComponent),
   ruta('tarifas', 'Tarifas', EnConstruccionComponent),
   ruta('cita', 'Citas', CitaComponent, 'citas'),
-  ruta('calendario', 'Mi calendario', EnConstruccionComponent),
+  diferida('calendario', 'Mi calendario', () => import('./demo/pages/calendario/calendario.component').then((m) => m.CalendarioComponent)),
   ruta('atencion', 'Atención médica', EnConstruccionComponent),
+  ruta('atencion', 'Atención médica', EnConstruccionComponent, 'atencion/:citaId'),
   ruta('historias', 'Historias clínicas', HistoriaComponent),
   ruta('formulas', 'Fórmulas médicas', FormulaMedicaComponent),
   ruta('mascotas', 'Mascotas', MascotaComponent),
-  ruta('inventario', 'Inventario', InventarioComponent),
-  ruta('inventario', 'Detalle del producto', ProductoDetalleComponent, 'inventario/:id'),
-  ruta('carga-inventario', 'Carga masiva', CargaInventarioComponent),
+  diferida('inventario', 'Inventario', () => import('./demo/pages/inventario/inventario.component').then((m) => m.InventarioComponent)),
+  diferida('inventario', 'Detalle del producto', () =>
+    import('./demo/pages/inventario/producto-detalle/producto-detalle.component').then((m) => m.ProductoDetalleComponent), 'inventario/:id'),
+  diferida('carga-inventario', 'Carga masiva', () =>
+    import('./demo/pages/carga-inventario/carga-inventario.component').then((m) => m.CargaInventarioComponent)),
   ruta('despacho', 'Despacho', EnConstruccionComponent),
   ruta('facturacion', 'Facturación', EnConstruccionComponent),
   ruta('reportes', 'Reportes', EnConstruccionComponent)

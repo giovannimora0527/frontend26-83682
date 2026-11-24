@@ -51,8 +51,8 @@ describe('MedicoService', () => {
       req.url === `${environment.apiUrlAuth}/medico/listar-disponibles`
     );
     expect(solicitud.request.method).toBe('GET');
-    expect(solicitud.request.params.get('fechaInicio')).toBe('2026-10-15T10:30:00');
-    expect(solicitud.request.params.get('fechaFin')).toBe('2026-10-15T10:45:00');
+    expect(solicitud.request.params.get('inicio')).toBe('2026-10-15T10:30:00');
+    expect(solicitud.request.params.get('fin')).toBe('2026-10-15T10:45:00');
     expect(solicitud.request.body).toBeNull();
     solicitud.flush([]);
     expect(recibidos).toEqual([]);
@@ -66,8 +66,8 @@ describe('MedicoService', () => {
     const solicitud = http.expectOne((req) =>
       req.url === `${environment.apiUrlAuth}/medico/listar-disponibles`
     );
-    expect(solicitud.request.params.get('fechaInicio')).toBe('2026-12-31T23:50:00');
-    expect(solicitud.request.params.get('fechaFin')).toBe('2027-01-01T00:05:00');
+    expect(solicitud.request.params.get('inicio')).toBe('2026-12-31T23:50:00');
+    expect(solicitud.request.params.get('fin')).toBe('2027-01-01T00:05:00');
     solicitud.flush([]);
   });
 

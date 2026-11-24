@@ -157,7 +157,7 @@
                             <select id="cita" class="form-select" formControlName="cita" [compareWith]="compararCitas">
                                 <option [ngValue]="null" disabled>Selecciona una cita</option>
                                 <option *ngFor="let cita of listCitas" [ngValue]="cita">
-                                    {{ cita.fechaHora | date:'yyyy-MM-dd HH:mm' }} -
+                                    {{ cita.fechaInicio | date:'yyyy-MM-dd HH:mm' }} -
                                     {{ cita.cliente?.nombres }} {{ cita.cliente?.apellidos }}
                                     ({{ cita.mascota?.nombreMascota }})
                                 </option>

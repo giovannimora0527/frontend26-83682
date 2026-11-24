@@ -82,28 +82,29 @@
                         <tr *ngFor="let cita of citasPaginadas">
                             <td class="text-center">{{ cita.mascota?.nombreMascota ?? cita.mascota?.nombre }}</td>
                             <td class="text-center">{{ cita.medico?.nombres }} {{ cita.medico?.apellidos }}</td>
-                            <td class="text-center">{{ cita.fechaHora | date:'yyyy-MM-dd HH:mm' }}</td>
+                            <td class="text-center">{{ cita.fechaInicio | date:'yyyy-MM-dd HH:mm' }}</td>
                             <td class="text-center">{{ cita.motivo }}</td>
                             <td class="text-center">
-                                <span class="badge estado-cita"
-                                    [attr.data-estado]="(cita.estado || '').trim() | lowercase">
-                                    {{ cita.estado | uppercase }}
-                                </span>
+                                <app-badge-estado [estado]="cita.estado" />
                             </td>
-                            <td class="text-center">
+                            <td class="text-center text-nowrap">
                                 <button type="button"
-                                    class="btn btn-outline-primary btn-ver-cita me-2"
+                                    class="btn btn-sm btn-outline-primary btn-ver-cita mb-0"
                                     (click)="verCita(cita)" ngbTooltip="Ver información de la cita"
                                     tooltipClass="tooltip-info" triggers="hover focus" placement="top" container="body">
                                     <i class="fa fa-eye" aria-hidden="true"></i>&nbsp;Ver
                                 </button>
                                 <button type="button"
-                                    class="btn btn-outline-info d-inline-flex align-items-center justify-content-center"
+                                    class="btn btn-sm btn-outline-info mb-0"
                                     (click)="abrirEdicion(cita)"
-                                    [attr.aria-label]="esCitaCancelada(cita) ? 'No se puede editar una cita cancelada' : 'Editar cita'"
+                                    [attr.aria-label]="esCitaCancelada(cita) ? 'No se puede editar una cita cancelada' : esEditable(cita.estado) ? 'Editar cita' : 'La cita no se puede editar'"
                                     ngbTooltip="Editar" tooltipClass="tooltip-info" triggers="hover focus"
                                     placement="top" container="body">
                                     <i class="fa fa-edit" aria-hidden="true"></i>&nbsp;Editar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mb-0 btn-historial"
+                                    (click)="verHistorialMascota(cita)" ngbTooltip="Historial de la mascota" container="body">
+                                    <i class="fa fa-clock-rotate-left" aria-hidden="true"></i>&nbsp;Historial
                                 </button>
                             </td>
                         </tr>
@@ -144,17 +145,23 @@
                     <dt class="col-sm-4">Número de cita</dt>
                     <dd class="col-sm-8">{{ cita.id ?? 'No registrado' }}</dd>
                     <dt class="col-sm-4">Fecha y hora de inicio</dt>
-                    <dd class="col-sm-8">{{ (cita.fechaHora | date:'yyyy-MM-dd HH:mm') || 'No registrada' }}</dd>
+                    <dd class="col-sm-8">{{ (cita.fechaInicio | date:'yyyy-MM-dd HH:mm') || 'No registrada' }}</dd>
+                    <dt class="col-sm-4">Fecha y hora de fin</dt>
+                    <dd class="col-sm-8">{{ (cita.fechaFin | date:'yyyy-MM-dd HH:mm') || 'No registrada' }}</dd>
+                    <dt class="col-sm-4">Servicio</dt>
+                    <dd class="col-sm-8">{{ cita.servicio?.nombre || 'No registrado' }}</dd>
                     <dt class="col-sm-4">Duración</dt>
-                    <dd class="col-sm-8">15 minutos</dd>
+                    <dd class="col-sm-8">{{ duracionCita(cita) }} minutos</dd>
                     <dt class="col-sm-4">Estado</dt>
                     <dd class="col-sm-8">
-                        <span class="badge estado-cita" [attr.data-estado]="(cita.estado || '').trim() | lowercase">
-                            {{ (cita.estado | uppercase) || 'No registrado' }}
-                        </span>
+                        <app-badge-estado [estado]="cita.estado" />
                     </dd>
                     <dt class="col-sm-4">Motivo</dt>
                     <dd class="col-sm-8 text-break">{{ cita.motivo || 'No registrado' }}</dd>
+                    <ng-container *ngIf="cita.motivoCancelacion">
+                        <dt class="col-sm-4">Motivo de cancelación</dt>
+                        <dd class="col-sm-8 text-break">{{ cita.motivoCancelacion }}</dd>
+                    </ng-container>
                 </dl>
                 <hr>
                 <h2 class="h6">Datos de la mascota</h2>
@@ -251,6 +258,21 @@
                             </div>
                         </div>
                         <div class="col-md-6">
+                            <label for="citaServicio" class="form-label">Servicio</label>
+                            <select id="citaServicio" class="form-select" formControlName="servicio" [compareWith]="compararServicios">
+                                <option [ngValue]="null" [disabled]="modoFormulario === 'C'">
+                                    {{ modoFormulario === 'C' ? 'Selecciona un servicio' : 'Sin servicio (30 minutos)' }}</option>
+                                <option *ngFor="let servicio of serviciosDisponibles" [ngValue]="servicio">
+                                    {{ servicio.nombre }} ({{ servicio.duracionMinutos }} min)
+                                </option>
+                            </select>
+                            <div class="text-danger" *ngIf="errorServicios" role="alert">
+                                {{ errorServicios }}
+                                <button type="button" class="btn btn-link" (click)="listarServicios()">Reintentar</button>
+                            </div>
+                            <div class="text-danger" *ngIf="f['servicio'].touched && f['servicio'].invalid">Selecciona un servicio.</div>
+                        </div>
+                        <div class="col-md-6">
                             <label for="citaFechaHora" class="form-label">Fecha y hora de inicio</label>
                             <input id="citaFechaHora" type="datetime-local" class="form-control"
                                 formControlName="fechaHora">
@@ -263,8 +285,7 @@
                             <input id="citaFechaFin" type="datetime-local" class="form-control" readonly
                                 [value]="fechaFin ? (fechaFin | date:'yyyy-MM-dd\'T\'HH:mm') : ''"
                                 aria-describedby="citaDuracion">
-                            <div id="citaDuracion" class="form-text">Se calcula automáticamente: 15 minutos después del
-                                inicio.</div>
+                            <div id="citaDuracion" class="form-text">Se calcula automáticamente: {{ duracionMinutos }} minutos después del inicio.</div>
                         </div>
                         <div class="col-12">
                             <button id="consultarMedicos" type="button" class="btn btn-outline-primary"
@@ -309,16 +330,18 @@
                         <div class="col-md-6" *ngIf="modoFormulario === 'E'">
                             <label for="citaEstado" class="form-label">Estado</label>
                             <select id="citaEstado" class="form-select" formControlName="estado">
-                                <option *ngIf="f['estado'].value !== 'cancelada' && f['estado'].value !== 'confirmada'"
-                                    [ngValue]="f['estado'].value" disabled>
-                                    {{ f['estado'].value ? (f['estado'].value | uppercase) : 'Selecciona un estado' }}
-                                </option>
-                                <option value="cancelada">CANCELADA</option>
-                                <option value="confirmada">CONFIRMADA</option>
+                                <option [value]="estadoActual">{{ etiquetaEstado(estadoActual) }} (actual)</option>
+                                <option *ngFor="let cambio of cambiosEstado" [value]="cambio.valor">{{ cambio.etiqueta }}</option>
                             </select>
                             <div class="text-danger" *ngIf="f['estado'].touched && f['estado'].invalid">
                                 Selecciona el estado de la cita.
                             </div>
+                        </div>
+                        <div class="col-12" *ngIf="cancelando">
+                            <label for="citaMotivoCancelacion" class="form-label">Motivo de la cancelación</label>
+                            <textarea id="citaMotivoCancelacion" class="form-control" rows="2" formControlName="motivoCancelacion"
+                                maxlength="255"></textarea>
+                            <div class="form-text">Al cancelar no se guardan otros cambios del formulario.</div>
                         </div>
                         <div class="col-12">
                             <label for="citaMotivo" class="form-label">Motivo</label>

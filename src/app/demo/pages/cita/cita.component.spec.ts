@@ -3,6 +3,10 @@ import { of, Subject, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { CitaComponent } from './cita.component';
 import { CitaService } from './service/cita.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ServicioService } from '../tarifas/service/servicio.service';
+import { RespuestaApi } from 'src/app/models/respuesta';
+import { Servicio } from 'src/app/models/servicio';
 import { MascotaService } from '../mascota/service/mascota.service';
 import { MedicoService } from '../medico/service/medico.service';
 import { Cita } from 'src/app/models/cita';
@@ -21,24 +25,27 @@ describe('CitaComponent', () => {
     numeroDocumento: '123', telefono: '1234567', registroProfesional: 'RP123',
     especializacion: {}
   };
+  const servicio = { id: 4, nombre: 'Vacunación', duracionMinutos: 20, activo: true } as Servicio;
   const cita: Cita = {
-    id: 1, mascota, medico, fechaHora: new Date(2026, 9, 15, 10, 30),
-    motivo: 'Control general', estado: 'Pendiente'
+    id: 1, mascota, medico, servicio, fechaInicio: new Date(2026, 9, 15, 10, 30),
+    motivo: 'Control general', estado: 'PROGRAMADA'
   };
+  const respuesta = { status: 200, message: 'ok', data: cita };
 
   function completarFormulario(): void {
     component.form.setValue({
-      fechaHora: '2026-10-15T10:30', mascota, medico, motivo: 'Control general', estado: 'Pendiente'
+      servicio, fechaHora: '2026-10-15T10:30', mascota, medico, motivo: 'Control general', estado: 'PROGRAMADA', motivoCancelacion: ''
     });
   }
 
   beforeEach(async () => {
-    citaService = jasmine.createSpyObj<CitaService>('CitaService', ['listarCitas', 'guardarCita', 'actualizarCita']);
+    citaService = jasmine.createSpyObj<CitaService>('CitaService', ['listarCitas', 'guardarCita', 'actualizarCita', 'cambiarEstado']);
     mascotaService = jasmine.createSpyObj<MascotaService>('MascotaService', ['listarMascotas']);
     medicoService = jasmine.createSpyObj<MedicoService>('MedicoService', ['listar', 'listarMedicosDisponiblesPorFecha']);
     citaService.listarCitas.and.returnValue(of([cita]));
-    citaService.guardarCita.and.returnValue(of(cita));
-    citaService.actualizarCita.and.returnValue(of(cita));
+    citaService.guardarCita.and.returnValue(of(respuesta));
+    citaService.actualizarCita.and.returnValue(of(respuesta));
+    citaService.cambiarEstado.and.returnValue(of(respuesta));
     mascotaService.listarMascotas.and.returnValue(of([mascota]));
     medicoService.listar.and.returnValue(of([medico]));
     medicoService.listarMedicosDisponiblesPorFecha.and.returnValue(of([medico]));
@@ -46,6 +53,7 @@ describe('CitaComponent', () => {
       imports: [CitaComponent],
       providers: [
         { provide: CitaService, useValue: citaService },
+        { provide: ServicioService, useValue: { listar: () => of([servicio]) } },
         { provide: MascotaService, useValue: mascotaService },
         { provide: MedicoService, useValue: medicoService }
       ]
@@ -67,24 +75,23 @@ describe('CitaComponent', () => {
 
   it('colors each status independently of casing and surrounding spaces', () => {
     const casos = [
-      [' Programada ', 'rgb(255, 193, 7)'],
-      ['CANCELADA', 'rgb(220, 53, 69)'],
-      ['pendiente', 'rgb(253, 126, 20)'],
-      ['Confirmada', 'rgb(25, 135, 84)'],
-      ['atendida', 'rgb(25, 135, 84)'],
-      ['Otro', 'rgb(233, 236, 239)']
+      [' Programada ', 'Programada', 'rgb(240, 173, 78)'],
+      ['confirmada', 'Confirmada', 'rgb(13, 110, 253)'],
+      ['EN_ATENCION', 'En atención', 'rgb(111, 66, 193)'],
+      ['ATENDIDA', 'Atendida', 'rgb(25, 135, 84)'],
+      ['Cancelada', 'Cancelada', 'rgb(108, 117, 125)']
     ];
-    for (const [estado, color] of casos) {
+    for (const [estado, etiqueta, color] of casos) {
       component.listCitas = [{ ...cita, estado }];
       fixture.detectChanges();
-      const distintivo: HTMLElement = fixture.nativeElement.querySelector('.estado-cita');
-      expect(distintivo.textContent?.trim()).toBe(estado.trim().toUpperCase());
+      const distintivo: HTMLElement = fixture.nativeElement.querySelector('tbody .badge');
+      expect(distintivo.textContent?.trim()).toBe(etiqueta);
       expect(getComputedStyle(distintivo).backgroundColor).withContext(estado).toBe(color);
     }
   });
 
   it('filters by pet, doctor, date, reason and status, ignoring accents', () => {
-    for (const termino of ['lúna', 'andrés perez', '2026-10-15 10:30', 'control', 'pendiente']) {
+    for (const termino of ['lúna', 'andrés perez', '2026-10-15 10:30', 'control', 'programada']) {
       const buscador: HTMLInputElement = fixture.nativeElement.querySelector('input[type="search"]');
       buscador.value = termino;
       buscador.dispatchEvent(new Event('input'));
@@ -157,7 +164,7 @@ describe('CitaComponent', () => {
     completarFormulario();
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(citaService.guardarCita).toHaveBeenCalledWith(jasmine.objectContaining({
-      mascotaId: 7, medicoId: 3, fechaHora: '2026-10-15T10:30', motivo: 'Control general', estado: 'programada'
+      mascotaId: 7, medicoId: 3, fechaInicio: '2026-10-15T10:30:00', motivo: 'Control general', servicioId: 4
     }));
     expect(citaService.listarCitas).toHaveBeenCalledTimes(2);
     expect(component.enviando).toBeFalse();
@@ -174,33 +181,69 @@ describe('CitaComponent', () => {
 
   it('defaults new appointments to programada and hides the status selector', () => {
     spyOn(component, 'openModal');
-    component.abrirEdicion({ ...cita, estado: 'confirmada' });
+    component.abrirEdicion({ ...cita, estado: 'CONFIRMADA' });
     component.nuevaCita('C');
     fixture.detectChanges();
-    expect(component.form.controls['estado'].value).toBe('programada');
+    expect(component.form.controls['estado'].value).toBe('PROGRAMADA');
     expect(fixture.nativeElement.querySelector('#citaEstado')).toBeNull();
   });
 
-  it('preserves the current status but only offers cancelada and confirmada as changes', () => {
+  it('offers only the transitions allowed by the contract', () => {
     spyOn(component, 'openModal');
-    spyOn(Swal, 'fire');
-    for (const estado of [' PROGRAMADA ', 'pendiente', 'atendida', 'confirmada']) {
+    for (const [estado, opciones] of [[' programada ', ['PROGRAMADA', 'CONFIRMADA', 'CANCELADA']], ['CONFIRMADA', ['CONFIRMADA', 'CANCELADA']]] as const) {
       component.abrirEdicion({ ...cita, estado });
       fixture.detectChanges();
       const selector: HTMLSelectElement = fixture.nativeElement.querySelector('#citaEstado');
-      expect(selector.value).toContain(estado.trim().toLowerCase());
-      expect(Array.from(selector.options).filter((opcion) => !opcion.disabled).map((opcion) => opcion.value))
-        .toEqual(['cancelada', 'confirmada']);
+      expect(Array.from(selector.options).map((opcion) => opcion.value)).toEqual([...opciones]);
     }
-    for (const estado of ['cancelada', 'confirmada']) {
-      component.abrirEdicion(cita);
-      fixture.detectChanges();
-      const selector: HTMLSelectElement = fixture.nativeElement.querySelector('#citaEstado');
-      selector.value = estado;
-      selector.dispatchEvent(new Event('change'));
-      component.guardarCita();
-      expect(citaService.actualizarCita).toHaveBeenCalledWith(jasmine.objectContaining({ id: cita.id, estado }));
+  });
+
+  it('sends the status only when it changes to confirmed', () => {
+    spyOn(component, 'openModal');
+    spyOn(Swal, 'fire');
+    component.abrirEdicion(cita);
+    component.guardarCita();
+    expect('estado' in citaService.actualizarCita.calls.mostRecent().args[0]).toBeFalse();
+    component.abrirEdicion(cita);
+    component.form.controls['estado'].setValue('CONFIRMADA');
+    component.guardarCita();
+    expect(citaService.actualizarCita.calls.mostRecent().args[0].estado).toBe('CONFIRMADA');
+  });
+
+  it('cancels through PATCH with a mandatory reason and confirmation', async () => {
+    spyOn(component, 'openModal');
+    const aviso = spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true, isDenied: false, isDismissed: false });
+    component.abrirEdicion(cita);
+    component.form.controls['estado'].setValue('CANCELADA');
+    component.guardarCita();
+    expect(aviso).not.toHaveBeenCalled();
+    expect(component.respuestaError).toContain('motivo de la cancelación');
+    component.form.controls['motivoCancelacion'].setValue(' El propietario no puede ');
+    component.guardarCita();
+    component.guardarCita();
+    await fixture.whenStable();
+    expect(citaService.cambiarEstado).toHaveBeenCalledOnceWith(1, 'CANCELADA', 'El propietario no puede');
+    expect(citaService.actualizarCita).not.toHaveBeenCalled();
+  });
+
+  it('rejects editing appointments in care or finished', () => {
+    const abrir = spyOn(component, 'openModal');
+    const aviso = spyOn(Swal, 'fire');
+    for (const estado of ['EN_ATENCION', 'ATENDIDA']) {
+      component.abrirEdicion({ ...cita, estado });
     }
+    expect(abrir).not.toHaveBeenCalled();
+    expect(aviso).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the assigned doctor selectable when editing and allows old appointments without service', () => {
+    spyOn(component, 'openModal');
+    medicoService.listarMedicosDisponiblesPorFecha.and.returnValue(of([]));
+    component.abrirEdicion({ ...cita, servicio: null });
+    expect(component.duracionMinutos).toBe(30);
+    expect(component.form.valid).toBeTrue();
+    component.consultarMedicosDisponibles();
+    expect(component.listMedicos).toEqual([medico]);
   });
 
   it('identifies cancelled appointments and rejects attempts to edit them', () => {
@@ -276,7 +319,7 @@ describe('CitaComponent', () => {
     component.modoFormulario = 'E';
     completarFormulario();
     component.citaSelected = { ...cita, estado: ' CANCELADA ' };
-    component.form.controls['estado'].setValue('confirmada');
+    component.form.controls['estado'].setValue('CONFIRMADA');
     component.guardarCita();
     fixture.detectChanges();
     expect(citaService.actualizarCita).not.toHaveBeenCalled();
@@ -288,8 +331,8 @@ describe('CitaComponent', () => {
   });
 
   it('blocks duplicate requests while saving', () => {
-    const respuesta = new Subject<Cita>();
-    citaService.guardarCita.and.returnValue(respuesta);
+    const pendiente = new Subject<RespuestaApi<Cita>>();
+    citaService.guardarCita.and.returnValue(pendiente);
     component.modoFormulario = 'C';
     completarFormulario();
     component.guardarCita();
@@ -297,12 +340,12 @@ describe('CitaComponent', () => {
     fixture.detectChanges();
     expect(citaService.guardarCita).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
-    respuesta.complete();
+    pendiente.complete();
   });
 
   it('displays save errors without losing the form values', () => {
     spyOn(console, 'error');
-    citaService.guardarCita.and.returnValue(throwError(() => ({ error: { mensaje: 'Horario no disponible' } })));
+    citaService.guardarCita.and.returnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'Horario no disponible' } })));
     component.modoFormulario = 'C';
     completarFormulario();
     component.guardarCita();
@@ -329,19 +372,27 @@ describe('CitaComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('No fue posible cargar las citas.');
   });
 
-  it('calculates a read-only end exactly fifteen minutes later, including day and year changes', () => {
-    for (const [inicio, fin] of [
-      ['2026-10-15T10:30', '2026-10-15T10:45'],
-      ['2026-10-31T23:50', '2026-11-01T00:05'],
-      ['2026-12-31T23:50', '2027-01-01T00:05']
-    ]) {
+  it('calculates a read-only end from the service duration, including day and year changes', () => {
+    for (const [inicio, minutos, fin] of [
+      ['2026-10-15T10:30', null, '2026-10-15T11:00'],
+      ['2026-10-31T23:50', 20, '2026-11-01T00:10'],
+      ['2026-12-31T23:30', 60, '2027-01-01T00:30']
+    ] as const) {
+      component.form.controls['servicio'].setValue(minutos === null ? null : { ...servicio, duracionMinutos: minutos });
       component.form.controls['fechaHora'].setValue(inicio);
       fixture.detectChanges();
       const entrada: HTMLInputElement = fixture.nativeElement.querySelector('#citaFechaFin');
       expect(entrada.readOnly).toBeTrue();
       expect(entrada.value).toBe(fin);
-      expect(component.fechaFin?.getTime()).toBe(new Date(inicio).getTime() + 900000);
     }
+  });
+
+  it('clears availability when the service changes', () => {
+    completarFormulario();
+    component.consultarMedicosDisponibles();
+    component.form.controls['servicio'].setValue({ ...servicio, id: 9, duracionMinutos: 60 });
+    expect(component.listMedicos).toEqual([]);
+    expect(component.form.controls['medico'].value).toBeNull();
   });
 
   it('queries availability from the button using Date objects for the selected interval', () => {
@@ -351,9 +402,9 @@ describe('CitaComponent', () => {
     entrada.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     fixture.nativeElement.querySelector('#consultarMedicos').click();
-    expect(consultar).toHaveBeenCalledWith(new Date(2026, 9, 15, 10, 30), new Date(2026, 9, 15, 10, 45));
+    expect(consultar).toHaveBeenCalledWith(new Date(2026, 9, 15, 10, 30), new Date(2026, 9, 15, 11, 0));
     expect(medicoService.listarMedicosDisponiblesPorFecha).toHaveBeenCalledWith(
-      new Date(2026, 9, 15, 10, 30), new Date(2026, 9, 15, 10, 45)
+      new Date(2026, 9, 15, 10, 30), new Date(2026, 9, 15, 11, 0)
     );
     expect(component.listMedicos).toEqual([medico]);
     expect(component.disponibilidadConsultada).toBeTrue();

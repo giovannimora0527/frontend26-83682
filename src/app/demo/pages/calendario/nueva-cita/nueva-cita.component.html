@@ -1,0 +1,73 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="nuevaCitaTitulo">Nueva cita</h2>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+</div>
+<form class="modal-body" id="formNuevaCita" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  @if (respuestaError) {
+    <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+  }
+  @if (errorCatalogos) {
+    <div class="alert alert-danger" role="alert">
+      {{ errorCatalogos }} <button type="button" class="btn btn-link mb-0" (click)="cargarCatalogos()">Reintentar</button>
+    </div>
+  }
+  <fieldset [disabled]="enviando">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="nueva-buscar" class="form-label">Buscar cliente</label>
+        <input id="nueva-buscar" type="search" class="form-control" placeholder="Nombre, documento o teléfono" [ngModelOptions]="{ standalone: true }"
+          [(ngModel)]="terminoCliente" />
+      </div>
+      <div class="col-md-6">
+        <label for="nueva-cliente" class="form-label">Cliente</label>
+        <select id="nueva-cliente" class="form-select" formControlName="clienteId" [class.is-invalid]="esInvalido(form.controls.clienteId)" aria-describedby="nueva-cliente-error">
+          <option [ngValue]="null" disabled>{{ clientesFiltrados.length ? 'Selecciona un cliente' : 'No hay coincidencias' }}</option>
+          @for (cliente of clientesFiltrados; track cliente.id) {
+            <option [ngValue]="cliente.id">{{ cliente.nombres }} {{ cliente.apellidos }} - {{ cliente.numeroDocumento }}</option>
+          }
+        </select>
+        <div class="invalid-feedback" id="nueva-cliente-error">{{ form.controls.clienteId.errors?.['servidor'] ?? 'Selecciona un cliente.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="nueva-mascota" class="form-label">Mascota</label>
+        <select id="nueva-mascota" class="form-select" formControlName="mascotaId" [class.is-invalid]="esInvalido(form.controls.mascotaId)" aria-describedby="nueva-mascota-error">
+          <option [ngValue]="null" disabled>{{ cargandoMascotas ? 'Cargando mascotas...' : form.controls.clienteId.value === null ? 'Selecciona primero un cliente' : mascotas.length ? 'Selecciona una mascota' : 'El cliente no tiene mascotas activas' }}</option>
+          @for (mascota of mascotas; track mascota.mascotaId) {
+            <option [ngValue]="mascota.mascotaId">{{ mascota.nombreMascota ?? mascota.nombre }}</option>
+          }
+        </select>
+        <div class="invalid-feedback" id="nueva-mascota-error">{{ form.controls.mascotaId.errors?.['servidor'] ?? 'Selecciona una mascota.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="nueva-servicio" class="form-label">Servicio</label>
+        <select id="nueva-servicio" class="form-select" formControlName="servicioId" [class.is-invalid]="esInvalido(form.controls.servicioId)" aria-describedby="nueva-servicio-error">
+          <option [ngValue]="null" disabled>Selecciona un servicio</option>
+          @for (servicio of servicios; track servicio.id) {
+            <option [ngValue]="servicio.id">{{ servicio.nombre }} ({{ servicio.duracionMinutos }} min)</option>
+          }
+        </select>
+        <div class="invalid-feedback" id="nueva-servicio-error">{{ form.controls.servicioId.errors?.['servidor'] ?? 'Selecciona un servicio.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="nueva-inicio" class="form-label">Inicio</label>
+        <input id="nueva-inicio" type="datetime-local" step="900" class="form-control" formControlName="fechaInicio"
+          [class.is-invalid]="esInvalido(form.controls.fechaInicio)" aria-describedby="nueva-inicio-error" />
+        <div class="invalid-feedback" id="nueva-inicio-error">{{ form.controls.fechaInicio.errors?.['servidor'] ?? 'Selecciona una fecha y hora futuras.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <span class="form-label d-block">Fin</span>
+        <p class="form-control-plaintext mb-0" id="nueva-fin">{{ (fin | fechaHora) || 'Selecciona el servicio' }}</p>
+      </div>
+      <div class="col-12">
+        <label for="nueva-motivo" class="form-label">Motivo</label>
+        <textarea id="nueva-motivo" rows="3" class="form-control" formControlName="motivo" maxlength="255"
+          [class.is-invalid]="esInvalido(form.controls.motivo)" aria-describedby="nueva-motivo-error"></textarea>
+        <div class="invalid-feedback" id="nueva-motivo-error">{{ form.controls.motivo.errors?.['servidor'] ?? 'Ingresa un motivo de entre 6 y 255 caracteres.' }}</div>
+      </div>
+    </div>
+  </fieldset>
+</form>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+  <button type="submit" form="formNuevaCita" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : 'Crear cita' }}</button>
+</div>

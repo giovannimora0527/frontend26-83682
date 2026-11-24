@@ -9,6 +9,11 @@ export function fechaIso(fecha: Date): string {
   return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
 }
 
+/** Fecha y hora local en formato yyyy-MM-ddTHH:mm:ss, sin zona. */
+export function fechaHoraIso(fecha: Date): string {
+  return `${fechaIso(fecha)}T${[fecha.getHours(), fecha.getMinutes(), fecha.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':')}`;
+}
+
 export type Atajo = 'hoy' | 'semana' | 'mes' | 'mesAnterior' | 'anio';
 
 /** Rango del atajo; la semana va de lunes a domingo. */

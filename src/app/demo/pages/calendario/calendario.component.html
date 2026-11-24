@@ -1,0 +1,62 @@
+@if (errorHorarios()) {
+  <div class="alert alert-warning" role="alert">
+    {{ errorHorarios() }} <button type="button" class="btn btn-link mb-0" (click)="cargarHorarios()">Reintentar</button>
+  </div>
+}
+@if (sinHorarios()) {
+  <div class="alert alert-warning" role="alert">No tienes horarios de atención registrados. Solicítalos en administración para poder recibir citas.</div>
+}
+@if (error()) {
+  <div class="alert alert-danger" role="alert">{{ error() }} <button type="button" class="btn btn-link mb-0" (click)="recargar()">Reintentar</button></div>
+}
+
+<div class="row g-2 mb-3">
+  @for (contador of contadores; track contador.estado) {
+    <div class="col-6 col-lg-3">
+      <div class="card mb-0 p-3 h-100 border-start border-4" [style.border-left-color]="estadosUi[contador.estado].color + ' !important'">
+        <span class="text-muted small">{{ contador.titulo }}</span>
+        <strong class="fs-4">{{ resumen()?.[contador.estado] ?? '—' }}</strong>
+      </div>
+    </div>
+  }
+</div>
+
+<div class="card">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <ul class="list-unstyled d-flex flex-wrap gap-3 mb-0 small" aria-label="Colores por estado">
+      @for (estado of leyenda; track estado) {
+        <li><span class="leyenda" [style.background-color]="estadosUi[estado].color"></span> {{ estadosUi[estado].etiqueta }}</li>
+      }
+    </ul>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div class="form-check mb-0">
+        <input type="checkbox" id="mostrarCanceladas" class="form-check-input" [(ngModel)]="mostrarCanceladas" (ngModelChange)="recargar()" />
+        <label for="mostrarCanceladas" class="form-check-label">Mostrar canceladas</label>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-success mb-0" (click)="abrirReporte(reporte)">
+        <i class="fa fa-file-excel" aria-hidden="true"></i> Reporte Excel
+      </button>
+    </div>
+  </div>
+  <div class="card-body" [attr.aria-busy]="cargando()">
+    <full-calendar [options]="opciones()" />
+    <p class="text-muted small mt-2 mb-0">
+      Selecciona una franja libre (vista de día o semana) para crear una cita. Arrastra una cita programada o confirmada para reprogramarla.
+    </p>
+  </div>
+</div>
+
+<ng-template #reporte let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="reporteTitulo">Reporte de mis citas</h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body">
+    <app-filtro-fechas [inicial]="rangoReporte" [obligatorio]="true" (cambio)="rangoReporte = $event" />
+  </div>
+  <div class="modal-footer">
+    <app-boton-descarga endpoint="cita/reporte/excel" [params]="{ desde: rangoReporte?.desde, hasta: rangoReporte?.hasta }" [formatos]="['xlsx']"
+      [deshabilitado]="!rangoReporte" etiqueta="Descargar Excel" />
+    <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+  </div>
+</ng-template>

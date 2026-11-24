@@ -11,7 +11,7 @@ describe('CitaService', () => {
   let backendService: jasmine.SpyObj<BackendService>;
 
   beforeEach(() => {
-    backendService = jasmine.createSpyObj<BackendService>('BackendService', ['get', 'post', 'put']);
+    backendService = jasmine.createSpyObj<BackendService>('BackendService', ['get', 'post', 'put', 'patch']);
     TestBed.configureTestingModule({
       providers: [{ provide: BackendService, useValue: backendService }]
     });
@@ -30,5 +30,15 @@ describe('CitaService', () => {
     const [url, api, endpoint, params] = backendService.get.calls.mostRecent().args;
     expect([url, api, endpoint]).toEqual([environment.apiUrlAuth, 'cita', 'listar-por-mascota']);
     expect((params as HttpParams).get('mascotaId')).toBe('7');
+  });
+
+  it('should cancel with a reason and reschedule using PATCH', () => {
+    backendService.patch.and.returnValue(of({}));
+    service.cambiarEstado(5, 'CANCELADA', 'Motivo').subscribe();
+    expect(backendService.patch).toHaveBeenCalledWith(environment.apiUrlAuth, 'cita', '5/estado', { estado: 'CANCELADA', motivo: 'Motivo' });
+    service.cambiarEstado(5, 'CONFIRMADA').subscribe();
+    expect(backendService.patch).toHaveBeenCalledWith(environment.apiUrlAuth, 'cita', '5/estado', { estado: 'CONFIRMADA' });
+    service.reprogramar(5, '2026-12-01T09:00:00').subscribe();
+    expect(backendService.patch).toHaveBeenCalledWith(environment.apiUrlAuth, 'cita', '5/reprogramar', { fechaInicio: '2026-12-01T09:00:00' });
   });
 });

@@ -158,7 +158,7 @@
                                 <dt class="col-sm-4">Número de cita</dt>
                                 <dd class="col-sm-8">{{ cita.id ?? 'No informado' }}</dd>
                                 <dt class="col-sm-4">Fecha y hora</dt>
-                                <dd class="col-sm-8">{{ (cita.fechaHora | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
+                                <dd class="col-sm-8">{{ (cita.fechaInicio | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                 <dt class="col-sm-4">Motivo de consulta</dt>
                                 <dd class="col-sm-8 text-break">{{ cita.motivo || 'No informado' }}</dd>
                                 <dt class="col-sm-4">Estado de la cita</dt>
@@ -200,7 +200,7 @@
                                     <dt class="col-sm-4">Modificación del medicamento</dt>
                                     <dd class="col-sm-8">{{ (formula.medicamento.fechaModificacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                     <dt class="col-sm-4">Cita de la fórmula</dt>
-                                    <dd class="col-sm-8">{{ formula.cita.id ?? 'No informado' }} — {{ (formula.cita.fechaHora | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
+                                    <dd class="col-sm-8">{{ formula.cita.id ?? 'No informado' }} — {{ (formula.cita.fechaInicio | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
                                 </dl>
                             </article>
                         </ng-container>
@@ -325,7 +325,7 @@
                                                 {{ cargandoCatalogos ? 'Cargando citas...' : 'Selecciona una cita' }}
                                             </option>
                                             <option *ngFor="let cita of citasDisponibles" [ngValue]="cita.id">
-                                                {{ cita.fechaHora | date:'yyyy-MM-dd HH:mm' }} - {{ cita.motivo || 'Sin motivo' }}
+                                                {{ cita.fechaInicio | date:'yyyy-MM-dd HH:mm' }} - {{ cita.motivo || 'Sin motivo' }}
                                                 ({{ cita.estado }}){{ citaConAnotacion(cita) ? ' - ya tiene anotación' : '' }}
                                             </option>
                                         </select>

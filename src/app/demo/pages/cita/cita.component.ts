@@ -1,17 +1,23 @@
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription } from 'rxjs';
+import { finalize, merge, Subscription } from 'rxjs';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule, formatDate } from '@angular/common';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 import Swal from 'sweetalert2';
-import { Cita } from 'src/app/models/cita';
+import { Cita, CitaRq, ServicioCita } from 'src/app/models/cita';
 import { CitaService } from './service/cita.service';
 import { Mascota } from 'src/app/models/mascota';
 import { Medico } from 'src/app/models/medico';
 import { MascotaService } from '../mascota/service/mascota.service';
 import { MedicoService } from '../medico/service/medico.service';
+import { ServicioService } from '../tarifas/service/servicio.service';
+import { BadgeEstadoComponent } from 'src/app/shared/components/badge-estado/badge-estado.component';
+import { ESTADOS_UI } from 'src/app/shared/estados-ui';
+import { mensajeError } from 'src/app/shared/utils/http.util';
+import { DURACION_SIN_SERVICIO, duracionCita, esEditable, estadoCita } from './cita.util';
+import { HistorialCitaComponent } from './historial-cita/historial-cita.component';
 
 type ColumnaOrden = 'mascota' | 'medico' | 'fechaHora' | 'motivo' | 'estado';
 type ModalBootstrap = { show(): void; hide(): void };
@@ -21,7 +27,7 @@ type WindowBootstrap = Window & { bootstrap: { Modal: new (element: Element) => 
 
 @Component({
   selector: 'app-cita',
-  imports: [CommonModule, ReactiveFormsModule, NgbTooltipModule],
+  imports: [CommonModule, ReactiveFormsModule, NgbTooltipModule, BadgeEstadoComponent],
   templateUrl: './cita.component.html',
   styleUrl: './cita.component.scss'
 })
@@ -48,6 +54,12 @@ export class CitaComponent {
   disponibilidadConsultada = false;
   private consultaMedicos?: Subscription;
   private readonly destroyRef = inject(DestroyRef);
+  private readonly modalService = inject(NgbModal);
+  private modalHistorial?: NgbModalRef;
+  listServicios: ServicioCita[] = [];
+  errorServicios = '';
+  readonly duracionCita = duracionCita;
+  readonly esEditable = esEditable;
   terminoBusqueda = '';
   paginaActual = 1;
   readonly registrosPorPagina = 5;
@@ -63,15 +75,19 @@ export class CitaComponent {
   constructor(private readonly citaService: CitaService,    
     private readonly formBuilder: FormBuilder,
     private readonly mascotaService: MascotaService,
-    private readonly medicoService: MedicoService) {
+    private readonly medicoService: MedicoService,
+    private readonly servicioService: ServicioService) {
+    this.destroyRef.onDestroy(() => this.modalHistorial?.dismiss());
     this.inicializarFormulario();
     this.listarCitas();
     this.listarMascotas();
+    this.listarServicios();
   }
 
   inicializarFormulario() {
     this.form = this.formBuilder.group({
       mascota: [null, Validators.required],
+      servicio: [null, Validators.required],
       medico: [null, Validators.required],
       fechaHora: [null, [
         Validators.required,
@@ -80,8 +96,10 @@ export class CitaComponent {
       ]],
       motivo: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(255)]],
       estado: ['', Validators.required],
+      motivoCancelacion: ['', Validators.maxLength(255)]
     });
-    this.form.controls['fechaHora'].valueChanges.pipe(
+    // La disponibilidad depende de la hora de inicio y de la duración del servicio.
+    merge(this.form.controls['fechaHora'].valueChanges, this.form.controls['servicio'].valueChanges).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.consultaMedicos?.unsubscribe();
@@ -123,6 +141,28 @@ export class CitaComponent {
     });
   }
 
+  listarServicios(): void {
+    this.errorServicios = '';
+    this.servicioService.listar(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (servicios) => this.listServicios = servicios,
+      error: (error) => this.errorServicios = mensajeError(error, 'No fue posible cargar los servicios.')
+    });
+  }
+
+  /** Servicios activos, más el que ya tenga la cita en edición. */
+  get serviciosDisponibles(): ServicioCita[] {
+    const actual = this.citaSelected?.servicio;
+    return actual && !this.listServicios.some(({ id }) => id === actual.id) ? [actual, ...this.listServicios] : this.listServicios;
+  }
+
+  get duracionMinutos(): number {
+    return (this.form.controls['servicio'].value as ServicioCita | null)?.duracionMinutos ?? DURACION_SIN_SERVICIO;
+  }
+
+  compararServicios(servicioA: ServicioCita | null, servicioB: ServicioCita | null): boolean {
+    return servicioA === servicioB || (servicioA?.id !== undefined && servicioA.id === servicioB?.id);
+  }
+
   get fechaInicio(): Date | null {
     const control = this.form.controls['fechaHora'];
     return control.valid && control.value ? new Date(control.value) : null;
@@ -130,7 +170,7 @@ export class CitaComponent {
 
   get fechaFin(): Date | null {
     const inicio = this.fechaInicio;
-    return inicio ? new Date(inicio.getTime() + 15 * 60 * 1000) : null;
+    return inicio ? new Date(inicio.getTime() + this.duracionMinutos * 60 * 1000) : null;
   }
 
   consultarMedicosDisponibles(): void {
@@ -159,7 +199,9 @@ export class CitaComponent {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (medicos) => {
-        this.listMedicos = medicos;
+        // Al editar, la propia cita ocupa al médico asignado: se ofrece igual y el backend valida el cruce.
+        const asignado = this.modoFormulario === 'E' ? this.citaSelected?.medico : undefined;
+        this.listMedicos = asignado && !medicos.some(({ id }) => id === asignado.id) ? [...medicos, asignado] : medicos;
         this.cargandoMedicos = false;
         this.disponibilidadConsultada = true;
       },
@@ -201,7 +243,7 @@ export class CitaComponent {
         this.obtenerValorOrden(cita, 'medico'),
         this.obtenerValorOrden(cita, 'fechaHora'),
         cita.motivo,
-        cita.estado
+        this.obtenerValorOrden(cita, 'estado')
       ];
 
       return valores.some((valor) =>
@@ -227,12 +269,12 @@ export class CitaComponent {
       case 'medico':
         return  `${cita.medico?.nombres ?? ''} ${cita.medico?.apellidos ?? ''}`;
       case 'fechaHora':
-        return cita.fechaHora ? formatDate(cita.fechaHora, 'yyyy-MM-dd HH:mm', 'en-US')
+        return cita.fechaInicio ? formatDate(cita.fechaInicio, 'yyyy-MM-dd HH:mm', 'en-US')
           : '';
       case 'motivo':
         return cita.motivo ?? '';
       case 'estado':
-        return cita.estado ?? '';
+        return ESTADOS_UI[estadoCita(cita.estado)]?.etiqueta ?? cita.estado ?? '';
     }
   }
 
@@ -290,7 +332,9 @@ export class CitaComponent {
       this.modoFormulario = modo;
       this.citaSelected = null;
       this.resetFormulario();
-      this.form.controls['estado'].setValue('programada');
+      this.form.controls['servicio'].setValidators(Validators.required);
+      this.form.controls['servicio'].updateValueAndValidity({ emitEvent: false });
+      this.form.controls['estado'].setValue('PROGRAMADA');
       this.openModal(modo);
     }  
    
@@ -309,7 +353,7 @@ export class CitaComponent {
     }
 
     esCitaCancelada(cita: Cita | null): boolean {
-      return cita?.estado?.trim().toLowerCase() === 'cancelada';
+      return estadoCita(cita?.estado) === 'CANCELADA';
     }
 
     abrirEdicion(cita: Cita) {
@@ -317,79 +361,127 @@ export class CitaComponent {
         Swal.fire('Cita cancelada', 'No se puede editar una cita cancelada.', 'warning');
         return;
       }
+      if (!esEditable(cita.estado)) {
+        Swal.fire('Cita no editable', 'Solo se editan citas programadas o confirmadas.', 'warning');
+        return;
+      }
       this.resetFormulario();
       this.citaSelected = cita;
       this.modoFormulario = 'E';
+      // Las citas anteriores pueden no tener servicio: duran 30 minutos y lo conservan vacío.
+      this.form.controls['servicio'].setValidators(cita.servicio ? Validators.required : null);
       this.form.patchValue({
-        fechaHora: cita.fechaHora ? formatDate(cita.fechaHora, "yyyy-MM-dd'T'HH:mm", 'en-US') : null,
+        servicio: cita.servicio ?? null,
+        fechaHora: cita.fechaInicio ? formatDate(cita.fechaInicio, "yyyy-MM-dd'T'HH:mm", 'en-US') : null,
         mascota: cita.mascota,
         medico: cita.medico,
         motivo: cita.motivo ?? null,
-        estado: cita.estado?.trim().toLowerCase() ?? null
+        estado: estadoCita(cita.estado)
       });
       this.listMedicos = cita.medico ? [cita.medico] : [];
       this.openModal(this.modoFormulario);
     }
   
-    /**
-     * 
-     * @returns Acción realizada sobre la cita (crear o actualizar).
-     */
+    /** Estados a los que puede pasar la cita en edición; los de atención los asigna el módulo de atención. */
+    get cambiosEstado(): { valor: string; etiqueta: string }[] {
+      const cambios = estadoCita(this.citaSelected?.estado) === 'PROGRAMADA' ? ['CONFIRMADA', 'CANCELADA'] as const : ['CANCELADA'] as const;
+      return cambios.map((valor) => ({ valor, etiqueta: ESTADOS_UI[valor].etiqueta }));
+    }
+
+    get estadoActual(): string {
+      return estadoCita(this.citaSelected?.estado);
+    }
+
+    get cancelando(): boolean {
+      return this.modoFormulario === 'E' && this.form.controls['estado'].value === 'CANCELADA';
+    }
+
+    etiquetaEstado(estado: string | null | undefined): string {
+      return ESTADOS_UI[estadoCita(estado)]?.etiqueta ?? estado ?? '';
+    }
+
+    /** Crea o actualiza la cita. */
     guardarCita() {
+      if (this.enviando) {
+        return;
+      }
       if (this.modoFormulario === 'E' && this.esCitaCancelada(this.citaSelected)) {
         this.respuestaError = 'No se puede actualizar una cita cancelada.';
         return;
       }
-      if (this.form.invalid || this.enviando) {
+      if (this.cancelando) {
+        void this.cancelarCita();
+        return;
+      }
+      if (this.form.invalid) {
         this.form.markAllAsTouched();
         return;
       }
-  
+
       const valores = this.form.getRawValue();
-      const cita: Cita = {
-        id: this.citaSelected?.id,
+      const cita: CitaRq = {
         mascotaId: valores.mascota.mascotaId,
         medicoId: valores.medico.id,
-        fechaHora: valores.fechaHora,
-        motivo: valores.motivo ?? null,
-        estado: this.modoFormulario === 'C' ? 'programada' : valores.estado
+        fechaInicio: `${valores.fechaHora}:00`,
+        motivo: valores.motivo.trim()
       };
-  
-      this.enviando = true;
-      this.respuestaError = '';
-      const solicitud = this.modoFormulario === 'C'
-        ? this.citaService.guardarCita(cita)
-        : this.citaService.actualizarCita(cita);
-  
-      solicitud.subscribe({
-        next: (respuesta) => {
-          this.enviando = false;
-          const mensaje = this.obtenerMensajeRespuesta(
-            respuesta,
-            this.modoFormulario === 'C' ? 'La cita fue creada correctamente.' : 'La cita fue actualizada correctamente.'
-          );
-          this.closeModal();
-          this.listarCitas();
-          Swal.fire('Operación exitosa', mensaje, 'success');
-        },
-        error: (error) => {
-          this.enviando = false;
-          console.error('Error al guardar la cita:', error);
-          this.respuestaError = error.error?.mensaje ?? error.error?.message ?? error.message ??
-            'No fue posible guardar la cita.';
-        }
-      });
-    }
-  
-    private obtenerMensajeRespuesta(respuesta: unknown, mensajePredeterminado: string): string {
-      if (respuesta && typeof respuesta === 'object') {
-        const cuerpo = respuesta as { mensaje?: unknown; message?: unknown };
-        const mensaje = cuerpo.mensaje ?? cuerpo.message;
-        if (typeof mensaje === 'string') {
-          return mensaje;
+      if (valores.servicio) {
+        cita.servicioId = valores.servicio.id;
+      }
+      if (this.modoFormulario === 'E') {
+        cita.id = this.citaSelected?.id;
+        if (valores.estado !== this.estadoActual) {
+          cita.estado = valores.estado;
         }
       }
-      return mensajePredeterminado;
+      this.enviar(this.modoFormulario === 'C' ? this.citaService.guardarCita(cita) : this.citaService.actualizarCita(cita));
+    }
+
+    private async cancelarCita(): Promise<void> {
+      const motivo = (this.form.controls['motivoCancelacion'].value ?? '').trim();
+      const id = this.citaSelected?.id;
+      if (!motivo || this.form.controls['motivoCancelacion'].invalid || id === undefined) {
+        this.form.controls['motivoCancelacion'].markAsTouched();
+        this.respuestaError = 'Escribe el motivo de la cancelación.';
+        return;
+      }
+      this.enviando = true;
+      const { isConfirmed } = await Swal.fire({
+        title: '¿Cancelar la cita?', text: 'Una cita cancelada no se puede volver a editar.', icon: 'warning',
+        showCancelButton: true, confirmButtonText: 'Cancelar cita', cancelButtonText: 'Volver'
+      });
+      if (!isConfirmed) {
+        this.enviando = false;
+        return;
+      }
+      this.enviar(this.citaService.cambiarEstado(id, 'CANCELADA', motivo));
+    }
+
+    private enviar(solicitud: ReturnType<CitaService['guardarCita']>): void {
+      this.enviando = true;
+      this.respuestaError = '';
+      solicitud.pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.enviando = false)
+      ).subscribe({
+        next: ({ message }) => {
+          this.enviando = false;
+          this.closeModal();
+          this.listarCitas();
+          Swal.fire('Operación exitosa', message, 'success');
+        },
+        error: (error) => this.respuestaError = mensajeError(error, 'No fue posible guardar la cita.')
+      });
+    }
+
+    verHistorialMascota(cita: Cita): void {
+      const mascotaId = cita.mascota?.mascotaId;
+      if (mascotaId === undefined) {
+        return;
+      }
+      this.modalHistorial = this.modalService.open(HistorialCitaComponent, { size: 'lg', scrollable: true, ariaLabelledBy: 'historialTitulo' });
+      this.modalHistorial.componentInstance.mascotaId = mascotaId;
+      this.modalHistorial.componentInstance.titulo = `Historial de ${cita.mascota?.nombreMascota ?? cita.mascota?.nombre ?? 'la mascota'}`;
     }
 
 

@@ -22,7 +22,8 @@ export interface EventoCalendario {
     medicoNombre: string;
     servicioId: number | null;
     servicioNombre: string | null;
+    motivoCancelacion: string | null;
   };
 }
 
-export type ResumenEstadosCita = Partial<Record<EstadoCita, number>>;
+export type ResumenEstadosCita = Record<EstadoCita, number>;
