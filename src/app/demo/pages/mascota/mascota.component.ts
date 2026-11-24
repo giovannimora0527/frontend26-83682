@@ -1,1119 +1,281 @@
-
-/**
- * ==========================================================
- * CLÍNICA VETERINARIA - GESTIÓN DE MASCOTAS
- * ==========================================================
- *
- * Funcionalidades:
- *
- * 1. Consultar mascotas desde Spring Boot.
- * 2. Consultar propietarios desde MySQL.
- * 3. Buscar mascotas.
- * 4. Mostrar mascotas con paginación.
- * 5. Abrir el formulario para crear mascotas.
- * 6. Abrir el formulario para editar mascotas.
- * 7. Seleccionar propietarios.
- * 8. Guardar nuevas mascotas en MySQL.
- *
- * IMPORTANTE:
- * La creación está implementada.
- * La actualización de mascotas se implementará después.
- */
-
-// ==========================================================
-// 1. IMPORTACIONES
-// ==========================================================
-
-import { Component } from '@angular/core';
-
-import {
-  CommonModule,
-  formatDate
-} from '@angular/common';
-
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  AbstractControl,
-  FormsModule,
-  ReactiveFormsModule
-} from '@angular/forms';
-
-// Librería para mostrar alertas.
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 
-// Ventanas modales de Bootstrap.
-import { Modal } from 'bootstrap';
-
-// Servicio y DTO para gestionar mascotas.
-import {
-  MascotaService,
-  CrearMascotaDTO
-} from './service/mascota.service';
-
-// Modelo de mascota.
-import { Mascota } from 'src/app/models/mascota';
-
-// Servicio para consultar propietarios.
+import { MascotaService, MascotaDetalle, MascotaRq } from './service/mascota.service';
 import { ClienteService } from 'src/app/services/cliente.service';
-
-// Modelo de cliente.
+import { RazaService, RazaRegistro } from 'src/app/services/raza.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { Cliente } from 'src/app/models/cliente';
+import { TablaDatos, mensajeError } from 'src/app/utils/tabla-datos';
+import { HistorialMascotaComponent } from '../cita/historial-mascota.component';
 
+/** Solo letras (con tildes), espacios, apóstrofos y guiones. */
+const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ '-]{0,99}$/;
 
-// ==========================================================
-// 2. CONFIGURACIÓN DEL COMPONENTE
-// ==========================================================
+/** Fila de la tabla con los campos planos para buscar, filtrar y ordenar. */
+type FilaMascota = MascotaDetalle & {
+  propietario: string; documento: string; nombreRaza: string; especie: string; estadoTexto: string; estaActiva: boolean;
+};
 
+/**
+ * Pantalla de gestión de mascotas (pacientes).
+ *
+ * <p>Administración y recepción registran, editan y activan/inactivan; el médico consulta la ficha
+ * y el historial de citas. Reglas: propietario activo, raza coherente con la especie elegida,
+ * edad entre 0 y 40 años, un propietario no repite el nombre de una mascota activa y no se inactiva
+ * una mascota con citas futuras reservadas.</p>
+ */
 @Component({
-
   selector: 'app-mascota',
-
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule
-  ],
-
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, HistorialMascotaComponent],
   templateUrl: './mascota.component.html',
-
   styleUrl: './mascota.component.scss'
-
 })
+export class MascotaComponent implements OnInit {
+  /** Servicio de mascotas. */
+  private readonly api = inject(MascotaService);
+  /** Servicio de clientes (propietarios). */
+  private readonly clientesApi = inject(ClienteService);
+  /** Servicio de razas. */
+  private readonly razasApi = inject(RazaService);
+  /** Constructor de formularios reactivos. */
+  private readonly fb = inject(FormBuilder);
 
-/** Pantalla «mascota» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
-export class MascotaComponent {
+  /** Perfil del usuario autenticado en mayúsculas. */
+  private readonly perfil = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase();
+  /** Administración y recepción pueden registrar y modificar; el médico solo consulta. */
+  readonly puedeModificar = this.perfil.startsWith('ADMIN') || this.perfil.startsWith('RECEP');
 
-  // ========================================================
-  // 3. VARIABLES DEL MODAL
-  // ========================================================
+  /** Tabla con búsqueda, orden y paginación. */
+  readonly tabla = new TablaDatos<FilaMascota>(
+    ['nombreMascota', 'propietario', 'documento', 'nombreRaza', 'especie', 'mascotaId'], 'nombreMascota', 'asc');
+  /** Filtro por especie ('' = todas). */
+  filtroEspecie = '';
+  /** Filtro por estado ('' = todos). */
+  filtroEstado = 'Activa';
 
-  // Instancia del modal Bootstrap.
-  /** Modal instance. */
-  modalInstance: Modal | null = null;
+  /** Propietarios. */
+  clientes: Cliente[] = [];
+  /** Razas registradas. */
+  razas: RazaRegistro[] = [];
+  /** Especie elegida en el formulario (filtra el combo de razas). */
+  especieFormulario = '';
 
-  // Título de la ventana.
-  /** Title modal. */
-  titleModal: string = '';
+  /** Formulario de registro y edición. */
+  readonly formulario = this.fb.group({
+    nombreMascota: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(SOLO_LETRAS)]],
+    edad: [null as number | null, [Validators.required, Validators.min(0), Validators.max(40), Validators.pattern(/^\d+$/)]],
+    clienteId: [null as number | null, Validators.required],
+    razaId: [null as number | null, Validators.required],
+    activo: [true]
+  });
 
-  // C = Crear, E = Editar.
-  /** Modo formulario. */
-  modoFormulario: string = '';
-
-  // Texto del botón principal.
-  /** Title boton. */
-  titleBoton: string = '';
-
-
-  // ========================================================
-  // 4. LISTAS DE MASCOTAS Y CLIENTES
-  // ========================================================
-
-  // Mascotas obtenidas desde Spring Boot.
-  /** Lista de list mascotas. */
-  listMascotas: Mascota[] = [];
-
-  // Propietarios obtenidos desde Spring Boot.
-  /** Lista de list clientes. */
-  listClientes: Cliente[] = [];
-
-
-  // ========================================================
-  // 5. BÚSQUEDA Y PAGINACIÓN
-  // ========================================================
-
-  // Texto utilizado para buscar mascotas.
-  /** Criterio de filtrado: termino búsqueda. */
-  terminoBusqueda: string = '';
-
-  // Página actual de la tabla.
-  /** Página actual. */
-  paginaActual: number = 1;
-
-  // Cantidad de registros por página.
-  /** Registros por página. */
-  readonly registrosPorPagina: number = 10;
-
-
-  // ========================================================
-  // 6. FORMULARIO
-  // ========================================================
-
-  // Formulario reactivo.
-  /** Formulario reactivo: form. */
-  form!: FormGroup;
-
-  // Mascota seleccionada para editar.
-  /** Mascota selected. */
-  mascotaSelected: Mascota | null = null;
-
-  // Evita enviar el formulario varias veces.
+  /** Mascota en edición: null = formulario cerrado, 0 = nueva. */
+  editandoId: number | null = null;
+  /** Mascota que se está editando. */
+  editando: FilaMascota | null = null;
+  /** Mascota cuya ficha se muestra. */
+  detalle: FilaMascota | null = null;
+  /** Indica si se están cargando los datos. */
+  cargando = false;
   /** Indica si se está guardando. */
-  guardando: boolean = false;
+  guardando = false;
+  /** Mensaje de error general. */
+  error = '';
+  /** Mensaje de error del formulario. */
+  errorFormulario = '';
+  /** Mensaje de confirmación. */
+  aviso = '';
 
-
-  // ========================================================
-  // 7. CONSTRUCTOR
-  // ========================================================
-
-  /**
-   * Crea la instancia con sus dependencias inyectadas.
-   *
-   * @param mascotaService servicio mascota.
-   * @param formBuilder constructor de formularios reactivos.
-   * @param clienteService servicio cliente.
-   */
-  constructor(
-
-    /** Dependencia inyectada (MascotaService). */
-    private readonly mascotaService: MascotaService,
-
-    /** Formulario reactivo: form builder. */
-    private readonly formBuilder: FormBuilder,
-
-    /** Dependencia inyectada (ClienteService). */
-    private readonly clienteService: ClienteService
-
-  ) {
-
-    // Crear los controles del formulario.
-    this.inicializarFormulario();
-
-    // Consultar mascotas.
-    this.listar();
-
-    // Consultar propietarios.
-    this.listarClientes();
-
+  /** Configura los filtros y carga los datos. */
+  ngOnInit(): void {
+    this.tabla.filtroExtra = m =>
+      (!this.filtroEspecie || m.especie === this.filtroEspecie) && (!this.filtroEstado || m.estadoTexto === this.filtroEstado);
+    this.cargar();
   }
 
-
-  // ========================================================
-  // 8. CONSULTAR PROPIETARIOS
-  // ========================================================
-
-  /**
-   * Obtiene los clientes registrados desde Spring Boot.
-   *
-   * Se utilizan para llenar el selector
-   * de propietarios del formulario.
-   */
-  listarClientes(): void {
-
-    this.clienteService.listarClientes().subscribe({
-
-      next: (data: Cliente[]) => {
-
-        // Almacenar propietarios.
-        this.listClientes = data;
-
-        console.log(
-          'Clientes cargados:',
-          data
-        );
-
-      },
-
-      error: (error) => {
-
-        console.error(
-          'Error al cargar clientes:',
-          error
-        );
-
-      }
-
-    });
-
-  }
-
-
-  // ========================================================
-  // 9. COMPARAR CLIENTES
-  // ========================================================
-
-  /**
-   * Compara dos propietarios mediante clienteId.
-   *
-   * Es necesario porque el selector HTML
-   * almacena objetos Cliente completos.
-   *
-   * Se utiliza desde:
-   *
-   * [compareWith]="compararClientes"
-   */
-  compararClientes = (
-
-    /** Cliente1. */
-    cliente1: Cliente | null,
-
-    /** Cliente2. */
-    cliente2: Cliente | null
-
-  ): boolean => {
-
-    // Ambos son el mismo objeto.
-    if (cliente1 === cliente2) {
-
-      return true;
-
-    }
-
-    // Uno de los clientes es null.
-    if (!cliente1 || !cliente2) {
-
-      return false;
-
-    }
-
-    // Comparar utilizando el identificador.
-    return (
-
-      cliente1.clienteId != null &&
-
-      String(cliente1.clienteId) ===
-      String(cliente2.clienteId)
-
-    );
-
-  };
-
-
-  // ========================================================
-  // 10. INICIALIZAR FORMULARIO
-  // ========================================================
-
-  /**
-   * Crea todos los campos del formulario
-   * y sus respectivas validaciones.
-   */
-  inicializarFormulario(): void {
-
-    this.form = this.formBuilder.group({
-
-      // Nombre de la mascota.
-      nombreMascota: [
-
-        '',
-
-        [
-          Validators.required,
-          Validators.maxLength(100)
-        ]
-
-      ],
-
-      // Edad de la mascota.
-      edad: [
-
-        null,
-
-        [
-          Validators.required,
-          Validators.min(0)
-        ]
-
-      ],
-
-      // ID de raza.
-      raza: [
-
-        null,
-
-        [
-          Validators.required,
-          Validators.min(1)
-        ]
-
-      ],
-
-      // Objeto Cliente completo.
-      cliente: [
-
-        null,
-
-        Validators.required
-
-      ]
-
-    });
-
-  }
-
-
-  // ========================================================
-  // 11. OBTENER LOS CONTROLES
-  // ========================================================
-
-  /**
-   * Permite acceder a los controles
-   * del formulario desde el HTML.
-   */
-  get f(): {
-    [key: string]: AbstractControl
-  } {
-
-    return this.form.controls;
-
-  }
-
-
-  // ========================================================
-  // 12. LISTAR MASCOTAS
-  // ========================================================
-
-  /**
-   * Consulta mascotas con:
-   *
-   * - Nombre
-   * - Edad
-   * - Fecha de registro
-   * - Raza
-   * - Especie
-   * - Propietario
-   *
-   * Endpoint:
-   * GET /mascota/listar-detalle
-   */
-  listar(): void {
-
-    this.mascotaService.listarMascotas().subscribe({
-
-      next: (data: Mascota[]) => {
-
-        // Actualizar el listado.
-        this.listMascotas = data;
-
-        // Reiniciar paginación.
-        this.paginaActual = 1;
-
-        console.log(
-          'Mascotas cargadas:',
-          data
-        );
-
-      },
-
-      error: (error) => {
-
-        console.error(
-          'Error al obtener las mascotas:',
-          error
-        );
-
-      }
-
-    });
-
-  }
-
-
-  // ========================================================
-  // 13. FILTRAR MASCOTAS
-  // ========================================================
-
-  /**
-   * Permite buscar mascotas por:
-   *
-   * - Nombre
-   * - Edad
-   * - Raza
-   * - Especie
-   * - Propietario
-   * - Fecha
-   */
-  get mascotasFiltradas(): Mascota[] {
-
-    // Obtener texto de búsqueda.
-    const termino = this.normalizarTexto(
-
-      this.terminoBusqueda.trim()
-
-    );
-
-    // Sin búsqueda: mostrar todas.
-    if (!termino) {
-
-      return this.listMascotas;
-
-    }
-
-    // Filtrar la lista.
-    return this.listMascotas.filter(
-
-      (mascota) => {
-
-        const valores = [
-
-          // Nombre.
-          mascota.nombreMascota,
-
-          // Especie.
-          mascota.raza?.especie,
-
-          // Raza.
-          mascota.raza?.nombre,
-
-          // Edad.
-          mascota.edad,
-
-          // Propietario.
-          `${
-            mascota.cliente?.nombres ?? ''
-          } ${
-            mascota.cliente?.apellidos ?? ''
-          }`,
-
-          // Fecha.
-          mascota.fechaRegistro
-            ? formatDate(
-                mascota.fechaRegistro,
-                'yyyy-MM-dd HH:mm',
-                'en-US'
-              )
-            : ''
-
-        ];
-
-        // Comprobar coincidencias.
-        return valores.some(
-
-          (valor) => {
-
-            return this.normalizarTexto(
-
-              String(valor ?? '')
-
-            ).includes(termino);
-
-          }
-
-        );
-
-      }
-
-    );
-
-  }
-
-
-  // ========================================================
-  // 14. NORMALIZAR TEXTO
-  // ========================================================
-
-  /**
-   * Convierte el texto a minúsculas
-   * y elimina tildes.
-   *
-   * Ejemplo:
-   * "MÁX" -> "max"
-   */
-  private normalizarTexto(
-    texto: string
-  ): string {
-
-    return texto
-
-      .toLocaleLowerCase()
-
-      .normalize('NFD')
-
-      .replace(
-        /[\u0300-\u036f]/g,
-        ''
-      );
-
-  }
-
-
-  // ========================================================
-  // 15. ACTUALIZAR BÚSQUEDA
-  // ========================================================
-
-  /**
-   * Se ejecuta cuando el usuario
-   * escribe en el buscador.
-   */
-  actualizarBusqueda(
-    event: Event
-  ): void {
-
-    this.terminoBusqueda = (
-
-      event.target as HTMLInputElement
-
-    ).value;
-
-    // Regresar a la primera página.
-    this.paginaActual = 1;
-
-  }
-
-
-  // ========================================================
-  // 16. PAGINACIÓN DE MASCOTAS
-  // ========================================================
-
-  /**
-   * Muestra solamente los registros
-   * correspondientes a la página actual.
-   */
-  get mascotasPaginadas(): Mascota[] {
-
-    const inicio = (
-
-      this.paginaActual - 1
-
-    ) * this.registrosPorPagina;
-
-    return this.mascotasFiltradas.slice(
-
-      inicio,
-
-      inicio + this.registrosPorPagina
-
-    );
-
-  }
-
-
-  // ========================================================
-  // 17. CALCULAR TOTAL DE PÁGINAS
-  // ========================================================
-
-  get totalPaginas(): number {
-
-    return Math.ceil(
-
-      this.mascotasFiltradas.length /
-
-      this.registrosPorPagina
-
-    );
-
-  }
-
-
-  // ========================================================
-  // 18. GENERAR NÚMEROS DE PÁGINAS
-  // ========================================================
-
-  /**
-   * Ejemplo:
-   *
-   * Si hay 21 mascotas:
-   * [1, 2, 3]
-   */
-  get paginas(): number[] {
-
-    return Array.from(
-
-      {
-        length: this.totalPaginas
-      },
-
-      (_, indice) => indice + 1
-
-    );
-
-  }
-
-
-  // ========================================================
-  // 19. CAMBIAR DE PÁGINA
-  // ========================================================
-
-  cambiarPagina(
-    pagina: number
-  ): void {
-
-    if (
-
-      pagina >= 1 &&
-
-      pagina <= this.totalPaginas
-
-    ) {
-
-      this.paginaActual = pagina;
-
-    }
-
-  }
-
-
-  // ========================================================
-  // 20. CREAR NUEVA MASCOTA
-  // ========================================================
-
-  /**
-   * Se ejecuta al pulsar Nuevo.
-   *
-   * Limpia el formulario y abre
-   * la ventana de creación.
-   */
-  nuevaMascota(
-    modo: string
-  ): void {
-
-    // No estamos editando.
-    this.mascotaSelected = null;
-
-    // Limpiar campos.
-    this.resetFormulario();
-
-    // Abrir modal.
-    this.openModal(modo);
-
-  }
-
-
-  // ========================================================
-  // 21. ABRIR EDICIÓN
-  // ========================================================
-
-  /**
-   * Carga los datos de una mascota
-   * dentro del formulario.
-   */
-  abrirEdicion(
-    mascota: Mascota
-  ): void {
-
-    // Guardar mascota seleccionada.
-    this.mascotaSelected = mascota;
-
-    // Colocar sus datos en el formulario.
-    this.form.patchValue({
-
-      nombreMascota:
-        mascota.nombreMascota ?? '',
-
-      edad:
-        mascota.edad ?? null,
-
-      // Obtener ID de raza.
-      raza:
-        mascota.raza?.id ?? null,
-
-      // Objeto Cliente completo.
-      cliente:
-        mascota.cliente ?? null
-
-    });
-
-    // Abrir en modo edición.
-    this.openModal('E');
-
-  }
-
-
-  // ========================================================
-  // 22. REINICIAR FORMULARIO
-  // ========================================================
-
-  /**
-   * Limpia todos los controles
-   * y elimina validaciones visuales.
-   */
-  resetFormulario(): void {
-
-    this.form.reset({
-
-      nombreMascota: '',
-
-      edad: null,
-
-      raza: null,
-
-      cliente: null
-
-    });
-
-    this.form.markAsPristine();
-
-    this.form.markAsUntouched();
-
-  }
-
-
-  // ========================================================
-  // 23. ABRIR MODAL
-  // ========================================================
-
-  /**
-   * Configura la ventana según el modo:
-   *
-   * C: Crear Mascota.
-   * E: Editar Mascota.
-   */
-  openModal(
-    modo: string
-  ): void {
-
-    this.modoFormulario = modo;
-
-    // Cambiar título.
-    this.titleModal =
-
-      modo === 'C'
-
-        ? 'Crear Mascota'
-
-        : 'Editar Mascota';
-
-    // Cambiar texto del botón.
-    this.titleBoton =
-
-      modo === 'C'
-
-        ? 'Guardar Mascota'
-
-        : 'Actualizar Mascota';
-
-    // Buscar el modal en el HTML.
-    const modalElement =
-
-      document.getElementById(
-        'modalCrearMascota'
-      );
-
-    if (modalElement) {
-
-      // Crear o reutilizar modal.
-      this.modalInstance ??=
-
-        new Modal(modalElement);
-
-      // Mostrar modal.
-      this.modalInstance.show();
-
-    }
-
-  }
-
-
-  // ========================================================
-  // 24. CERRAR MODAL
-  // ========================================================
-
-  /**
-   * Cierra el formulario
-   * y limpia la selección.
-   */
-  closeModal(): void {
-
-    if (this.modalInstance) {
-
-      this.modalInstance.hide();
-
-    }
-
-    // Limpiar formulario.
-    this.resetFormulario();
-
-    // Eliminar selección.
-    this.mascotaSelected = null;
-
-  }
-
-
-  // ========================================================
-  // 25. GUARDAR MASCOTA EN MYSQL
-  // ========================================================
-
-  /**
-   * REGISTRAR NUEVA MASCOTA
-   *
-   * 1. Validar formulario.
-   * 2. Obtener objeto Cliente.
-   * 3. Extraer clienteId.
-   * 4. Preparar los datos.
-   * 5. Enviar POST a Spring Boot.
-   * 6. Mostrar confirmación.
-   * 7. Actualizar la tabla.
-   */
-  guardarMascota(): void {
-
-    // ------------------------------------------------------
-    // PASO 1. IMPEDIR PETICIONES DUPLICADAS
-    // ------------------------------------------------------
-
-    if (this.guardando) {
-
-      return;
-
-    }
-
-    // ------------------------------------------------------
-    // PASO 2. VALIDAR EL FORMULARIO
-    // ------------------------------------------------------
-
-    if (this.form.invalid) {
-
-      this.form.markAllAsTouched();
-
-      Swal.fire({
-
-        icon: 'warning',
-
-        title: 'Formulario incompleto',
-
-        text: 'Completa todos los campos correctamente.'
-
+  /** Consulta mascotas, propietarios y razas. */
+  cargar(): void {
+    this.cargando = true;
+    this.error = '';
+    forkJoin({ mascotas: this.api.listarDetalle(), clientes: this.clientesApi.listarClientes(), razas: this.razasApi.listarRazas() })
+      .subscribe({
+        next: ({ mascotas, clientes, razas }) => {
+          this.tabla.datos = mascotas.map(m => ({
+            ...m,
+            estaActiva: !!m.activo,
+            estadoTexto: m.activo ? 'Activa' : 'Inactiva',
+            propietario: `${m.cliente?.nombres ?? ''} ${m.cliente?.apellidos ?? ''}`.trim(),
+            documento: `${m.cliente?.tipoDocumento ?? ''} ${m.cliente?.numeroDocumento ?? ''}`.trim(),
+            nombreRaza: m.raza?.nombre ?? '',
+            especie: m.raza?.especie ?? ''
+          }));
+          this.clientes = clientes;
+          this.razas = razas;
+          this.cargando = false;
+        },
+        error: e => {
+          this.error = mensajeError(e, 'No fue posible consultar las mascotas.');
+          this.cargando = false;
+        }
       });
+  }
 
-      return;
+  /** Especies registradas en el catálogo de razas. */
+  get especies(): string[] {
+    return [...new Set(this.razas.map(r => r.especie))].sort((a, b) => a.localeCompare(b, 'es'));
+  }
 
+  /** Razas de la especie elegida en el formulario. */
+  get razasFormulario(): RazaRegistro[] {
+    return this.razas.filter(r => !this.especieFormulario || r.especie === this.especieFormulario);
+  }
+
+  /** Propietarios activos (más el actual si se edita una mascota de un propietario archivado). */
+  get clientesFormulario(): Cliente[] {
+    return this.clientes.filter(c => !!c.activo || c.clienteId === this.editando?.clienteId);
+  }
+
+  /** Número de mascotas activas. */
+  get activas(): number {
+    return this.tabla.datos.filter(m => m.estaActiva).length;
+  }
+
+  /** Al cambiar la especie se limpia la raza si ya no corresponde. */
+  alCambiarEspecie(): void {
+    const raza = this.razas.find(r => r.razaId === this.formulario.controls.razaId.value);
+    if (raza && raza.especie !== this.especieFormulario) {
+      this.formulario.controls.razaId.setValue(null);
     }
+  }
 
-    // ------------------------------------------------------
-    // PASO 3. COMPROBAR MODO DEL FORMULARIO
-    // ------------------------------------------------------
+  /** Abre el formulario para registrar una mascota. */
+  nueva(): void {
+    this.editandoId = 0;
+    this.editando = null;
+    this.detalle = null;
+    this.errorFormulario = '';
+    this.especieFormulario = this.filtroEspecie;
+    this.formulario.reset({ nombreMascota: '', edad: null, clienteId: null, razaId: null, activo: true });
+  }
 
-    // El endpoint para actualizar todavía no existe.
-    if (this.modoFormulario === 'E') {
+  /**
+   * Abre el formulario con los datos de la mascota.
+   *
+   * @param m mascota a editar.
+   */
+  editar(m: FilaMascota): void {
+    this.editandoId = m.mascotaId;
+    this.editando = m;
+    this.detalle = null;
+    this.errorFormulario = '';
+    this.especieFormulario = m.especie;
+    this.formulario.reset({ nombreMascota: m.nombreMascota, edad: m.edad, clienteId: m.clienteId, razaId: m.razaId, activo: m.estaActiva });
+  }
 
-      Swal.fire({
+  /** Cierra el formulario sin guardar. */
+  cancelar(): void {
+    this.editandoId = null;
+    this.editando = null;
+  }
 
-        icon: 'info',
+  /**
+   * Indica si un campo es inválido y ya fue tocado.
+   *
+   * @param campo nombre del control.
+   * @returns true si debe mostrarse el error.
+   */
+  invalido(campo: keyof typeof this.formulario.controls): boolean {
+    const c = this.formulario.controls[campo];
+    return c.invalid && (c.touched || c.dirty);
+  }
 
-        title: 'Actualización pendiente',
-
-        text: 'Por ahora solamente está disponible el registro de nuevas mascotas.'
-
-      });
-
+  /** Valida y guarda la mascota (crea o actualiza). */
+  guardar(): void {
+    this.formulario.markAllAsTouched();
+    if (this.formulario.invalid) {
+      this.errorFormulario = 'Revisa los campos marcados.';
       return;
-
     }
-
-    // ------------------------------------------------------
-    // PASO 4. OBTENER VALORES
-    // ------------------------------------------------------
-
-    const valores = this.form.value;
-
-    // ------------------------------------------------------
-    // PASO 5. OBTENER PROPIETARIO SELECCIONADO
-    // ------------------------------------------------------
-
-    /**
-     * IMPORTANTE:
-     *
-     * El formulario guarda un objeto Cliente.
-     *
-     * Por ejemplo:
-     *
-     * {
-     *   clienteId: 2,
-     *   nombres: 'María',
-     *   apellidos: 'Gómez Rodríguez'
-     * }
-     *
-     * No debemos convertir directamente
-     * todo el objeto a número.
-     */
-
-    const clienteSeleccionado: Cliente | null =
-
-      valores.cliente;
-
-    // Extraer únicamente el identificador.
-    const clienteId = Number(
-
-      clienteSeleccionado?.clienteId
-
-    );
-
-    // ------------------------------------------------------
-    // PASO 6. VALIDAR EL PROPIETARIO
-    // ------------------------------------------------------
-
-    if (
-
-      !clienteSeleccionado ||
-
-      !Number.isInteger(clienteId) ||
-
-      clienteId <= 0
-
-    ) {
-
-      Swal.fire({
-
-        icon: 'warning',
-
-        title: 'Propietario inválido',
-
-        text: 'Selecciona un propietario válido.'
-
-      });
-
+    const v = this.formulario.getRawValue();
+    const nombre = (v.nombreMascota ?? '').trim().replace(/\s+/g, ' ');
+    const repetida = this.tabla.datos.some(m => m.mascotaId !== this.editandoId && m.estaActiva &&
+      m.clienteId === v.clienteId && m.nombreMascota.toLowerCase() === nombre.toLowerCase());
+    if (repetida) {
+      this.errorFormulario = `El propietario ya tiene una mascota activa llamada ${nombre}.`;
       return;
-
     }
-
-    // ------------------------------------------------------
-    // PASO 7. PREPARAR LOS DATOS
-    // ------------------------------------------------------
-
-    const datos: CrearMascotaDTO = {
-
-      nombreMascota: String(
-
-        valores.nombreMascota ?? ''
-
-      ).trim(),
-
-      edad: Number(
-        valores.edad
-      ),
-
-      razaId: Number(
-        valores.raza
-      ),
-
-      // CORRECCIÓN PRINCIPAL:
-      // Enviar el ID, no el objeto completo.
-      clienteId: clienteId
-
+    if (this.editando && this.editando.estaActiva && !v.activo && this.editando.citasFuturas > 0) {
+      this.errorFormulario = `No se puede inactivar: tiene ${this.editando.citasFuturas} cita(s) futura(s) reservada(s).`;
+      return;
+    }
+    const datos: MascotaRq = {
+      nombreMascota: nombre, edad: Number(v.edad), clienteId: Number(v.clienteId), razaId: Number(v.razaId), activo: !!v.activo
     };
-
-    // ------------------------------------------------------
-    // PASO 8. VALIDAR DATOS ADICIONALES
-    // ------------------------------------------------------
-
-    if (
-
-      !datos.nombreMascota ||
-
-      !Number.isInteger(datos.edad) ||
-
-      datos.edad < 0 ||
-
-      !Number.isInteger(datos.razaId) ||
-
-      datos.razaId <= 0
-
-    ) {
-
-      Swal.fire({
-
-        icon: 'warning',
-
-        title: 'Datos inválidos',
-
-        text: 'Verifica el nombre, la edad y la raza.'
-
-      });
-
-      return;
-
-    }
-
-    // ------------------------------------------------------
-    // PASO 9. MOSTRAR DATOS EN CONSOLA
-    // ------------------------------------------------------
-
-    console.log(
-
-      'Datos enviados a Spring Boot:',
-
-      datos
-
-    );
-
-    // ------------------------------------------------------
-    // PASO 10. ENVIAR PETICIÓN POST
-    // ------------------------------------------------------
-
     this.guardando = true;
-
-    this.mascotaService.crearMascota(
-
-      datos
-
-    ).subscribe({
-
-      // ----------------------------------------------------
-      // RESPUESTA CORRECTA DEL BACKEND
-      // ----------------------------------------------------
-
-      next: (mascota: Mascota) => {
-
-        // Permitir otro guardado.
+    this.errorFormulario = '';
+    const peticion = this.editandoId ? this.api.actualizar(this.editandoId, datos) : this.api.crearMascota(datos);
+    peticion.subscribe({
+      next: m => {
         this.guardando = false;
-
-        console.log(
-
-          'Mascota registrada:',
-
-          mascota
-
-        );
-
-        // Cerrar formulario.
-        this.closeModal();
-
-        // Actualizar listado.
-        this.listar();
-
-        // Mostrar confirmación.
-        Swal.fire({
-
-          icon: 'success',
-
-          title: 'Mascota registrada',
-
-          text:
-
-            `La mascota ${mascota.nombreMascota} ` +
-
-            'se guardó correctamente.'
-
-        });
-
+        this.aviso = `Mascota ${m.nombreMascota} ${this.editandoId ? 'actualizada' : 'registrada'}.`;
+        this.editandoId = null;
+        this.editando = null;
+        this.cargar();
       },
-
-      // ----------------------------------------------------
-      // ERROR DEL BACKEND
-      // ----------------------------------------------------
-
-      error: (error) => {
-
-        // Permitir volver a intentar.
+      error: e => {
         this.guardando = false;
-
-        // Mostrar error técnico.
-        console.error(
-
-          'Error al guardar mascota:',
-
-          error
-
-        );
-
-        // Mostrar mensaje al usuario.
-        Swal.fire({
-
-          icon: 'error',
-
-          title: 'Error al guardar',
-
-          text:
-
-            error.error?.message ||
-
-            'No fue posible registrar la mascota. Revisa los datos enviados.'
-
-        });
-
+        this.errorFormulario = mensajeError(e, 'No fue posible guardar la mascota.');
       }
-
     });
-
   }
 
+  /**
+   * Activa o inactiva una mascota, previa confirmación.
+   *
+   * @param m mascota seleccionada.
+   */
+  cambiarEstado(m: FilaMascota): void {
+    const activar = !m.estaActiva;
+    if (!activar && m.citasFuturas > 0) {
+      this.error = `No se puede inactivar a ${m.nombreMascota}: tiene ${m.citasFuturas} cita(s) futura(s) reservada(s). ` +
+        'Cancélelas primero en Gestión de Citas.';
+      return;
+    }
+    if (activar && m.cliente && !m.cliente.activo) {
+      this.error = `No se puede activar a ${m.nombreMascota}: su propietario está archivado.`;
+      return;
+    }
+    Swal.fire({
+      title: activar ? '¿Activar mascota?' : '¿Inactivar mascota?',
+      text: activar ? `${m.nombreMascota} podrá agendar citas nuevamente.`
+        : `${m.nombreMascota} no podrá agendar nuevas citas. Su historia clínica se conserva.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: activar ? 'Activar' : 'Inactivar',
+      cancelButtonText: 'Cancelar'
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      this.error = '';
+      this.api.cambiarEstado(m.mascotaId, activar).subscribe({
+        next: () => {
+          this.aviso = `${m.nombreMascota} ${activar ? 'activada' : 'inactivada'}.`;
+          this.cargar();
+        },
+        error: e => (this.error = mensajeError(e, 'No fue posible cambiar el estado de la mascota.'))
+      });
+    });
+  }
+
+  /** Limpia la búsqueda y los filtros. */
+  limpiarFiltros(): void {
+    this.tabla.busqueda = '';
+    this.filtroEspecie = '';
+    this.filtroEstado = '';
+    this.tabla.reiniciar();
+  }
 }

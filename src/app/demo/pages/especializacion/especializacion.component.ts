@@ -70,13 +70,12 @@ export class EspecializacionComponent implements OnInit {
   ) {}
 
   // 5. INICIALIZACIÓN
-  /** Inicializa el componente y carga los datos iniciales. */
+  /**
+   * Inicializa el componente. La pantalla delega en {@link TarifarioComponent}, que carga sus propios
+   * datos (el administrador edita; recepción consulta en modo solo lectura).
+   */
   ngOnInit(): void {
-    if (this.esAdmin) return;
-
-    // Consultar las especializaciones al abrir.
-    this.cargarEspecializaciones();
-
+    this.cargando = false;
   }
 
   // 6. CONSULTAR ESPECIALIZACIONES

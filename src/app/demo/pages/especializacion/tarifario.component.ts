@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, Observable } from 'rxjs';
 import { hoyBogota } from '../../../services/agenda.service';
@@ -14,6 +14,8 @@ import { ClinicaService, Especialidad, mensajeClinica, ServicioClinico, TarifaCl
 export class TarifarioComponent implements OnInit {
   /** Ruta del recurso en la API del backend. */
   private readonly api = inject(ClinicaService);
+  /** Modo consulta (Recepción): oculta registro y edición; los precios se consultan pero no se modifican. */
+  @Input() soloLectura = false;
   /** Lista de especialidades. */
   especialidades: Especialidad[] = [];
   /** Especialidad. */

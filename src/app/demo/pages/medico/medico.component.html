@@ -1,91 +1,198 @@
-
-<div class="container-fluid">
-  <div class="card">
-    <div class="card-header">
-      <div class="row">
-        <div class="col col-md-9">
-          <input
-            class="form-control"
-            type="text"
-            placeholder="Buscar médico"
-          />
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <h5 class="mb-0">Gestión de médicos veterinarios</h5>
+          <small class="text-muted">{{ activos }} activo(s) de {{ tabla.datos.length }}</small>
         </div>
-
-        <div class="col col-md-3 text-end">
-          <button
-            type="button"
-            class="btn btn-md btn-outline-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#modalCrearMedico">
-            <i class="fa fa-plus"></i>
-            &nbsp; Nuevo
+        @if (esAdmin) {
+          <button type="button" class="btn btn-primary" (click)="nuevo()" [disabled]="guardando">
+            <i class="feather icon-plus"></i> Nuevo médico
           </button>
+        }
+      </div>
+
+      <div class="card-body">
+        @if (aviso) { <p class="alert alert-success" role="status">{{ aviso }}</p> }
+        @if (error) { <p class="alert alert-danger" role="alert">{{ error }}</p> }
+
+        <!-- ================= FORMULARIO ================= -->
+        @if (editandoId !== null) {
+          <form [formGroup]="formulario" (ngSubmit)="guardar()" class="border rounded p-3 mb-4" novalidate>
+            <h2 class="h6 mb-3">{{ editandoId ? 'Editar médico #' + editandoId : 'Registrar médico' }}</h2>
+            @if (errorFormulario) { <p class="alert alert-danger py-2" role="alert">{{ errorFormulario }}</p> }
+            <div class="row g-3">
+              <label class="col-md-4">Tipo de documento *
+                <select class="form-select" formControlName="tipoDocumento">
+                  @for (t of tipos; track t.id) { <option [value]="t.id">{{ t.id }} · {{ t.nombre }}</option> }
+                </select>
+              </label>
+              <label class="col-md-4">Número de documento *
+                <input class="form-control" formControlName="numeroDocumento" maxlength="15"
+                  [class.is-invalid]="(formulario.controls.numeroDocumento.touched || formulario.controls.numeroDocumento.dirty) && !!errorDocumento">
+                @if ((formulario.controls.numeroDocumento.touched || formulario.controls.numeroDocumento.dirty) && errorDocumento) {
+                  <small class="text-danger">{{ errorDocumento }}</small>
+                }
+              </label>
+              <label class="col-md-4">Registro profesional *
+                <input class="form-control text-uppercase" formControlName="registroProfesional" maxlength="50" placeholder="Ej. RP-1020"
+                  [class.is-invalid]="invalido('registroProfesional')">
+                @if (invalido('registroProfesional')) { <small class="text-danger">Letras, dígitos y guiones (3 a 50).</small> }
+              </label>
+              <label class="col-md-4">Nombres *
+                <input class="form-control" formControlName="nombres" maxlength="100" [class.is-invalid]="invalido('nombres')">
+                @if (invalido('nombres')) { <small class="text-danger">Obligatorio; solo letras y espacios.</small> }
+              </label>
+              <label class="col-md-4">Apellidos *
+                <input class="form-control" formControlName="apellidos" maxlength="100" [class.is-invalid]="invalido('apellidos')">
+                @if (invalido('apellidos')) { <small class="text-danger">Obligatorio; solo letras y espacios.</small> }
+              </label>
+              <label class="col-md-4">Teléfono
+                <input class="form-control" formControlName="telefono" maxlength="10" inputmode="numeric" [class.is-invalid]="invalido('telefono')">
+                @if (invalido('telefono')) { <small class="text-danger">Entre 7 y 10 dígitos.</small> }
+              </label>
+              <label class="col-md-4">Especialidad *
+                <select class="form-select" formControlName="especializacionId" [class.is-invalid]="invalido('especializacionId')">
+                  <option [ngValue]="null">Seleccionar especialidad</option>
+                  @for (e of especialidades; track e.id) {
+                    <option [ngValue]="e.id" [disabled]="!especialidadActiva(e)">{{ e.nombre }}{{ especialidadActiva(e) ? '' : ' (inactiva)' }}</option>
+                  }
+                </select>
+                @if (invalido('especializacionId')) { <small class="text-danger">Selecciona una especialidad activa.</small> }
+              </label>
+              <label class="col-md-4">Usuario del sistema (perfil Médico)
+                <select class="form-select" formControlName="usuarioId">
+                  <option [ngValue]="null">Sin usuario asociado</option>
+                  @for (u of usuariosLibres; track u.id) { <option [ngValue]="u.id">{{ u.username }} · {{ u.email }}</option> }
+                </select>
+                <small class="text-muted">Permite que el médico vea su calendario y atienda sus citas.</small>
+              </label>
+              <div class="col-md-4 d-flex align-items-center">
+                <div class="form-check form-switch mt-3">
+                  <input class="form-check-input" type="checkbox" id="medicoActivo" formControlName="activo">
+                  <label class="form-check-label" for="medicoActivo">Activo (puede recibir citas)</label>
+                </div>
+              </div>
+            </div>
+            @if (editando && editando.citasFuturas > 0) {
+              <p class="text-muted small mt-2 mb-0">Tiene {{ editando.citasFuturas }} cita(s) futura(s) reservada(s): no puede inactivarse.</p>
+            }
+            <button class="btn btn-primary mt-3 me-2" [disabled]="guardando">{{ guardando ? 'Guardando…' : 'Guardar médico' }}</button>
+            <button type="button" class="btn btn-outline-secondary mt-3" (click)="cancelar()" [disabled]="guardando">Cancelar</button>
+          </form>
+        }
+
+        <!-- ================= FILTROS ================= -->
+        <div class="row g-2 mb-3">
+          <div class="col-md-5">
+            <label class="form-label" for="busquedaMedico">Buscar</label>
+            <input id="busquedaMedico" type="search" class="form-control" placeholder="Nombre, documento, registro, usuario…"
+              [(ngModel)]="tabla.busqueda" (ngModelChange)="tabla.reiniciar()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="especialidadMedico">Especialidad</label>
+            <select id="especialidadMedico" class="form-select" [(ngModel)]="filtroEspecialidad" (ngModelChange)="tabla.reiniciar()">
+              <option [ngValue]="null">Todas</option>
+              @for (e of especialidades; track e.id) { <option [ngValue]="e.id">{{ e.nombre }}</option> }
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" for="estadoMedico">Estado</label>
+            <select id="estadoMedico" class="form-select" [(ngModel)]="filtroEstado" (ngModelChange)="tabla.reiniciar()">
+              <option value="">Todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-secondary w-100" (click)="limpiarFiltros()">Limpiar</button>
+          </div>
+        </div>
+
+        <!-- ================= TABLA ================= -->
+        @if (cargando) {
+          <p class="text-muted" role="status">Cargando médicos…</p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle tabla-ordenable">
+              <thead class="table-light">
+                <tr>
+                  <th (click)="tabla.ordenarPor('nombreCompleto')">Médico {{ tabla.icono('nombreCompleto') }}</th>
+                  <th (click)="tabla.ordenarPor('numeroDocumento')">Documento {{ tabla.icono('numeroDocumento') }}</th>
+                  <th (click)="tabla.ordenarPor('registroProfesional')">Registro {{ tabla.icono('registroProfesional') }}</th>
+                  <th (click)="tabla.ordenarPor('especializacion')">Especialidad {{ tabla.icono('especializacion') }}</th>
+                  <th (click)="tabla.ordenarPor('telefono')">Teléfono {{ tabla.icono('telefono') }}</th>
+                  <th (click)="tabla.ordenarPor('usuario')">Usuario {{ tabla.icono('usuario') }}</th>
+                  <th (click)="tabla.ordenarPor('citasFuturas')">Citas futuras {{ tabla.icono('citasFuturas') }}</th>
+                  <th (click)="tabla.ordenarPor('estadoTexto')">Estado {{ tabla.icono('estadoTexto') }}</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of tabla.visibles; track m.id) {
+                  <tr [class.text-muted]="!m.activo">
+                    <td><strong>{{ m.nombreCompleto }}</strong></td>
+                    <td>{{ m.tipoDocumento }} {{ m.numeroDocumento }}</td>
+                    <td>{{ m.registroProfesional }}</td>
+                    <td>{{ m.especializacion }}@if (!m.especializacionActiva) { <small class="d-block text-danger">Especialidad inactiva</small> }</td>
+                    <td>{{ m.telefono || '—' }}</td>
+                    <td>{{ m.usuario || '—' }}</td>
+                    <td class="text-center">{{ m.citasFuturas }} <small class="text-muted">/ {{ m.citasTotales }}</small></td>
+                    <td><span class="badge" [class.text-bg-success]="m.activo" [class.text-bg-secondary]="!m.activo">{{ m.estadoTexto }}</span></td>
+                    <td class="text-nowrap">
+                      <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="detalle = m"><i class="feather icon-eye"></i> Ver</button>
+                      @if (esAdmin) {
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="editar(m)"><i class="feather icon-edit-2"></i> Editar</button>
+                        <button type="button" class="btn btn-sm" [class.btn-outline-danger]="m.activo" [class.btn-outline-success]="!m.activo"
+                          (click)="cambiarEstado(m)">{{ m.activo ? 'Inactivar' : 'Activar' }}</button>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="text-center text-muted">No hay médicos que coincidan con los filtros.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <small class="text-muted">{{ tabla.filtradas.length }} médico(s) · página {{ tabla.pagina }} de {{ tabla.totalPaginas }}</small>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="tabla.pagina === 1" (click)="tabla.irA(tabla.pagina - 1)">Anterior</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="tabla.pagina >= tabla.totalPaginas" (click)="tabla.irA(tabla.pagina + 1)">Siguiente</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: DETALLE ================= -->
+@if (detalle; as d) {
+  <div class="modal-fondo" (click)="detalle = null"></div>
+  <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="tituloDetalleMedico">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tituloDetalleMedico">{{ d.nombreCompleto }}</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="detalle = null"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2 detalle-datos">
+            <div class="col-md-6"><span>Documento</span>{{ d.tipoDocumento }} {{ d.numeroDocumento }}</div>
+            <div class="col-md-6"><span>Registro profesional</span>{{ d.registroProfesional }}</div>
+            <div class="col-md-6"><span>Especialidad</span>{{ d.especializacion }}</div>
+            <div class="col-md-6"><span>Teléfono</span>{{ d.telefono || '—' }}</div>
+            <div class="col-md-6"><span>Usuario del sistema</span>{{ d.usuario || 'Sin usuario asociado' }}</div>
+            <div class="col-md-6"><span>Estado</span>{{ d.estadoTexto }}</div>
+            <div class="col-md-6"><span>Citas futuras reservadas</span>{{ d.citasFuturas }}</div>
+            <div class="col-md-6"><span>Citas totales</span>{{ d.citasTotales }}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          @if (esAdmin) { <button type="button" class="btn btn-outline-secondary" (click)="editar(d)">Editar</button> }
+          <button type="button" class="btn btn-primary" (click)="detalle = null">Cerrar</button>
         </div>
       </div>
     </div>
-
-    <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead>
-          <tr>
-            <th class="text-center">Nombre</th>
-            <th class="text-center">Especialidad</th>
-            <th class="text-center">Teléfono</th>
-            <th class="text-center">Correo</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-          </thead>
-
-          <tbody>
-          <tr>
-            <td colspan="5" class="text-center">
-              No hay médicos registrados
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
-</div>
-
-<!-- Ventana modal -->
-<div
-  class="modal fade"
-  id="modalCrearMedico"
-  tabindex="-1"
-  aria-labelledby="modalCrearMedicoLabel"
-  aria-hidden="true">
-
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalCrearMedicoLabel">
-          Gestión de Médicos
-        </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Cerrar">
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <p>Formulario de registro de médicos pendiente.</p>
-      </div>
-
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          data-bs-dismiss="modal">
-          Cerrar
-        </button>
-      </div>
-
-    </div>
-  </div>
-</div>
+}

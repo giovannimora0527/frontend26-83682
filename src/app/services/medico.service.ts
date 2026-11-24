@@ -1,86 +1,121 @@
-
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// ==========================================================
-// CLÍNICA VETERINARIA - UNIMINUTO
-// SERVICIO DE MÉDICOS VETERINARIOS
-// ==========================================================
-
-// Modelo que representa los datos de cada médico.
 import { Medico } from '../models/medico';
-
-// Servicio general para comunicarse con Spring Boot.
-import { BackendService } from './backend.service';
-
-// Configuración de la URL principal del backend.
 import { environment } from '../../environments/environment';
 
-/**
- * ==========================================================
- * SERVICIO: MedicoService
- * ==========================================================
- *
- * Se encarga de consultar los médicos
- * registrados en la base de datos MySQL.
- *
- * Este servicio será utilizado en el
- * formulario de Gestión de Citas.
- *
- * Permitirá mostrar los nombres y apellidos
- * de los veterinarios en una lista desplegable.
- */
-@Injectable({
-  providedIn: 'root'
-})
+/** Médico tal como lo devuelve el backend (GET /medico/listar). */
+export interface MedicoRegistro {
+  /** Identificador del médico. */
+  id: number;
+  /** Indica si el médico puede recibir citas. */
+  activo: boolean;
+  /** Tipo de documento (CC, CE, PA, PPT). */
+  tipoDocumento: string;
+  /** Número de documento. */
+  numeroDocumento: string;
+  /** Nombres. */
+  nombres: string;
+  /** Apellidos. */
+  apellidos: string;
+  /** Teléfono de contacto. */
+  telefono: string | null;
+  /** Registro (tarjeta) profesional. */
+  registroProfesional: string;
+  /** Identificador de la especialidad. */
+  especializacionId: number;
+  /** Nombre de la especialidad. */
+  especializacion: string;
+  /** Indica si la especialidad está activa. */
+  especializacionActiva: boolean;
+  /** Usuario del sistema asociado (perfil Médico). */
+  usuarioId: number | null;
+  /** Nombre de usuario asociado. */
+  usuario: string | null;
+  /** Citas futuras pendientes, programadas o confirmadas. */
+  citasFuturas: number;
+  /** Total de citas del médico. */
+  citasTotales: number;
+}
+
+/** Datos para registrar o actualizar un médico. */
+export interface MedicoRq {
+  /** Tipo de documento. */
+  tipoDocumento: string;
+  /** Número de documento. */
+  numeroDocumento: string;
+  /** Nombres. */
+  nombres: string;
+  /** Apellidos. */
+  apellidos: string;
+  /** Teléfono (opcional). */
+  telefono: string | null;
+  /** Registro profesional. */
+  registroProfesional: string;
+  /** Especialidad. */
+  especializacionId: number;
+  /** Usuario asociado (opcional). */
+  usuarioId: number | null;
+  /** Estado. */
+  activo: boolean;
+}
+
+/** Servicio del catálogo de médicos veterinarios: consume los endpoints /medico del backend. */
+@Injectable({ providedIn: 'root' })
 export class MedicoService {
-
-  // ========================================================
-  // 1. RECURSO PRINCIPAL DE LA API
-  // ========================================================
-
-  /**
-   * Corresponde a la ruta /medico
-   * definida en MedicoApi.java.
-   */
-  private readonly api = 'medico';
-
-  // ========================================================
-  // 2. CONSTRUCTOR
-  // ========================================================
+  /** Cliente HTTP de Angular (el interceptor agrega el token). */
+  private readonly http = inject(HttpClient);
+  /** URL base del recurso. */
+  private readonly base = `${environment.apiUrlAuth}/medico`;
 
   /**
-   * Inyectamos el servicio general que
-   * realiza las peticiones HTTP.
-   */
-  constructor(
-    /** Dependencia inyectada (BackendService). */
-    private readonly backendService: BackendService
-  ) {}
-
-  // ========================================================
-  // 3. CONSULTAR TODOS LOS MÉDICOS
-  // ========================================================
-
-  /**
-   * Obtiene los médicos registrados en MySQL.
+   * Lista los médicos (modelo usado por citas, fórmulas e historias).
    *
-   * Endpoint:
-   * GET http://localhost:8080/clinica/v1/medico/listar
-   *
-   * El backend devuelve los médicos
-   * ordenados por apellidos y nombres.
-   *
-   * @returns Observable con la lista de médicos.
+   * @returns observable con los médicos.
    */
   listarMedicos(): Observable<Medico[]> {
-
-    return this.backendService.get<Medico[]>(
-      environment.apiUrlAuth,
-      this.api,
-      'listar'
-    );
-
+    return this.http.get<Medico[]>(`${this.base}/listar`);
   }
 
+  /**
+   * Lista los médicos con especialidad, usuario y citas para la pantalla de gestión.
+   *
+   * @returns observable con los médicos.
+   */
+  listarRegistros(): Observable<MedicoRegistro[]> {
+    return this.http.get<MedicoRegistro[]>(`${this.base}/listar`);
+  }
+
+  /**
+   * Registra un médico.
+   *
+   * @param datos datos del médico.
+   * @returns observable con el médico creado.
+   */
+  crear(datos: MedicoRq): Observable<MedicoRegistro> {
+    return this.http.post<MedicoRegistro>(`${this.base}/crear`, datos);
+  }
+
+  /**
+   * Actualiza un médico.
+   *
+   * @param id identificador del médico.
+   * @param datos nuevos datos.
+   * @returns observable con el médico actualizado.
+   */
+  actualizar(id: number, datos: MedicoRq): Observable<MedicoRegistro> {
+    return this.http.put<MedicoRegistro>(`${this.base}/actualizar/${id}`, datos);
+  }
+
+  /**
+   * Activa o inactiva un médico (no se puede inactivar con citas futuras reservadas).
+   *
+   * @param id identificador del médico.
+   * @param activo nuevo estado.
+   * @returns observable con el médico actualizado.
+   */
+  cambiarEstado(id: number, activo: boolean): Observable<MedicoRegistro> {
+    return this.http.patch<MedicoRegistro>(`${this.base}/${id}/estado`, { activo });
+  }
 }

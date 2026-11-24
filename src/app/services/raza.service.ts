@@ -1,107 +1,78 @@
-
-/**
- * ==========================================================
- * CLÍNICA VETERINARIA - UNIMINUTO
- * SERVICIO DE GESTIÓN DE RAZAS
- * ==========================================================
- *
- * Consulta las razas registradas en MySQL
- * utilizando el backend de Spring Boot.
- */
-
-// ==========================================================
-// 1. IMPORTACIONES
-// ==========================================================
-
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// Servicio general de peticiones HTTP.
-import { BackendService } from './backend.service';
-
-// Configuración de la dirección del backend.
 import { environment } from '../../environments/environment';
 
-// ==========================================================
-// 2. MODELO DE RESPUESTA DE LA API
-// ==========================================================
-
-/**
- * Representa la información que devuelve
- * el endpoint GET /raza/listar.
- *
- * Se utiliza un modelo separado para no modificar
- * el modelo Raza que ya usa Gestión de Mascotas.
- */
+/** Raza tal como la devuelve el backend (GET /raza/listar). */
 export interface RazaRegistro {
-
-  // Identificador de la raza.
-  /** Identificador de raza. */
+  /** Identificador de la raza. */
   razaId: number;
-
-  // Nombre registrado.
-  /** Nombre. */
+  /** Nombre de la raza. */
   nombre: string;
-
-  // Especie.
-  /** Especie de la mascota. */
+  /** Especie a la que pertenece (Canino, Felino…). */
   especie: string;
-
-  // Fecha de creación enviada por Spring Boot.
-  /** Fecha creación. */
+  /** Fecha de creación del registro. */
   fechaCreacion: string;
-
-  // Fecha de última modificación.
-  /** Fecha modificación. */
-  fechaModificacion: string;
+  /** Fecha de la última modificación, si existe. */
+  fechaModificacion: string | null;
+  /** Número de mascotas registradas con esta raza. */
+  mascotas: number;
 }
 
-// ==========================================================
-// 3. SERVICIO DE RAZAS
-// ==========================================================
+/** Datos para registrar o actualizar una raza. */
+export interface RazaRq {
+  /** Nombre de la raza (solo letras y espacios). */
+  nombre: string;
+  /** Especie (solo letras y espacios). */
+  especie: string;
+}
 
-/** Servicio de raza: consume los endpoints correspondientes de la API REST del backend. */
-@Injectable({
-  providedIn: 'root'
-})
+/** Servicio del catálogo de razas: consume los endpoints /raza del backend. */
+@Injectable({ providedIn: 'root' })
 export class RazaService {
-
-  // Recurso de la API.
-  /** Ruta del recurso en la API del backend. */
-  private readonly api = 'raza';
-
-  /**
-   * Crea la instancia con sus dependencias inyectadas.
-   *
-   * @param backendService servicio backend.
-   */
-  constructor(
-    /** Dependencia inyectada (BackendService). */
-    private readonly backendService: BackendService
-  ) {}
-
-  // ========================================================
-  // MÉTODO 1: LISTAR RAZAS
-  // ========================================================
+  /** Cliente HTTP de Angular (el interceptor agrega el token). */
+  private readonly http = inject(HttpClient);
+  /** URL base del recurso. */
+  private readonly base = `${environment.apiUrlAuth}/raza`;
 
   /**
-   * Consulta todas las razas registradas.
+   * Lista las razas con el número de mascotas de cada una.
    *
-   * Endpoint completo:
-   *
-   * GET http://localhost:8080/clinica/v1/raza/listar
-   *
-   * El resultado será una lista de objetos
-   * de tipo RazaRegistro.
+   * @returns observable con las razas.
    */
   listarRazas(): Observable<RazaRegistro[]> {
-
-    return this.backendService.get<RazaRegistro[]>(
-      environment.apiUrlAuth,
-      this.api,
-      'listar'
-    );
-
+    return this.http.get<RazaRegistro[]>(`${this.base}/listar`);
   }
 
+  /**
+   * Registra una raza nueva.
+   *
+   * @param datos nombre y especie.
+   * @returns observable con la raza creada.
+   */
+  crear(datos: RazaRq): Observable<RazaRegistro> {
+    return this.http.post<RazaRegistro>(`${this.base}/guardar`, datos);
+  }
+
+  /**
+   * Actualiza una raza (el backend impide cambiar la especie si ya tiene mascotas).
+   *
+   * @param id identificador de la raza.
+   * @param datos nuevos datos.
+   * @returns observable con la raza actualizada.
+   */
+  actualizar(id: number, datos: RazaRq): Observable<RazaRegistro> {
+    return this.http.put<RazaRegistro>(`${this.base}/actualizar/${id}`, datos);
+  }
+
+  /**
+   * Elimina una raza sin mascotas asociadas (solo administrador).
+   *
+   * @param id identificador de la raza.
+   * @returns observable que finaliza al eliminar.
+   */
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/eliminar/${id}`);
+  }
 }

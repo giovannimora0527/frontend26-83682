@@ -1,235 +1,288 @@
-import { AuthService } from '../../../services/auth.service';
-import { finalize } from 'rxjs';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import Swal from 'sweetalert2';
+
+import { ClienteService, ClienteRq, MascotaDeCliente } from 'src/app/services/cliente.service';
+import { AuthService } from 'src/app/services/auth.service';
+import { Cliente } from 'src/app/models/cliente';
+import { TablaDatos, mensajeError } from 'src/app/utils/tabla-datos';
+
+/** Solo letras (con tildes), espacios, apóstrofos y guiones; mínimo 2 caracteres. */
+const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ '-]{1,99}$/;
 
 /**
- * CLÍNICA VETERINARIA - UNIMINUTO
- * COMPONENTE DE GESTIÓN DE CLIENTES
+ * Valida que la fecha de nacimiento no sea futura ni anterior a 1900.
  *
- * Consulta los clientes registrados en MySQL
- * mediante el backend Spring Boot.
+ * @param c control con la fecha AAAA-MM-DD.
+ * @returns error si la fecha no es válida.
  */
+function fechaNacimientoValida(c: AbstractControl): ValidationErrors | null {
+  const v = String(c.value ?? '');
+  if (!v) return null;
+  const hoy = new Date().toISOString().slice(0, 10);
+  return v > hoy || v < '1900-01-01' ? { fecha: true } : null;
+}
 
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+/** Fila de la tabla con campos planos para buscar, filtrar y ordenar. */
+type FilaCliente = Cliente & { nombreCompleto: string; documento: string; estadoTexto: string; estaActivo: boolean };
 
-// Servicio que consulta los clientes.
-import { ClienteService } from 'src/app/services/cliente.service';
-
-// Modelo de datos del cliente.
-import { Cliente } from 'src/app/models/cliente';
-
+/**
+ * Pantalla de gestión de clientes (propietarios de mascotas).
+ *
+ * <p>Reglas: documento único con formato válido, fecha de nacimiento entre 1900 y hoy, teléfono válido;
+ * archivar conserva el historial e inactiva sus mascotas, y no se permite con citas futuras reservadas;
+ * un cliente archivado puede reactivarse. El médico solo consulta.</p>
+ */
 @Component({
   selector: 'app-cliente',
   standalone: true,
-
-  // Permite utilizar *ngIf, *ngFor y ngModel.
-  imports: [
-    CommonModule,
-    FormsModule
-  ],
-
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './cliente.component.html',
   styleUrl: './cliente.component.scss'
 })
-/** Pantalla «cliente» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 export class ClienteComponent implements OnInit {
+  /** Servicio de clientes. */
+  private readonly api = inject(ClienteService);
+  /** Constructor de formularios reactivos. */
+  private readonly fb = inject(FormBuilder);
 
-  // Lista original recibida desde Spring Boot.
-  /** Lista de clientes. */
-  clientes: Cliente[] = [];
+  /** Perfil del usuario autenticado en mayúsculas. */
+  private readonly perfil = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase();
+  /** Administración y recepción registran y editan. */
+  readonly puedeModificar = this.perfil.startsWith('ADMIN') || this.perfil.startsWith('RECEP');
+  /** Solo el administrador archiva. */
+  readonly puedeArchivar = this.perfil.startsWith('ADMIN');
+  /** Tipos de documento permitidos. */
+  readonly tipos = [
+    { id: 'CC', nombre: 'Cédula de ciudadanía' }, { id: 'TI', nombre: 'Tarjeta de identidad' },
+    { id: 'CE', nombre: 'Cédula de extranjería' }, { id: 'PA', nombre: 'Pasaporte' },
+    { id: 'NIT', nombre: 'NIT' }, { id: 'PPT', nombre: 'Permiso por protección temporal' }
+  ];
+  /** Fecha de hoy (AAAA-MM-DD) para limitar la fecha de nacimiento. */
+  readonly hoy = new Date().toISOString().slice(0, 10);
 
-  // Texto utilizado para buscar clientes.
-  /** Criterio de filtrado: texto búsqueda. */
-  textoBusqueda: string = '';
+  /** Tabla con búsqueda, orden y paginación. */
+  readonly tabla = new TablaDatos<FilaCliente>(['nombreCompleto', 'documento', 'telefono', 'direccion'], 'nombreCompleto', 'asc');
+  /** Filtro por estado ('' = todos). */
+  filtroEstado = 'Activo';
 
-  // Estado de carga de la información.
-  /** Indica si se está cargando. */
-  cargando: boolean = false;
+  /** Formulario de registro y edición. */
+  readonly formulario = this.fb.nonNullable.group({
+    tipoDocumento: ['CC', Validators.required],
+    numeroDocumento: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]{4,20}$/)]],
+    nombres: ['', [Validators.required, Validators.pattern(SOLO_LETRAS)]],
+    apellidos: ['', [Validators.required, Validators.pattern(SOLO_LETRAS)]],
+    fechaNacimiento: ['', [Validators.required, fechaNacimientoValida]],
+    genero: [''],
+    telefono: ['', Validators.pattern(/^[0-9+ ()-]{7,20}$/)],
+    direccion: ['', Validators.maxLength(500)]
+  });
 
-  // Mensaje cuando ocurre un error.
-  /** Mensaje mostrado al usuario (error carga). */
-  errorCarga: string = '';
-
-  /**
-   * Crea la instancia con sus dependencias inyectadas.
-   *
-   * @param clienteService servicio cliente.
-   * @param sesion sesión.
-   */
-  constructor(
-    /** Dependencia inyectada (ClienteService). */
-    private readonly clienteService: ClienteService, private readonly sesion: AuthService
-  ) {}
-
-  /**
-   * Se ejecuta cuando Angular abre el componente.
-   */
-  ngOnInit(): void {
-    this.cargarClientes();
-  }
-
-  /**
-   * Consultar los clientes registrados.
-   *
-   * Utiliza:
-   * GET /clinica/v1/cliente/listar-todos
-   */
-  cargarClientes(): void {
-
-    this.cargando = true;
-    this.errorCarga = '';
-
-    this.clienteService.listarClientes().subscribe({
-
-      next: (respuesta: Cliente[]) => {
-
-        this.clientes = respuesta ?? [];
-
-        this.cargando = false;
-
-
-      },
-
-      error: (error) => {
-
-        console.error(
-          'Error al cargar clientes:',
-          error
-        );
-
-        this.errorCarga =
-          'No fue posible consultar los clientes. ' +
-          'Verifica que Spring Boot esté ejecutándose.';
-
-        this.cargando = false;
-      }
-
-    });
-  }
-
-  /**
-   * Filtrar clientes por:
-   * - ID
-   * - Nombres
-   * - Apellidos
-   * - Número de documento
-   *
-   * No modifica la lista original.
-   */
-  get clientesFiltrados(): Cliente[] {
-
-    const buscar = this.textoBusqueda
-      .trim()
-      .toLowerCase();
-
-    if (!buscar) {
-      return this.clientes;
-    }
-
-    return this.clientes.filter(cliente => {
-
-      const contenido = [
-        cliente.clienteId,
-        cliente.nombres,
-        cliente.apellidos,
-        cliente.numeroDocumento
-      ]
-        .map(valor => String(valor ?? ''))
-        .join(' ')
-        .toLowerCase();
-
-      return contenido.includes(buscar);
-
-    });
-  }
-
-  /**
-   * Limpiar el campo de búsqueda.
-   */
-  limpiarBusqueda(): void {
-    this.textoBusqueda = '';
-  }
-  /** Formulario reactivo: formulario. */
-  formulario: ReturnType<ClienteComponent['datos']> | null = null;
-  /** Indica si se está editando. */
-  editando?: number;
-  /** Por archivar. */
-  porArchivar?: Cliente;
+  /** Cliente en edición: null = formulario cerrado, 0 = nuevo. */
+  editandoId: number | null = null;
+  /** Cliente cuya ficha se muestra. */
+  detalle: FilaCliente | null = null;
+  /** Mascotas activas del cliente de la ficha. */
+  mascotasDetalle: MascotaDeCliente[] = [];
+  /** Indica si se están cargando los datos. */
+  cargando = false;
   /** Indica si se está guardando. */
   guardando = false;
-  /** Mensaje mostrado al usuario (error operación). */
-  errorOperacion = '';
+  /** Mensaje de error general. */
+  error = '';
+  /** Mensaje de error del formulario. */
+  errorFormulario = '';
+  /** Mensaje de confirmación. */
+  aviso = '';
 
-  /**
-   * Indica si el registro se puede archivar.
-   *
-   * @returns puede archivar.
-   */
-  get puedeArchivar() {
-    return ['ADMIN','ADMINISTRADOR'].includes(this.sesion.obtenerPerfil()?.trim().toUpperCase() ?? '');
+  /** Configura el filtro de estado y carga los clientes. */
+  ngOnInit(): void {
+    this.tabla.filtroExtra = c => !this.filtroEstado || c.estadoTexto === this.filtroEstado;
+    this.cargar();
+  }
+
+  /** Consulta los clientes. */
+  cargar(): void {
+    this.cargando = true;
+    this.error = '';
+    this.api.listarClientes().subscribe({
+      next: lista => {
+        this.tabla.datos = lista.map(c => ({
+          ...c,
+          estaActivo: !!c.activo,
+          estadoTexto: c.activo ? 'Activo' : 'Archivado',
+          nombreCompleto: `${c.nombres ?? ''} ${c.apellidos ?? ''}`.trim(),
+          documento: `${c.tipoDocumento ?? ''} ${c.numeroDocumento ?? ''}`.trim()
+        }));
+        this.cargando = false;
+      },
+      error: e => {
+        this.error = mensajeError(e, 'No fue posible consultar los clientes.');
+        this.cargando = false;
+      }
+    });
+  }
+
+  /** Número de clientes activos. */
+  get activos(): number {
+    return this.tabla.datos.filter(c => c.estaActivo).length;
   }
 
   /**
-   * Datos.
+   * Edad calculada a partir de la fecha de nacimiento.
    *
-   * @param c c.
+   * @param fecha fecha de nacimiento.
+   * @returns edad en años o null.
    */
-  datos(c?: Cliente) {
-    return {tipoDocumento:c?.tipoDocumento ?? '',numeroDocumento:c?.numeroDocumento ?? '',
-      nombres:c?.nombres ?? '',apellidos:c?.apellidos ?? '',
-      fechaNacimiento:String(c?.fechaNacimiento ?? '').slice(0,10),genero:c?.genero ?? '',
-      telefono:c?.telefono ?? '',direccion:c?.direccion ?? ''};
+  edad(fecha: string | Date | undefined): number | null {
+    if (!fecha) return null;
+    const n = new Date(String(fecha).slice(0, 10) + 'T00:00:00');
+    const h = new Date();
+    let anios = h.getFullYear() - n.getFullYear();
+    if (h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getDate())) anios--;
+    return anios;
+  }
+
+  /** Abre el formulario para registrar un cliente. */
+  nuevo(): void {
+    this.editandoId = 0;
+    this.detalle = null;
+    this.errorFormulario = '';
+    this.formulario.reset();
   }
 
   /**
-   * Abre los datos de la pantalla.
+   * Abre el formulario con los datos del cliente.
    *
-   * @param cliente cliente.
+   * @param c cliente a editar.
    */
-  abrir(cliente?: Cliente) {
-    this.errorOperacion = '';
-    this.editando = cliente?.clienteId;
-    if (!this.editando) {
-      this.formulario = this.datos();
+  editar(c: FilaCliente): void {
+    this.editandoId = c.clienteId ?? null;
+    this.detalle = null;
+    this.errorFormulario = '';
+    this.formulario.reset({
+      tipoDocumento: c.tipoDocumento ?? 'CC', numeroDocumento: c.numeroDocumento ?? '', nombres: c.nombres ?? '',
+      apellidos: c.apellidos ?? '', fechaNacimiento: String(c.fechaNacimiento ?? '').slice(0, 10), genero: c.genero ?? '',
+      telefono: c.telefono ?? '', direccion: c.direccion ?? ''
+    });
+  }
+
+  /** Cierra el formulario sin guardar. */
+  cancelar(): void {
+    this.editandoId = null;
+  }
+
+  /**
+   * Indica si un campo es inválido y ya fue tocado.
+   *
+   * @param campo nombre del control.
+   * @returns true si debe mostrarse el error.
+   */
+  invalido(campo: keyof typeof this.formulario.controls): boolean {
+    const c = this.formulario.controls[campo];
+    return c.invalid && (c.touched || c.dirty);
+  }
+
+  /** Valida y guarda el cliente (crea o actualiza). */
+  guardar(): void {
+    this.formulario.markAllAsTouched();
+    if (this.formulario.invalid) {
+      this.errorFormulario = 'Revisa los campos marcados.';
       return;
     }
+    const v = this.formulario.getRawValue();
+    const doc = v.numeroDocumento.trim();
+    if (this.tabla.datos.some(c => c.clienteId !== this.editandoId && c.numeroDocumento === doc)) {
+      this.errorFormulario = `Ya existe un cliente con el número de documento ${doc}.`;
+      return;
+    }
+    if (v.tipoDocumento === 'TI' && (this.edad(v.fechaNacimiento) ?? 0) >= 18) {
+      this.errorFormulario = 'La tarjeta de identidad corresponde a menores de edad; revisa el tipo de documento.';
+      return;
+    }
+    const datos: ClienteRq = {
+      tipoDocumento: v.tipoDocumento, numeroDocumento: doc, nombres: v.nombres.trim(), apellidos: v.apellidos.trim(),
+      fechaNacimiento: v.fechaNacimiento, genero: v.genero || null, telefono: v.telefono.trim() || null,
+      direccion: v.direccion.trim() || null
+    };
     this.guardando = true;
-    this.clienteService.consultar(this.editando).pipe(finalize(() => this.guardando = false)).subscribe({
-      next: detalle => this.formulario = this.datos(detalle),
-      error: error => this.mostrarError(error)
-    });
-  }
-
-  /** Guarda los datos de la pantalla validando el formulario y enviándolo al backend. */
-  guardar() {
-    if (!this.formulario || this.guardando) return;
-    this.errorOperacion = '';
-    this.guardando = true;
-    this.clienteService.guardar(this.formulario,this.editando).pipe(finalize(() => this.guardando = false)).subscribe({
-      next: () => { this.formulario = null; this.cargarClientes(); },
-      error: error => this.mostrarError(error)
-    });
-  }
-
-  /** Archiva los datos de la pantalla. */
-  archivar() {
-    const id = this.porArchivar?.clienteId;
-    if (!id || this.guardando) return;
-    this.errorOperacion = '';
-    this.guardando = true;
-    this.clienteService.archivar(id).pipe(finalize(() => this.guardando = false)).subscribe({
-      next: () => { this.porArchivar = undefined; this.cargarClientes(); },
-      error: error => this.mostrarError(error)
+    this.errorFormulario = '';
+    this.api.guardar(datos, this.editandoId || undefined).subscribe({
+      next: () => {
+        this.guardando = false;
+        this.aviso = `Cliente ${datos.nombres} ${datos.apellidos} ${this.editandoId ? 'actualizado' : 'registrado'}.`;
+        this.editandoId = null;
+        this.cargar();
+      },
+      error: e => {
+        this.guardando = false;
+        this.errorFormulario = mensajeError(e, 'No fue posible guardar el cliente.');
+      }
     });
   }
 
   /**
-   * Muestra error.
+   * Muestra la ficha del cliente con sus mascotas activas.
    *
-   * @param error error recibido del backend.
+   * @param c cliente seleccionado.
    */
-  private mostrarError(error: {error?: {mensaje?: string}}) {
-    this.errorOperacion = error.error?.mensaje ?? 'No fue posible completar la operación.';
+  ver(c: FilaCliente): void {
+    this.detalle = c;
+    this.mascotasDetalle = [];
+    this.api.mascotas(c.clienteId!).subscribe({
+      next: m => (this.mascotasDetalle = m),
+      error: () => (this.mascotasDetalle = [])
+    });
+  }
+
+  /**
+   * Archiva un cliente (y sus mascotas), previa confirmación.
+   *
+   * @param c cliente seleccionado.
+   */
+  archivar(c: FilaCliente): void {
+    Swal.fire({
+      title: '¿Archivar cliente?',
+      text: `${c.nombreCompleto} y sus mascotas quedarán inactivos. Su historial se conserva.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Archivar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33'
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      this.error = '';
+      this.api.archivar(c.clienteId!).subscribe({
+        next: () => {
+          this.aviso = `${c.nombreCompleto} archivado.`;
+          this.cargar();
+        },
+        error: e => (this.error = mensajeError(e, 'No fue posible archivar el cliente.'))
+      });
+    });
+  }
+
+  /**
+   * Reactiva un cliente archivado.
+   *
+   * @param c cliente seleccionado.
+   */
+  reactivar(c: FilaCliente): void {
+    this.error = '';
+    this.api.reactivar(c.clienteId!).subscribe({
+      next: () => {
+        this.aviso = `${c.nombreCompleto} reactivado. Activa sus mascotas desde Gestión de Mascotas si corresponde.`;
+        this.cargar();
+      },
+      error: e => (this.error = mensajeError(e, 'No fue posible reactivar el cliente.'))
+    });
+  }
+
+  /** Limpia la búsqueda y el filtro. */
+  limpiarFiltros(): void {
+    this.tabla.busqueda = '';
+    this.filtroEstado = '';
+    this.tabla.reiniciar();
   }
 }

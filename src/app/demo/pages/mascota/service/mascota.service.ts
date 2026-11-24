@@ -1,116 +1,114 @@
-
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// Modelo utilizado para mostrar mascotas.
 import { Mascota } from 'src/app/models/mascota';
-
-// Servicio general de comunicación con Spring Boot.
-import { BackendService } from 'src/app/services/backend.service';
-
-// Dirección principal de nuestra API.
 import { environment } from 'src/environments/environment';
 
-/**
- * Datos que Angular enviará para crear una mascota.
- *
- * Deben coincidir con CrearMascotaDTO.java
- * que creamos en Spring Boot.
- */
+/** Datos para registrar una mascota. */
 export interface CrearMascotaDTO {
-
-  // Nombre de la mascota.
-  /** Nombre mascota. */
+  /** Nombre de la mascota. */
   nombreMascota: string;
-
-  // Edad en años.
-  /** Edad de la mascota en años. */
+  /** Edad en años (0 a 40). */
   edad: number;
-
-  // Identificador de la raza.
-  /** Identificador de raza. */
+  /** Raza. */
   razaId: number;
-
-  // Identificador del propietario.
-  /** Identificador de cliente. */
+  /** Propietario. */
   clienteId: number;
 }
 
-/**
- * Servicio de gestión de mascotas.
- *
- * Se encarga de comunicarse con Spring Boot
- * para consultar y registrar mascotas.
- */
-@Injectable({
-  providedIn: 'root'
-})
+/** Datos para actualizar una mascota (incluye el estado). */
+export interface MascotaRq extends CrearMascotaDTO {
+  /** Indica si la mascota está activa. */
+  activo: boolean;
+}
+
+/** Mascota con raza, propietario y conteos de citas e historias (GET /mascota/listar-detalle). */
+export interface MascotaDetalle {
+  /** Identificador de la mascota. */
+  mascotaId: number;
+  /** Nombre. */
+  nombreMascota: string;
+  /** Edad en años. */
+  edad: number;
+  /** Indica si está activa. */
+  activo: boolean | number;
+  /** Fecha de registro. */
+  fechaRegistro: string;
+  /** Fecha de la última modificación. */
+  fechaModificacion: string | null;
+  /** Identificador de la raza. */
+  razaId: number;
+  /** Identificador del propietario. */
+  clienteId: number;
+  /** Citas futuras reservadas. */
+  citasFuturas: number;
+  /** Total de citas. */
+  citasTotales: number;
+  /** Historias clínicas registradas. */
+  historias: number;
+  /** Raza y especie. */
+  raza: { razaId: number; nombre: string; especie: string };
+  /** Propietario. */
+  cliente: { clienteId: number; tipoDocumento: string; numeroDocumento: string; nombres: string; apellidos: string;
+    telefono: string | null; activo: boolean | number };
+}
+
+/** Servicio de mascotas (pacientes): consume los endpoints /mascota del backend. */
+@Injectable({ providedIn: 'root' })
 export class MascotaService {
-
-  // Recurso principal de la API.
-  /** Ruta del recurso en la API del backend. */
-  private readonly api = 'mascota';
-
-  /**
-   * Crea la instancia con sus dependencias inyectadas.
-   *
-   * @param backendService servicio backend.
-   */
-  constructor(
-    /** Dependencia inyectada (BackendService). */
-    private readonly backendService: BackendService
-  ) {}
+  /** Cliente HTTP de Angular (el interceptor agrega el token). */
+  private readonly http = inject(HttpClient);
+  /** URL base del recurso. */
+  private readonly base = `${environment.apiUrlAuth}/mascota`;
 
   /**
-   * MÉTODO 1: LISTAR MASCOTAS.
+   * Lista las mascotas con raza y propietario (modelo usado por citas y otros módulos).
    *
-   * Recupera las mascotas con:
-   * - Nombre
-   * - Edad
-   * - Fecha de registro
-   * - Raza
-   * - Especie
-   * - Propietario
-   *
-   * Endpoint:
-   * GET /clinica/v1/mascota/listar-detalle
+   * @returns observable con las mascotas.
    */
   listarMascotas(): Observable<Mascota[]> {
-
-    return this.backendService.get<Mascota[]>(
-      environment.apiUrlAuth,
-      this.api,
-      'listar-detalle'
-    );
+    return this.http.get<Mascota[]>(`${this.base}/listar-detalle`);
   }
 
   /**
-   * MÉTODO 2: GUARDAR MASCOTA.
+   * Lista las mascotas con conteos de citas e historias para la pantalla de gestión.
    *
-   * Envía los datos mediante una petición POST
-   * al backend de Spring Boot.
-   *
-   * Endpoint:
-   * POST /clinica/v1/mascota/crear
-   *
-   * El backend:
-   * 1. Valida los datos.
-   * 2. Comprueba la raza y el propietario.
-   * 3. Asigna la fecha de registro.
-   * 4. Guarda la mascota en MySQL.
-   *
-   * Devuelve la mascota recién registrada.
+   * @returns observable con las mascotas.
    */
-  crearMascota(
-    /** Datos. */
-    datos: CrearMascotaDTO
-  ): Observable<Mascota> {
+  listarDetalle(): Observable<MascotaDetalle[]> {
+    return this.http.get<MascotaDetalle[]>(`${this.base}/listar-detalle`);
+  }
 
-    return this.backendService.post<Mascota>(
-      environment.apiUrlAuth,
-      this.api,
-      'crear',
-      datos
-    );
+  /**
+   * Registra una mascota.
+   *
+   * @param datos datos de la mascota.
+   * @returns observable con la mascota creada.
+   */
+  crearMascota(datos: CrearMascotaDTO): Observable<MascotaDetalle> {
+    return this.http.post<MascotaDetalle>(`${this.base}/crear`, datos);
+  }
+
+  /**
+   * Actualiza una mascota.
+   *
+   * @param id identificador de la mascota.
+   * @param datos nuevos datos.
+   * @returns observable con la mascota actualizada.
+   */
+  actualizar(id: number, datos: MascotaRq): Observable<MascotaDetalle> {
+    return this.http.put<MascotaDetalle>(`${this.base}/actualizar/${id}`, datos);
+  }
+
+  /**
+   * Activa o inactiva una mascota (no se inactiva con citas futuras reservadas).
+   *
+   * @param id identificador de la mascota.
+   * @param activo nuevo estado.
+   * @returns observable con la mascota actualizada.
+   */
+  cambiarEstado(id: number, activo: boolean): Observable<MascotaDetalle> {
+    return this.http.patch<MascotaDetalle>(`${this.base}/${id}/estado`, { activo });
   }
 }
