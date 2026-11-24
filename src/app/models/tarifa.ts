@@ -2,7 +2,7 @@ export interface Impuesto {
   id: number;
   nombre: string;
   porcentaje: number;
-  activo?: boolean;
+  activo: boolean;
 }
 
 export type ImpuestoRq = Omit<Impuesto, 'id'>;
@@ -10,30 +10,35 @@ export type ImpuestoRq = Omit<Impuesto, 'id'>;
 export interface Tarifa {
   id: number;
   servicioId: number;
+  servicioCodigo: string;
   servicioNombre: string;
+  especializacionNombre: string | null;
   valor: number;
-  impuestoId: number | null;
+  impuestoId: number;
+  impuestoNombre: string;
   porcentajeIva: number;
   vigenteDesde: string;
   vigenteHasta: string | null;
+  activa: boolean;
 }
 
 export interface TarifaCrearRq {
   servicioId: number;
   valor: number;
-  impuestoId: number | null;
+  impuestoId: number;
   vigenteDesde: string;
 }
 
 export interface TarifaActualizarRq {
   valor: number;
-  impuestoId: number | null;
+  impuestoId: number;
   motivo: string;
 }
 
 export interface HistorialTarifa {
   id: number;
   tarifaId: number;
+  servicioId: number;
   servicioNombre: string;
   valorAnterior: number | null;
   valorNuevo: number;
@@ -47,9 +52,11 @@ export interface HistorialTarifa {
 export interface ConfiguracionClinica {
   nombre: string;
   nit: string;
-  direccion: string;
-  telefono: string;
-  correo: string;
+  direccion: string | null;
+  telefono: string | null;
+  correo: string | null;
   prefijoFactura: string;
-  topeDescuentoSecretaria?: number;
+  prefijoFormula: string;
+  prefijoDespacho: string;
+  topeDescuentoSecretaria: number;
 }

@@ -1,0 +1,46 @@
+<app-filtro-fechas (cambio)="filtrarFechas($event)" />
+<div class="row g-2 my-2">
+  <div class="col-md-5">
+    <select class="form-select" aria-label="Filtrar por servicio" [(ngModel)]="servicioId" (ngModelChange)="filtrarServicio()">
+      <option [ngValue]="null">Todos los servicios</option>
+      @for (servicio of servicios; track servicio.id) {
+        <option [ngValue]="servicio.id">{{ servicio.nombre }}</option>
+      }
+    </select>
+  </div>
+</div>
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando...</p>
+} @else {
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          @for (columna of columnas; track columna.clave) {
+            <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+              <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+          @for (cambio of tabla.visibles; track cambio.id) {
+            <tr>
+              <td class="text-nowrap">{{ cambio.fecha | fechaHora }}</td>
+              <td>{{ cambio.servicioNombre }}</td>
+              <td class="text-nowrap">{{ (cambio.valorAnterior | moneda) || 'Nueva' }} → {{ cambio.valorNuevo | moneda }}</td>
+              <td class="text-nowrap">{{ cambio.ivaAnterior === null ? 'Nuevo' : cambio.ivaAnterior + ' %' }} → {{ cambio.ivaNuevo }} %</td>
+              <td>{{ cambio.motivo || '—' }}</td>
+              <td>{{ cambio.usuario }}</td>
+            </tr>
+          }
+          @empty {
+            <tr><td colspan="6" class="text-center">{{ tabla.items.length ? 'No se encontraron resultados' : 'No hay cambios de tarifas en el período' }}</td></tr>
+          }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+}

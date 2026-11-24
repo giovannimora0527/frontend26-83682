@@ -137,18 +137,32 @@
                     <h3 class="h6">Anotaciones y consultas</h3>
                     <p *ngIf="detalle.anotaciones.length === 0">Esta historia no tiene anotaciones registradas.</p>
                     <section *ngFor="let anotacion of detalle.anotaciones; let indice = index" class="border rounded p-3 mb-3">
-                        <h4 class="h6">Anotación {{ indice + 1 }}</h4>
+                        <h4 class="h6">{{ leerAtencion(anotacion) ? 'Atención médica' : 'Anotación' }} {{ indice + 1 }}</h4>
                         <dl class="row">
                             <dt class="col-sm-4">Número de anotación</dt>
                             <dd class="col-sm-8">{{ anotacion.id }}</dd>
                             <dt class="col-sm-4">Fecha</dt>
                             <dd class="col-sm-8">{{ anotacion.fecha | date:'yyyy-MM-dd HH:mm' }}</dd>
-                            <dt class="col-sm-4">Descripción</dt>
-                            <dd class="col-sm-8 text-break descripcion-anotacion">{{ anotacion.descripcion || 'No informado' }}</dd>
-                            <dt class="col-sm-4">Diagnóstico</dt>
-                            <dd class="col-sm-8 text-break descripcion-anotacion">{{ anotacion.diagnostico?.trim() || 'No informado' }}</dd>
-                            <dt class="col-sm-4">Observaciones</dt>
-                            <dd class="col-sm-8 text-break descripcion-anotacion">{{ anotacion.observaciones?.trim() || 'No informado' }}</dd>
+                            <ng-container *ngIf="leerAtencion(anotacion) as atencion; else anotacionManual">
+                                <dt class="col-sm-4">Motivo</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ atencion.motivo || 'No informado' }}</dd>
+                                <dt class="col-sm-4">Síntomas</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ atencion.sintomas || 'No informado' }}</dd>
+                                <dt class="col-sm-4">Diagnóstico</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ anotacion.diagnostico?.trim() || 'No informado' }}</dd>
+                                <dt class="col-sm-4">Observaciones</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ atencion.observaciones || 'No informado' }}</dd>
+                                <dt class="col-sm-4">Recomendaciones</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ atencion.recomendaciones || 'No informado' }}</dd>
+                            </ng-container>
+                            <ng-template #anotacionManual>
+                                <dt class="col-sm-4">Descripción</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ anotacion.descripcion || 'No informado' }}</dd>
+                                <dt class="col-sm-4">Diagnóstico</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ anotacion.diagnostico?.trim() || 'No informado' }}</dd>
+                                <dt class="col-sm-4">Observaciones</dt>
+                                <dd class="col-sm-8 text-break descripcion-anotacion">{{ anotacion.observaciones?.trim() || 'No informado' }}</dd>
+                            </ng-template>
                         </dl>
                         <h5 class="h6">Datos del veterinario de la anotación</h5>
                         <ng-container *ngTemplateOutlet="datosVeterinario; context: { $implicit: anotacion.medico }"></ng-container>
@@ -170,38 +184,8 @@
                         <ng-template #sinCita><p>No hay una cita asociada a esta anotación.</p></ng-template>
                         <h5 class="h6">Fórmulas médicas</h5>
                         <ng-container *ngIf="anotacion.formulasMedicas?.length; else sinFormulas">
-                            <article *ngFor="let formula of anotacion.formulasMedicas; let indiceFormula = index" class="border rounded p-3 mb-3 formula-medica">
-                                <h6 class="h6">Fórmula médica {{ indiceFormula + 1 }}</h6>
-                                <dl class="row mb-0">
-                                    <dt class="col-sm-4">Medicamento</dt>
-                                    <dd class="col-sm-8">{{ formula.medicamento.nombre || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Descripción del medicamento</dt>
-                                    <dd class="col-sm-8 text-break">{{ formula.medicamento.descripcion || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Presentación</dt>
-                                    <dd class="col-sm-8">{{ formula.medicamento.presentacion || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Dosis</dt>
-                                    <dd class="col-sm-8 text-break">{{ formula.dosis || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Frecuencia</dt>
-                                    <dd class="col-sm-8 text-break">{{ formula.frecuencia || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Duración</dt>
-                                    <dd class="col-sm-8 text-break">{{ formula.duracion || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Indicaciones</dt>
-                                    <dd class="col-sm-8 text-break descripcion-anotacion">{{ formula.indicaciones || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Fecha de creación de la fórmula</dt>
-                                    <dd class="col-sm-8">{{ (formula.fechaCreacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Última actualización de la fórmula</dt>
-                                    <dd class="col-sm-8">{{ (formula.fechaActualizacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Fecha de compra del medicamento</dt>
-                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaCompra | date:'yyyy-MM-dd') || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Fecha de vencimiento del medicamento</dt>
-                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaVence | date:'yyyy-MM-dd') || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Registro del medicamento</dt>
-                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaCreacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Modificación del medicamento</dt>
-                                    <dd class="col-sm-8">{{ (formula.medicamento.fechaModificacionRegistro | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
-                                    <dt class="col-sm-4">Cita de la fórmula</dt>
-                                    <dd class="col-sm-8">{{ formula.cita.id ?? 'No informado' }} — {{ (formula.cita.fechaInicio | date:'yyyy-MM-dd HH:mm') || 'No informado' }}</dd>
-                                </dl>
+                            <article *ngFor="let formula of anotacion.formulasMedicas" class="border rounded p-3 mb-3 formula-medica">
+                                <app-vista-formula [formula]="formula" />
                             </article>
                         </ng-container>
                         <ng-template #sinFormulas><p>No hay fórmulas médicas asociadas a esta anotación.</p></ng-template>

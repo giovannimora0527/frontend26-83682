@@ -1,0 +1,70 @@
+@if (errorCarga) {
+  <div class="alert alert-danger" role="alert">{{ errorCarga }} <button type="button" class="btn btn-link mb-0" (click)="cargar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando...</p>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+    }
+    <fieldset [disabled]="enviando">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="clinica-nombre" class="form-label">Nombre</label>
+        <input id="clinica-nombre" type="text" class="form-control" formControlName="nombre" maxlength="150"
+          [class.is-invalid]="esInvalido(form.controls.nombre)" aria-describedby="clinica-nombre-error" />
+        <div class="invalid-feedback" id="clinica-nombre-error">{{ form.controls.nombre.errors?.['servidor'] ?? 'Ingresa el nombre (máximo 150 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="clinica-nit" class="form-label">NIT</label>
+        <input id="clinica-nit" type="text" class="form-control" formControlName="nit" maxlength="30"
+          [class.is-invalid]="esInvalido(form.controls.nit)" aria-describedby="clinica-nit-error" />
+        <div class="invalid-feedback" id="clinica-nit-error">{{ form.controls.nit.errors?.['servidor'] ?? 'Ingresa el NIT (máximo 30 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="clinica-direccion" class="form-label">Dirección (opcional)</label>
+        <input id="clinica-direccion" type="text" class="form-control" formControlName="direccion" maxlength="200"
+          [class.is-invalid]="esInvalido(form.controls.direccion)" aria-describedby="clinica-direccion-error" />
+        <div class="invalid-feedback" id="clinica-direccion-error">{{ form.controls.direccion.errors?.['servidor'] ?? 'Máximo 200 caracteres.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="clinica-telefono" class="form-label">Teléfono (opcional)</label>
+        <input id="clinica-telefono" type="tel" class="form-control" formControlName="telefono" maxlength="30"
+          [class.is-invalid]="esInvalido(form.controls.telefono)" aria-describedby="clinica-telefono-error" />
+        <div class="invalid-feedback" id="clinica-telefono-error">{{ form.controls.telefono.errors?.['servidor'] ?? 'Máximo 30 caracteres.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="clinica-correo" class="form-label">Correo (opcional)</label>
+        <input id="clinica-correo" type="email" class="form-control" formControlName="correo" maxlength="255"
+          [class.is-invalid]="esInvalido(form.controls.correo)" aria-describedby="clinica-correo-error" />
+        <div class="invalid-feedback" id="clinica-correo-error">{{ form.controls.correo.errors?.['servidor'] ?? 'Ingresa un correo válido.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="clinica-tope" class="form-label">Tope de descuento de Recepcion (%)</label>
+        <input id="clinica-tope" type="number" class="form-control" formControlName="topeDescuentoSecretaria" min="0" max="100" step="0.01"
+          [class.is-invalid]="esInvalido(form.controls.topeDescuentoSecretaria)" aria-describedby="clinica-tope-error" />
+        <div class="invalid-feedback" id="clinica-tope-error">{{ form.controls.topeDescuentoSecretaria.errors?.['servidor'] ?? 'Ingresa un valor de 0 a 100, con máximo 2 decimales.' }}</div>
+      </div>
+      <div class="col-md-4">
+        <label for="clinica-prefijo-factura" class="form-label">Prefijo de factura</label>
+        <input id="clinica-prefijo-factura" type="text" class="form-control" formControlName="prefijoFactura" maxlength="10"
+          [class.is-invalid]="esInvalido(form.controls.prefijoFactura)" aria-describedby="clinica-prefijo-factura-error" />
+        <div class="invalid-feedback" id="clinica-prefijo-factura-error">{{ form.controls.prefijoFactura.errors?.['servidor'] ?? 'Ingresa de 1 a 10 letras o números.' }}</div>
+      </div>
+      <div class="col-md-4">
+        <label for="clinica-prefijo-formula" class="form-label">Prefijo de fórmula</label>
+        <input id="clinica-prefijo-formula" type="text" class="form-control" formControlName="prefijoFormula" maxlength="10"
+          [class.is-invalid]="esInvalido(form.controls.prefijoFormula)" aria-describedby="clinica-prefijo-formula-error" />
+        <div class="invalid-feedback" id="clinica-prefijo-formula-error">{{ form.controls.prefijoFormula.errors?.['servidor'] ?? 'Ingresa de 1 a 10 letras o números.' }}</div>
+      </div>
+      <div class="col-md-4">
+        <label for="clinica-prefijo-despacho" class="form-label">Prefijo de despacho</label>
+        <input id="clinica-prefijo-despacho" type="text" class="form-control" formControlName="prefijoDespacho" maxlength="10"
+          [class.is-invalid]="esInvalido(form.controls.prefijoDespacho)" aria-describedby="clinica-prefijo-despacho-error" />
+        <div class="invalid-feedback" id="clinica-prefijo-despacho-error">{{ form.controls.prefijoDespacho.errors?.['servidor'] ?? 'Ingresa de 1 a 10 letras o números.' }}</div>
+      </div>
+    </div>
+    </fieldset>
+    <div class="text-end mt-3"><button type="submit" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : 'Guardar datos' }}</button></div>
+  </form>
+}

@@ -11,23 +11,23 @@ export class BackendService {
   constructor(private readonly http: HttpClient) { }
 
   get<T>(urlApi: string, endpoint: string, service: string, routerParams?: HttpParams): Observable<T> {
-    return this.http.get<T>(`${urlApi}/${endpoint}/${service}`, { params: routerParams });
+    return this.http.get<T>(this.url(urlApi, endpoint, service), { params: routerParams });
   }
 
   post<T>(urlApi: string, endpoint: string, service: string, data: unknown): Observable<T> {
-    return this.http.post<T>(`${urlApi}/${endpoint}/${service}`, data);
+    return this.http.post<T>(this.url(urlApi, endpoint, service), data);
   }
 
   put<T>(urlApi: string, endpoint: string, service: string, data: unknown): Observable<T> {
-    return this.http.put<T>(`${urlApi}/${endpoint}/${service}`, data);
+    return this.http.put<T>(this.url(urlApi, endpoint, service), data);
   }
 
   patch<T>(urlApi: string, endpoint: string, service: string, data: unknown): Observable<T> {
-    return this.http.patch<T>(`${urlApi}/${endpoint}/${service}`, data);
+    return this.http.patch<T>(this.url(urlApi, endpoint, service), data);
   }
 
   delete<T>(urlApi: string, endpoint: string, service: string): Observable<T> {
-    return this.http.delete<T>(`${urlApi}/${endpoint}/${service}`);
+    return this.http.delete<T>(this.url(urlApi, endpoint, service));
   }
 
   /** Descarga binaria. Si falla, el cuerpo del error se entrega como JSON y no como Blob. */
@@ -39,6 +39,11 @@ export class BackendService {
 
   postArchivo<T>(endpoint: string, formData: FormData): Observable<T> {
     return this.http.post<T>(`${environment.apiUrlAuth}/${endpoint}`, formData);
+  }
+
+  /** El servicio vacío corresponde a un recurso único, sin barra final. */
+  private url(urlApi: string, endpoint: string, service: string): string {
+    return service ? `${urlApi}/${endpoint}/${service}` : `${urlApi}/${endpoint}`;
   }
 
   private leerErrorBlob(error: unknown): Observable<never> {

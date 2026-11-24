@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { HistoriaMedica } from 'src/app/models/historia-medica';
 import { AnotacionHistoria } from 'src/app/models/anotacion-historia';
-import { Formula } from 'src/app/models/formula';
+import { FormulaMedica } from 'src/app/models/formula-medica';
 import { NgbConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HistoriaComponent } from './historia.component';
 import { HistoriaService } from './service/historia.service';
@@ -107,56 +107,41 @@ describe('HistoriaComponent', () => {
     TestBed.inject(NgbModal).dismissAll();
   });
 
-  it('should display each prescription under its annotation with treatment and medication dates', async () => {
+  it('should display each prescription under its annotation and the medical care fields', async () => {
     const historia = crearHistoria(1);
-    const anotacion = crearAnotacion(historia, '2026-01-02T10:00:00', 'Control');
-    const formula: Formula = {
-      id: 4,
-      cita: { id: 1, fechaInicio: '2025-10-16T21:30:00', motivo: 'Consulta general', estado: 'PROGRAMADA' },
-      dosis: 'Una pastilla cada 12 horas.',
-      frecuencia: 'Cada 4 horas',
-      duracion: 'El tratamiento dura por 3 semanas',
-      indicaciones: 'Indicaciones del tratamiento',
-      fechaCreacionRegistro: '2025-10-30T21:09:02',
-      fechaActualizacionRegistro: '2026-10-10T11:46:55',
-      medicamento: {
-        id: 5, nombre: 'Paracetamol Inyectable', descripcion: 'Analgésico y antipirético',
-        presentacion: 'Tabletas 1200mg', fechaCompra: '2024-06-01', fechaVence: '2026-06-01',
-        fechaCreacionRegistro: '2025-09-13T10:58:40', fechaModificacionRegistro: '2025-09-13T12:49:23'
-      }
+    const formula: FormulaMedica = {
+      id: 4, numero: 'FM-000004', citaId: 1, atencionId: 2, medicoId: 1, medicoNombre: 'María Gómez', clienteId: 1, clienteNombre: 'Juan', mascotaId: 1,
+      mascotaNombre: 'Max', fecha: '2026-01-02T10:00:00', fechaConfirmacion: null, indicacionesGenerales: 'Reposo', estadoFormula: 'CONFIRMADA',
+      estadoDespacho: 'DESPACHADO', motivoAnulacion: null, detalles: [{
+        id: 1, medicamentoId: 5, medicamentoCodigo: 'PAR00001', medicamentoNombre: 'Paracetamol', presentacion: 'Tabletas', dosis: 1, unidadDosis: 'tableta',
+        frecuenciaHoras: 8, duracionDias: 7, viaAdministracion: 'ORAL', cantidadSugerida: 21, cantidadPrescrita: 21, cantidadDespachada: 10,
+        indicaciones: 'Con comida', cantidadDisponibleVigente: 0, alcanza: false
+      }]
     };
-    anotacion.formulasMedicas = [
-      formula,
-      { ...formula, id: 1, dosis: '800 mg cada 12 horas', indicaciones: null, fechaActualizacionRegistro: null }
-    ];
+    const atencion = crearAnotacion(historia, '2026-01-02T10:00:00', 'Motivo: Vómito\nSíntomas: Decaimiento');
+    atencion.observaciones = 'Estable\nRecomendaciones: Dieta blanda';
+    atencion.formulasMedicas = [formula, { ...formula, id: 5, numero: 'FM-000005' }];
     const sinFormulas = crearAnotacion(historia, '2026-02-02T10:00:00', 'Sin tratamiento');
     sinFormulas.formulasMedicas = [];
     const formulasNulas = crearAnotacion(historia, '2026-03-02T10:00:00', 'Control posterior');
     formulasNulas.formulasMedicas = null;
-    historia.anotaciones = [anotacion, sinFormulas, formulasNulas];
+    historia.anotaciones = [atencion, sinFormulas, formulasNulas];
     component.listHistorias = [historia];
     fixture.detectChanges();
     const element: HTMLElement = fixture.nativeElement;
     element.querySelector<HTMLButtonElement>('tbody button')?.click();
     fixture.detectChanges();
     await fixture.whenStable();
-    const modal = document.querySelector('ngb-modal-window');
-    const secciones = modal?.querySelectorAll('section');
-    expect(secciones?.[0].querySelectorAll('.formula-medica').length).toBe(2);
-    expect(secciones?.[1].querySelectorAll('.formula-medica').length).toBe(0);
-    expect(secciones?.[2].textContent).toContain('No hay fórmulas médicas asociadas a esta anotación.');
-    const formulas = modal?.querySelectorAll('.formula-medica');
-    expect(formulas?.[0].querySelector('h6')?.textContent?.trim()).toBe('Fórmula médica 1');
-    expect(formulas?.[1].querySelector('h6')?.textContent?.trim()).toBe('Fórmula médica 2');
-    for (const dato of [
-      'Paracetamol Inyectable', 'Analgésico y antipirético', 'Tabletas 1200mg', formula.dosis,
-      formula.frecuencia, formula.duracion, 'Indicaciones del tratamiento', '2025-10-30 21:09',
-      '2026-10-10 11:46', '2024-06-01', '2026-06-01', '2025-09-13 10:58', '2025-09-13 12:49'
-    ]) {
-      expect(formulas?.[0].textContent).withContext(dato).toContain(dato);
+    const secciones = document.querySelectorAll('ngb-modal-window section');
+    expect(secciones[0].querySelectorAll('.formula-medica').length).toBe(2);
+    expect(secciones[0].querySelector('h4')?.textContent).toContain('Atención médica 1');
+    expect(secciones[1].querySelector('h4')?.textContent).toContain('Anotación 2');
+    expect(secciones[1].querySelectorAll('.formula-medica').length).toBe(0);
+    expect(secciones[2].textContent).toContain('No hay fórmulas médicas asociadas a esta anotación.');
+    for (const dato of ['Vómito', 'Decaimiento', 'Estable', 'Dieta blanda', 'FM-000004', 'FM-000005', 'Paracetamol', 'Cada 8 h', 'Con comida', 'Reposo']) {
+      expect(secciones[0].textContent).withContext(dato).toContain(dato);
     }
-    expect(formulas?.[1].textContent).toContain('800 mg cada 12 horas');
-    expect(formulas?.[1].textContent).toContain('No informado');
+    expect(secciones[0].textContent).not.toContain('Recomendaciones: Dieta');
   });
 
   it('should open the selected history with client, pet, veterinarian and all consultation details', async () => {

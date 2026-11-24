@@ -1,0 +1,125 @@
+<div class="row g-2 mb-3">
+  <div class="col-md-9">
+    <input class="form-control" type="search" placeholder="Buscar tarifa" aria-label="Buscar tarifa" [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+  </div>
+  <div class="col-md-3 text-md-end">
+    <button type="button" class="btn btn-outline-primary mb-0" (click)="abrir(null, formulario)"><i class="fa fa-plus" aria-hidden="true"></i> Nueva tarifa</button>
+  </div>
+</div>
+<div class="form-check mb-2">
+  <input type="checkbox" id="soloVigentes" class="form-check-input" [(ngModel)]="soloVigentes" (ngModelChange)="filtrar()" />
+  <label for="soloVigentes" class="form-check-label">Solo vigentes</label>
+</div>
+@if (serviciosSinTarifa.length) {
+  <div class="alert alert-warning" role="status">
+    Servicios activos sin tarifa: {{ serviciosSinTarifa.length }}. No se podrán finalizar atenciones que los incluyan.
+  </div>
+}
+@if (errorListado) {
+  <div class="alert alert-danger" role="alert">{{ errorListado }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando...</p>
+} @else {
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          @for (columna of columnas; track columna.clave) {
+            <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+              <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+            </th>
+          }
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+          @for (tarifa of tabla.visibles; track tarifa.id) {
+            <tr [class.opacity-50]="!tarifa.activa">
+              <td>{{ tarifa.servicioNombre }} <span class="text-muted small">{{ tarifa.servicioCodigo }}</span></td>
+              <td class="text-nowrap">{{ tarifa.valor | moneda }}</td>
+              <td>{{ tarifa.impuestoNombre }}</td>
+              <td>{{ tarifa.vigenteDesde | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ (tarifa.vigenteHasta | date: 'dd/MM/yyyy') || '—' }}</td>
+              <td><span class="badge" [class.bg-success]="tarifa.activa" [class.bg-secondary]="!tarifa.activa">{{ tarifa.activa ? 'Vigente' : 'Cerrada' }}</span></td>
+              <td>
+                @if (tarifa.activa) {
+                  <button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="abrir(tarifa, formulario)">Cambiar</button>
+                }
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr><td colspan="7" class="text-center">{{ tabla.items.length ? 'No se encontraron resultados' : 'No hay tarifas registradas' }}</td></tr>
+          }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+}
+<ng-template #formulario let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="tarifaTitulo">{{ seleccionada ? 'Cambiar tarifa: ' + seleccionada.servicioNombre : 'Nueva tarifa' }}</h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+  </div>
+  <form class="modal-body" id="formTarifa" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+    }
+    <fieldset [disabled]="enviando">
+    <div class="row g-3">
+      @if (!seleccionada) {
+      <div class="col-md-6">
+        <label for="tarifa-servicio" class="form-label">Servicio</label>
+        <select id="tarifa-servicio" class="form-select" formControlName="servicioId" [class.is-invalid]="esInvalido(form.controls.servicioId)" aria-describedby="tarifa-servicio-error">
+          <option [ngValue]="null" disabled>{{ serviciosSinTarifa.length ? 'Selecciona un servicio' : 'Todos los servicios activos tienen tarifa' }}</option>
+          @for (opcion of serviciosSinTarifa; track opcion) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
+        </select>
+        <div class="invalid-feedback" id="tarifa-servicio-error">{{ form.controls.servicioId.errors?.['servidor'] ?? 'Selecciona un servicio.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="tarifa-desde" class="form-label">Vigente desde</label>
+        <input id="tarifa-desde" type="date" class="form-control" formControlName="vigenteDesde" [max]="hoy"
+          [class.is-invalid]="esInvalido(form.controls.vigenteDesde)" aria-describedby="tarifa-desde-error" />
+        <div class="invalid-feedback" id="tarifa-desde-error">{{ form.controls.vigenteDesde.errors?.['servidor'] ?? 'Selecciona una fecha que no sea futura.' }}</div>
+      </div>
+      }
+      <div class="col-md-6">
+        <label for="tarifa-valor" class="form-label">Valor (COP, sin IVA)</label>
+        <input id="tarifa-valor" type="number" class="form-control" formControlName="valor" min="0" step="0.01"
+          [class.is-invalid]="esInvalido(form.controls.valor)" aria-describedby="tarifa-valor-error" />
+        <div class="invalid-feedback" id="tarifa-valor-error">{{ form.controls.valor.errors?.['servidor'] ?? 'Ingresa un valor de 0 en adelante, con máximo 2 decimales.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="tarifa-impuesto" class="form-label">Impuesto</label>
+        <select id="tarifa-impuesto" class="form-select" formControlName="impuestoId" [class.is-invalid]="esInvalido(form.controls.impuestoId)" aria-describedby="tarifa-impuesto-error">
+          <option [ngValue]="null" disabled>Selecciona un impuesto</option>
+          @for (opcion of impuestosDisponibles; track opcion) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
+        </select>
+        <div class="invalid-feedback" id="tarifa-impuesto-error">{{ form.controls.impuestoId.errors?.['servidor'] ?? 'Selecciona un impuesto.' }}</div>
+      </div>
+      @if (seleccionada; as actual) {
+        <div class="col-12">
+          <div class="alert alert-info mb-0" id="tarifa-comparacion">
+            <div><strong>Antes:</strong> {{ actual.valor | moneda }}, IVA {{ actual.porcentajeIva }} %</div>
+            <div><strong>Después:</strong> {{ (form.controls.valor.value | moneda) || '—' }}, IVA {{ impuestoElegido?.porcentaje ?? '—' }} %</div>
+          </div>
+        </div>
+      <div class="col-12">
+        <label for="tarifa-motivo" class="form-label">Motivo del cambio</label>
+        <textarea id="tarifa-motivo" rows="3" class="form-control" formControlName="motivo" maxlength="500"
+          [class.is-invalid]="esInvalido(form.controls.motivo)" aria-describedby="tarifa-motivo-error"></textarea>
+        <div class="invalid-feedback" id="tarifa-motivo-error">{{ form.controls.motivo.errors?.['servidor'] ?? 'El motivo es obligatorio.' }}</div>
+      </div>
+      }
+    </div>
+    </fieldset>
+  </form>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+    <button type="submit" form="formTarifa" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : seleccionada ? 'Registrar cambio' : 'Guardar tarifa' }}</button>
+  </div>
+</ng-template>

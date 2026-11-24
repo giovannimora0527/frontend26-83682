@@ -1,0 +1,56 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 class="h5 mb-0">Citas de hoy</h2>
+    <button type="button" class="btn btn-sm btn-outline-secondary mb-0" [disabled]="cargando" (click)="listar()">Actualizar</button>
+  </div>
+  <div class="card-body">
+    <p class="text-muted small">La atención se puede iniciar el día de la cita, desde 30 minutos antes.</p>
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando...</p>
+} @else {
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead><tr><th scope="col">Hora</th><th scope="col">Mascota</th><th scope="col">Propietario</th><th scope="col">Servicio</th><th scope="col">Motivo</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+          <tbody>
+            @for (cita of pendientes; track cita.id) {
+              <tr>
+                <td class="text-nowrap">{{ cita.start | date: 'HH:mm' }} - {{ cita.end | date: 'HH:mm' }}</td>
+                <td>{{ cita.extendedProps.mascotaNombre }}</td>
+                <td>{{ cita.extendedProps.clienteNombre }}</td>
+                <td>{{ cita.extendedProps.servicioNombre || 'No informado' }}</td>
+                <td>{{ cita.extendedProps.motivo }}</td>
+                <td><app-badge-estado [estado]="cita.estado" /></td>
+                <td><a class="btn btn-sm mb-0 btn-success" [routerLink]="['/inicio/atencion', cita.id]">{{ cita.estado === 'EN_ATENCION' ? 'Continuar' : 'Atender' }}</a></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="text-center">No tienes citas pendientes para hoy</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <h3 class="h6 mt-3">Atendidas hoy</h3>
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead><tr><th scope="col">Hora</th><th scope="col">Mascota</th><th scope="col">Propietario</th><th scope="col">Servicio</th><th scope="col">Motivo</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+          <tbody>
+            @for (cita of atendidas; track cita.id) {
+              <tr>
+                <td class="text-nowrap">{{ cita.start | date: 'HH:mm' }} - {{ cita.end | date: 'HH:mm' }}</td>
+                <td>{{ cita.extendedProps.mascotaNombre }}</td>
+                <td>{{ cita.extendedProps.clienteNombre }}</td>
+                <td>{{ cita.extendedProps.servicioNombre || 'No informado' }}</td>
+                <td>{{ cita.extendedProps.motivo }}</td>
+                <td><app-badge-estado [estado]="cita.estado" /></td>
+                <td><a class="btn btn-sm mb-0 btn-outline-success" [routerLink]="['/inicio/atencion', cita.id]">Ver atención</a></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="text-center">Aún no has finalizado atenciones hoy</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+}
+  </div>
+</div>

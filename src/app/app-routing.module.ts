@@ -35,11 +35,15 @@ const modulos: Routes = [
   ruta('clientes', 'Clientes', ClienteComponent),
   ruta('medicos', 'Médicos', MedicoComponent),
   ruta('especializaciones', 'Especializaciones', EspecializacionComponent),
-  ruta('tarifas', 'Tarifas', EnConstruccionComponent),
+  diferida('tarifas', 'Tarifas', () => import('./demo/pages/tarifas/tarifas.component').then((m) => m.TarifasComponent)),
   ruta('cita', 'Citas', CitaComponent, 'citas'),
   diferida('calendario', 'Mi calendario', () => import('./demo/pages/calendario/calendario.component').then((m) => m.CalendarioComponent)),
-  ruta('atencion', 'Atención médica', EnConstruccionComponent),
-  ruta('atencion', 'Atención médica', EnConstruccionComponent, 'atencion/:citaId'),
+  diferida('atencion', 'Atención médica', () => import('./demo/pages/atencion/atencion.component').then((m) => m.AtencionComponent)),
+  {
+    ...diferida('atencion', 'Atención médica', () =>
+      import('./demo/pages/atencion/atencion-detalle/atencion-detalle.component').then((m) => m.AtencionDetalleComponent), 'atencion/:citaId'),
+    canDeactivate: [(componente: { puedeSalir(): Promise<boolean> }) => componente.puedeSalir()]
+  },
   ruta('historias', 'Historias clínicas', HistoriaComponent),
   ruta('formulas', 'Fórmulas médicas', FormulaMedicaComponent),
   ruta('mascotas', 'Mascotas', MascotaComponent),

@@ -1,0 +1,33 @@
+@if (error()) {
+  <div class="alert alert-danger" role="alert">{{ error() }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando() && !formulas().length) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando fórmulas...</p>
+} @else {
+  @for (formula of formulas(); track formula.id) {
+    <section class="border rounded p-3 mb-3">
+      <app-vista-formula [formula]="formula" />
+      <div class="d-flex flex-wrap gap-1 mt-2">
+        @if (formula.estadoFormula === 'BORRADOR' && puedeFormular()) {
+          <button type="button" class="btn btn-sm btn-outline-info mb-0" [disabled]="procesando() || editando() !== undefined" (click)="editando.set(formula)">Editar</button>
+          <button type="button" class="btn btn-sm btn-success mb-0" [disabled]="procesando() || editando() !== undefined" (click)="confirmar(formula)">Confirmar fórmula</button>
+        }
+        @if (puedeAnular(formula)) {
+          <button type="button" class="btn btn-sm btn-outline-danger mb-0" [disabled]="procesando() || editando() !== undefined" (click)="anular(formula)">Anular</button>
+        }
+        @if (formula.estadoFormula !== 'BORRADOR') {
+          <app-boton-descarga [endpoint]="'formula-medica/' + formula.id + '/pdf'" />
+        }
+      </div>
+    </section>
+  } @empty {
+    <p class="text-muted">La cita no tiene fórmulas.</p>
+  }
+}
+@if (editando() !== undefined) {
+  <section class="border border-primary rounded p-3">
+    <h3 class="h6">{{ editando() === null ? 'Nueva fórmula' : 'Editar fórmula en borrador' }}</h3>
+    <app-editor-formula [citaId]="citaId()" [formula]="editando() ?? null" (guardada)="alGuardar($event)" (cerrar)="cerrarEditor()" />
+  </section>
+} @else if (puedeFormular()) {
+  <button type="button" class="btn btn-outline-primary" [disabled]="procesando()" (click)="editando.set(null)"><i class="fa fa-plus" aria-hidden="true"></i> Nueva fórmula</button>
+}

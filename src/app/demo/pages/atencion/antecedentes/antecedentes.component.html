@@ -1,0 +1,51 @@
+<h3 class="h6">Antecedentes</h3>
+@if (vacio()) {
+  <p class="text-muted mb-0">La mascota no tiene antecedentes registrados.</p>
+} @else {
+    @if (antecedentes().atenciones.length) {
+      <h4 class="h6 mt-3">Atenciones anteriores</h4>
+      <div ngbAccordion [closeOthers]="true">
+        @for (atencion of antecedentes().atenciones; track atencion.id) {
+          <div ngbAccordionItem>
+            <h5 ngbAccordionHeader><button ngbAccordionButton class="py-2">{{ atencion.fechaInicio | fechaHora }} - {{ atencion.diagnostico || 'Sin diagnóstico' }}</button></h5>
+            <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+              <p class="mb-1"><strong>Médico:</strong> {{ atencion.medicoNombre }}</p>
+              <p class="mb-1"><strong>Motivo:</strong> {{ atencion.motivoConsulta || 'No informado' }}</p>
+              <p class="mb-1"><strong>Síntomas:</strong> {{ atencion.sintomas || 'No informado' }}</p>
+              <p class="mb-1"><strong>Diagnóstico:</strong> {{ atencion.diagnostico || 'No informado' }}</p>
+              <p class="mb-1"><strong>Observaciones:</strong> {{ atencion.observaciones || 'No informado' }}</p>
+              <p class="mb-0"><strong>Recomendaciones:</strong> {{ atencion.recomendaciones || 'No informado' }}</p>
+            </ng-template></div></div>
+          </div>
+        }
+      </div>
+    }
+    @if (antecedentes().formulas.length) {
+      <h4 class="h6 mt-3">Fórmulas anteriores</h4>
+      <div ngbAccordion [closeOthers]="true">
+        @for (formula of antecedentes().formulas; track formula.id) {
+          <div ngbAccordionItem>
+            <h5 ngbAccordionHeader><button ngbAccordionButton class="py-2">{{ formula.numero ?? 'Borrador' }} - {{ formula.fecha | fechaHora }}</button></h5>
+            <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+              <app-vista-formula [formula]="formula" />
+            </ng-template></div></div>
+          </div>
+        }
+      </div>
+    }
+    @if (antecedentes().anotaciones.length) {
+      <h4 class="h6 mt-3">Anotaciones de la historia</h4>
+      <div ngbAccordion [closeOthers]="true">
+        @for (anotacion of antecedentes().anotaciones; track anotacion.id) {
+          <div ngbAccordionItem>
+            <h5 ngbAccordionHeader><button ngbAccordionButton class="py-2">{{ anotacion.fecha | fechaHora }} - {{ anotacion.medicoNombre }}</button></h5>
+            <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+              <p class="mb-1">{{ anotacion.descripcion }}</p>
+              <p class="mb-1"><strong>Diagnóstico:</strong> {{ anotacion.diagnostico || 'No informado' }}</p>
+              <p class="mb-0"><strong>Observaciones:</strong> {{ anotacion.observaciones || 'No informado' }}</p>
+            </ng-template></div></div>
+          </div>
+        }
+      </div>
+    }
+}

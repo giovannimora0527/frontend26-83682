@@ -124,11 +124,12 @@ describe('Inventario', () => {
     http.expectOne(`${api}/productos/1/movimientos?desde=2026-11-01&hasta=2026-11-30`);
   });
 
-  it('obtiene los impuestos de los productos si el endpoint no existe', () => {
+  it('ofrece solo los impuestos activos', () => {
     let ids: number[] = [];
     TestBed.inject(InventarioService).listarImpuestos().subscribe((impuestos) => ids = impuestos.map(({ id }) => id));
-    http.expectOne(`${environment.apiUrlAuth}/impuesto/listar`).flush(null, { status: 404, statusText: 'x' });
-    http.expectOne(`${api}/productos`).flush([{ ...producto, impuestoId: 3, porcentajeIva: 19 }, producto, { ...producto, impuestoId: null }]);
-    expect(ids).toEqual([1, 3]);
+    http.expectOne(`${environment.apiUrlAuth}/impuesto/listar`).flush([
+      { id: 1, nombre: 'IVA 0 %', porcentaje: 0, activo: true }, { id: 2, nombre: 'Viejo', porcentaje: 16, activo: false }
+    ]);
+    expect(ids).toEqual([1]);
   });
 });

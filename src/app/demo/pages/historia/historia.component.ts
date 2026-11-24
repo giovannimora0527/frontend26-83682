@@ -6,6 +6,8 @@ import { NgbModal, NgbModalModule, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 import { concatMap, finalize, forkJoin, from, Observable } from 'rxjs';
 import Swal from 'sweetalert2';
 import { HistoriaService } from './service/historia.service';
+import { VistaFormulaComponent } from '../formula-medica/vista-formula/vista-formula.component';
+import { leerAtencion } from './historia.util';
 import { AnotacionHistoriaService } from './service/anotacion-historia.service';
 import { MascotaService } from '../mascota/service/mascota.service';
 import { CitaService } from '../cita/service/cita.service';
@@ -21,12 +23,13 @@ type FilaHistoria = Record<ColumnaOrden, string> & { fechaOrden: number; detalle
 
 @Component({
   selector: 'app-historia',
-  imports: [CommonModule, NgbModalModule, ReactiveFormsModule],
+  imports: [CommonModule, NgbModalModule, ReactiveFormsModule, VistaFormulaComponent],
   templateUrl: './historia.component.html',
   styleUrl: './historia.component.scss'
 })
 export class HistoriaComponent {
 
+  readonly leerAtencion = leerAtencion;
   listHistorias: HistoriaMedica[] = [];
   cargandoHistorias = false;
   errorHistorias = '';

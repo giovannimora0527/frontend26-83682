@@ -1,0 +1,135 @@
+<a class="btn btn-sm btn-outline-secondary" routerLink="/inicio/atencion"><i class="fa fa-arrow-left" aria-hidden="true"></i> Citas de hoy</a>
+@if (error) {
+  <div class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link mb-0" (click)="iniciar()">Reintentar</button></div>
+} @else if (!datos) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Abriendo la atención...</p>
+} @else {
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card"><div class="card-body">
+        <h2 class="h5">{{ datos.mascota.nombre }} <app-badge-estado [estado]="datos.cita.estado" /></h2>
+        <dl class="row mb-2">
+          <dt class="col-5">Especie</dt>
+          <dd class="col-7 text-break">{{ datos.mascota.especie }}</dd>
+          <dt class="col-5">Raza</dt>
+          <dd class="col-7 text-break">{{ datos.mascota.raza }}</dd>
+          <dt class="col-5">Edad</dt>
+          <dd class="col-7 text-break">{{ datos.mascota.edad ?? 'No informada' }}</dd>
+          <dt class="col-5">Cita</dt>
+          <dd class="col-7 text-break">{{ datos.cita.fechaInicio | fechaHora }}</dd>
+          <dt class="col-5">Servicio</dt>
+          <dd class="col-7 text-break">{{ datos.cita.servicioNombre || 'No informado' }}</dd>
+        </dl>
+        <h3 class="h6">Propietario</h3>
+        <dl class="row mb-0">
+          <dt class="col-5">Nombre</dt>
+          <dd class="col-7 text-break">{{ datos.propietario.nombre }}</dd>
+          <dt class="col-5">Documento</dt>
+          <dd class="col-7 text-break">{{ datos.propietario.documento }}</dd>
+          <dt class="col-5">Teléfono</dt>
+          <dd class="col-7 text-break">{{ datos.propietario.telefono || 'No informado' }}</dd>
+          <dt class="col-5">Correo</dt>
+          <dd class="col-7 text-break">{{ datos.propietario.correo || 'No informado' }}</dd>
+        </dl>
+      </div></div>
+      <div class="card"><div class="card-body"><app-antecedentes [antecedentes]="datos.antecedentes" /></div></div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card"><div class="card-body">
+        @if (respuestaError) {
+          <div class="alert alert-danger" role="alert" style="white-space: pre-line">{{ respuestaError }}</div>
+        }
+        <ul ngbNav #nav="ngbNav" class="nav-tabs" [(activeId)]="pestana" [destroyOnHide]="false" [animation]="false">
+          <li ngbNavItem="consulta">
+            <button ngbNavLink type="button">Consulta</button>
+            <ng-template ngbNavContent>
+              <form [formGroup]="form" (ngSubmit)="guardarBorrador()" novalidate>
+                @for (campo of campos; track campo.clave) {
+                  <div class="mb-3">
+                    <label [for]="'atencion-' + campo.clave" class="form-label">{{ campo.etiqueta }}{{ campo.obligatorio ? ' *' : '' }}</label>
+                    <textarea [id]="'atencion-' + campo.clave" rows="3" class="form-control" [formControlName]="campo.clave" [attr.maxlength]="maximoTexto"
+                      [class.is-invalid]="esInvalido(form.controls[campo.clave])"></textarea>
+                    <div class="invalid-feedback">{{ form.controls[campo.clave].errors?.['servidor'] ?? campo.etiqueta + ': campo obligatorio.' }}</div>
+                    <div class="form-text text-end">{{ form.controls[campo.clave].value.length }} / {{ maximoTexto }}</div>
+                  </div>
+                }
+                @if (editable) {
+                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span class="text-muted small" role="status">
+                      {{ guardando ? 'Guardando...' : ultimoGuardado ? 'Guardado: ' + (ultimoGuardado | fechaHora) : 'Se guarda automáticamente cada minuto si hay cambios.' }}
+                    </span>
+                    <button type="submit" class="btn btn-outline-primary mb-0" [disabled]="finalizando">Guardar borrador</button>
+                  </div>
+                }
+              </form>
+            </ng-template>
+          </li>
+          <li ngbNavItem="servicios">
+            <button ngbNavLink type="button">Servicios prestados</button>
+            <ng-template ngbNavContent>
+              @if (errorServicios) {
+                <div class="alert alert-danger" role="alert">{{ errorServicios }} <button type="button" class="btn btn-link mb-0" (click)="cargarServicios()">Reintentar</button></div>
+              }
+              @if (editable) {
+                <label for="atencion-servicio" class="form-label">Agregar servicio</label>
+                <select #selector id="atencion-servicio" class="form-select mb-3" (change)="agregarServicio(selector)">
+                  <option value="">{{ serviciosDisponibles.length ? 'Selecciona un servicio' : 'No hay más servicios disponibles' }}</option>
+                  @for (servicio of serviciosDisponibles; track servicio.id) {
+                    <option [value]="servicio.id">
+                      {{ servicio.nombre }} - {{ servicio.tarifaVigente ? (servicio.tarifaVigente.valor | moneda) + ' + IVA ' + servicio.tarifaVigente.porcentajeIva + ' %' : 'sin tarifa' }}
+                    </option>
+                  }
+                </select>
+              }
+              <div class="table-responsive" [formGroup]="form">
+                <table class="table align-middle" formArrayName="servicios">
+                  <thead><tr><th scope="col">Servicio</th><th scope="col">Tarifa</th><th scope="col">Cantidad</th><th scope="col">Total con IVA</th><th scope="col"></th></tr></thead>
+                  <tbody>
+                    @for (renglon of servicios.controls; track renglon; let i = $index) {
+                      <tr [formGroupName]="i">
+                        <td>
+                          {{ nombreServicio(renglon.controls.servicioId.value) }}
+                          @if (listServicios.length && editable && !servicioDe(renglon.controls.servicioId.value)?.tarifaVigente) {
+                            <span class="badge bg-danger">Sin tarifa vigente: no se podrá finalizar</span>
+                          }
+                        </td>
+                        <td class="text-nowrap">{{ servicioDe(renglon.controls.servicioId.value)?.tarifaVigente?.valor | moneda }}</td>
+                        <td style="min-width: 90px">
+                          <input type="number" min="1" step="1" class="form-control" formControlName="cantidad" aria-label="Cantidad"
+                            [class.is-invalid]="esInvalido(renglon.controls.cantidad)" />
+                        </td>
+                        <td class="text-nowrap">{{ totalServicio(renglon) | moneda }}</td>
+                        <td>
+                          @if (editable) {
+                            <button type="button" class="btn btn-sm btn-outline-danger mb-0" (click)="quitarServicio(i)">Quitar</button>
+                          }
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="5" class="text-center">No hay servicios registrados</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-end mb-0">Subtotal estimado (con las tarifas actuales): <strong>{{ subtotal | moneda }}</strong></p>
+            </ng-template>
+          </li>
+          <li ngbNavItem="formula">
+            <button ngbNavLink type="button">Fórmula médica</button>
+            <ng-template ngbNavContent><app-formulas-cita [citaId]="citaId" [puedeFormular]="puedeFormular" /></ng-template>
+          </li>
+        </ul>
+        <div class="pt-3" [ngbNavOutlet]="nav"></div>
+        <hr />
+        <div class="d-flex flex-wrap justify-content-end gap-2">
+          <app-boton-descarga [endpoint]="'atencion/' + atencion?.id + '/prefactura/pdf'" [deshabilitado]="!atencion?.finalizada" etiqueta="Prefactura PDF" />
+          @if (editable) {
+            <button type="button" class="btn btn-sm btn-success mb-0" [disabled]="finalizando || guardando" (click)="finalizar()">
+              {{ finalizando ? 'Finalizando...' : 'Finalizar atención' }}
+            </button>
+          }
+        </div>
+      </div></div>
+    </div>
+  </div>
+}

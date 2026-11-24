@@ -45,6 +45,7 @@ export class ProductoFormComponent implements OnInit {
   });
 
   impuestos: Impuesto[] = [];
+  errorImpuestos = '';
   enviando = false;
   respuestaError = '';
 
@@ -78,7 +79,13 @@ export class ProductoFormComponent implements OnInit {
       this.form.controls.codigo.disable();
     }
     this.inventarioService.listarImpuestos().pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((impuestos) => this.impuestos = this.conImpuestoActual(impuestos));
+      .subscribe({
+        next: (impuestos) => this.impuestos = this.conImpuestoActual(impuestos),
+        error: (error) => {
+          this.impuestos = this.conImpuestoActual([]);
+          this.errorImpuestos = mensajeError(error, 'No fue posible cargar los impuestos.');
+        }
+      });
   }
 
   guardar(): void {
@@ -131,6 +138,6 @@ export class ProductoFormComponent implements OnInit {
   private conImpuestoActual(impuestos: Impuesto[]): Impuesto[] {
     const { impuestoId = null, porcentajeIva = 0 } = this.producto ?? {};
     return impuestoId === null || impuestos.some(({ id }) => id === impuestoId)
-      ? impuestos : [...impuestos, { id: impuestoId, nombre: `IVA ${porcentajeIva} %`, porcentaje: porcentajeIva }];
+      ? impuestos : [...impuestos, { id: impuestoId, nombre: `IVA ${porcentajeIva} %`, porcentaje: porcentajeIva, activo: false }];
   }
 }

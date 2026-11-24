@@ -135,3 +135,26 @@ Crear en una franja, choque (409 junto al campo), arrastrar, cancelar el arrastr
 ### Pruebas
 
 Las pruebas de Citas se ajustaron al contrato (duración por servicio, estados y cancelación).
+
+## Fase 6: tarifas, atención, fórmulas e historias
+
+- **Tarifas** (`/inicio/tarifas`): servicios, tarifas con motivo y comparación antes/después, impuestos, historial y datos de la clínica. Tras cambiar una tarifa se recarga la lista (el backend devuelve un id nuevo).
+- **Impuestos**: el porcentaje se bloquea si el impuesto está en uso. El API no informa el uso: se deduce de las tarifas (también cerradas) y de los productos; el backend decide. El inventario usa `/impuesto/listar`.
+- **Atención** (`/inicio/atencion` y `/inicio/atencion/:citaId`): antecedentes, consulta con borrador y autoguardado cada 60 s, servicios, fórmulas, finalizar y prefactura. Un 409 al iniciar vuelve al calendario. Pregunta antes de salir con cambios.
+- **Fórmulas**: se crean en la atención, con cantidad sugerida y disponibilidad. El módulo quedó de consulta, con búsqueda en indicaciones. El modelo anterior (`models/formula.ts`) se eliminó.
+- **Historias**: al finalizar, el backend guarda la atención como anotación de texto ("Motivo: …", "Síntomas: …", "Recomendaciones: …"); se separa por campos. Si ese formato cambia, se muestra como anotación normal.
+- `BackendService` admite un recurso sin sub-ruta (`/configuracion-clinica`).
+
+### Decisiones
+
+- Al abrir una atención sin servicios se propone el agendado.
+- Las citas atendidas hoy aparecen aparte, para poder agregar una fórmula olvidada ese mismo día.
+- Un "Guardar borrador" pulsado durante otro guardado queda en cola.
+
+### Verificado contra el backend real (24/11/2026)
+
+Con `medico1`: 409 por otro día, iniciar, borrador, salida con cambios, servicios, fórmula de dos medicamentos (guardar, editar, confirmar), impedimentos para finalizar, finalizar, PDF de fórmula y prefactura, fórmula olvidada y anulación, documentos en el calendario, Fórmulas e Historias. Con `admin`: las cinco pestañas de Tarifas. 360, 768 y 1366 px. Sin probar contra el backend real: el 409 por servicio sin tarifa al finalizar.
+
+### Observación
+
+En una prueba, un cambio de Observaciones no quedó guardado después de rechazar la salida y pulsar "Guardar borrador". No se pudo reproducir en 14 intentos. La causa más probable es que coincidió con otro guardado; de ahí la cola.

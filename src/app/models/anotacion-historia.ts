@@ -1,7 +1,7 @@
 import { Medico } from './medico';
 import { Historia } from './historia';
 import { Cita } from './cita';
-import { Formula } from './formula';
+import { FormulaMedica } from './formula-medica';
 
 export class AnotacionHistoria {
     id!: number;
@@ -12,5 +12,5 @@ export class AnotacionHistoria {
     historia!: Historia;
     medico!: Medico;
     cita?: Cita | null;
-    formulasMedicas?: Formula[] | null;
+    formulasMedicas?: FormulaMedica[] | null;
 }

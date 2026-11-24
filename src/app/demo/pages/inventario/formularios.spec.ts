@@ -34,7 +34,7 @@ describe('Formularios de inventario', () => {
   beforeEach(() => {
     service = jasmine.createSpyObj<InventarioService>('InventarioService',
       ['crearProducto', 'actualizarProducto', 'registrarEntrada', 'registrarAjuste', 'listarImpuestos']);
-    service.listarImpuestos.and.returnValue(of([{ id: 2, nombre: 'IVA 19 %', porcentaje: 19 }]));
+    service.listarImpuestos.and.returnValue(of([{ id: 2, nombre: 'IVA 19 %', porcentaje: 19, activo: true }]));
     for (const metodo of ['crearProducto', 'actualizarProducto', 'registrarEntrada', 'registrarAjuste'] as const) {
       service[metodo].and.returnValue(of(respuesta));
     }

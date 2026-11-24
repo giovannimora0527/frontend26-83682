@@ -1,0 +1,123 @@
+<div class="row g-2 mb-3">
+  <div class="col-md-9">
+    <input class="form-control" type="search" placeholder="Buscar servicio" aria-label="Buscar servicio" [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+  </div>
+  <div class="col-md-3 text-md-end">
+    <button type="button" class="btn btn-outline-primary mb-0" (click)="abrir(null, formulario)"><i class="fa fa-plus" aria-hidden="true"></i> Nuevo servicio</button>
+  </div>
+</div>
+@if (errorListado) {
+  <div class="alert alert-danger" role="alert">{{ errorListado }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando...</p>
+} @else {
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          @for (columna of columnas; track columna.clave) {
+            <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+              <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+            </th>
+          }
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+          @for (servicio of tabla.visibles; track servicio.id) {
+            <tr [class.opacity-50]="!servicio.activo">
+              <td>{{ servicio.codigo }}</td>
+              <td>{{ servicio.nombre }}</td>
+              <td>{{ etiquetaTipo(servicio.tipoServicio) }}</td>
+              <td>{{ servicio.especializacionNombre || 'General' }}</td>
+              <td>{{ servicio.duracionMinutos }} min</td>
+              <td>
+                @if (servicio.tarifaVigente; as tarifa) {
+                  {{ tarifa.valor | moneda }} <span class="text-muted small">+ IVA {{ tarifa.porcentajeIva }} %</span>
+                } @else {
+                  <span class="badge bg-danger">Sin tarifa</span>
+                }
+              </td>
+              <td><span class="badge" [class.bg-success]="servicio.activo" [class.bg-secondary]="!servicio.activo">{{ servicio.activo ? 'Activo' : 'Inactivo' }}</span></td>
+              <td class="text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="abrir(servicio, formulario)">Editar</button>
+                <button type="button" class="btn btn-sm mb-0" [class.btn-outline-danger]="servicio.activo" [class.btn-outline-success]="!servicio.activo"
+                  [disabled]="cambiandoEstado" (click)="cambiarEstado(servicio)">{{ servicio.activo ? 'Inactivar' : 'Activar' }}</button>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr><td colspan="8" class="text-center">{{ tabla.items.length ? 'No se encontraron resultados' : 'No hay servicios registrados' }}</td></tr>
+          }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+}
+<ng-template #formulario let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="servicioTitulo">{{ seleccionado ? 'Editar servicio' : 'Crear servicio' }}</h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+  </div>
+  <form class="modal-body" id="formServicio" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+    }
+    <fieldset [disabled]="enviando">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="servicio-codigo" class="form-label">Código</label>
+        <input id="servicio-codigo" type="text" class="form-control" formControlName="codigo" maxlength="20"
+          [class.is-invalid]="esInvalido(form.controls.codigo)" aria-describedby="servicio-codigo-error" />
+        <div class="invalid-feedback" id="servicio-codigo-error">{{ form.controls.codigo.errors?.['servidor'] ?? 'Ingresa el código (máximo 20 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="servicio-nombre" class="form-label">Nombre</label>
+        <input id="servicio-nombre" type="text" class="form-control" formControlName="nombre" maxlength="100"
+          [class.is-invalid]="esInvalido(form.controls.nombre)" aria-describedby="servicio-nombre-error" />
+        <div class="invalid-feedback" id="servicio-nombre-error">{{ form.controls.nombre.errors?.['servidor'] ?? 'Ingresa el nombre (máximo 100 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="servicio-tipo" class="form-label">Tipo</label>
+        <select id="servicio-tipo" class="form-select" formControlName="tipoServicio" [class.is-invalid]="esInvalido(form.controls.tipoServicio)" aria-describedby="servicio-tipo-error">
+          <option value="" disabled>Selecciona un tipo</option>
+          @for (opcion of tipos; track opcion) {
+            <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+          }
+        </select>
+        <div class="invalid-feedback" id="servicio-tipo-error">{{ form.controls.tipoServicio.errors?.['servidor'] ?? 'Selecciona el tipo.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="servicio-especialidad" class="form-label">Especialidad (opcional)</label>
+        <select id="servicio-especialidad" class="form-select" formControlName="especializacionId" [class.is-invalid]="esInvalido(form.controls.especializacionId)" aria-describedby="servicio-especialidad-error">
+          <option [ngValue]="null">General (sin especialidad)</option>
+          @for (opcion of especialidadesDisponibles; track opcion) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
+        </select>
+        <div class="invalid-feedback" id="servicio-especialidad-error">{{ form.controls.especializacionId.errors?.['servidor'] ?? 'Selecciona otra especialidad.' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="servicio-duracion" class="form-label">Duración (minutos)</label>
+        <input id="servicio-duracion" type="number" class="form-control" formControlName="duracionMinutos" min="1" max="720" step="1"
+          [class.is-invalid]="esInvalido(form.controls.duracionMinutos)" aria-describedby="servicio-duracion-error" />
+        <div class="invalid-feedback" id="servicio-duracion-error">{{ form.controls.duracionMinutos.errors?.['servidor'] ?? 'Ingresa un entero entre 1 y 720.' }}</div>
+      </div>
+      <div class="col-12">
+        <label for="servicio-descripcion" class="form-label">Descripción (opcional)</label>
+        <textarea id="servicio-descripcion" rows="3" class="form-control" formControlName="descripcion" maxlength="1000"
+          [class.is-invalid]="esInvalido(form.controls.descripcion)" aria-describedby="servicio-descripcion-error"></textarea>
+        <div class="invalid-feedback" id="servicio-descripcion-error">{{ form.controls.descripcion.errors?.['servidor'] ?? 'Máximo 1000 caracteres.' }}</div>
+      </div>
+      @if (errorEspecializaciones) {
+        <div class="col-12 text-danger" role="alert">{{ errorEspecializaciones }}</div>
+      }
+      <div class="col-12 form-text">El valor del servicio se define en la pestaña Tarifas.</div>
+    </div>
+    </fieldset>
+  </form>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+    <button type="submit" form="formServicio" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : seleccionado ? 'Actualizar servicio' : 'Guardar servicio' }}</button>
+  </div>
+</ng-template>

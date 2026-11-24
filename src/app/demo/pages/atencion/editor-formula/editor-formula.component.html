@@ -1,0 +1,105 @@
+<form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  @if (respuestaError) {
+    <div class="alert alert-danger" role="alert" style="white-space: pre-line">{{ respuestaError }}</div>
+  }
+  @if (errorMedicamentos) {
+    <div class="alert alert-danger" role="alert">
+      {{ errorMedicamentos }} <button type="button" class="btn btn-link mb-0" (click)="cargarMedicamentos()">Reintentar</button>
+    </div>
+  }
+  <fieldset [disabled]="enviando" formArrayName="detalles">
+    @for (renglon of detalles.controls; track renglon; let i = $index) {
+      <section class="border rounded p-3 mb-3" [formGroupName]="i">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h4 class="h6 mb-0">Medicamento {{ i + 1 }}</h4>
+          @if (detalles.length > 1) {
+            <button type="button" class="btn btn-sm btn-outline-danger mb-0" [attr.aria-label]="'Quitar medicamento ' + (i + 1)" (click)="quitar(i)">Quitar</button>
+          }
+        </div>
+        <div class="row g-2">
+          <div class="col-12">
+            <label [for]="'formula-medicamento-' + i" class="form-label">Medicamento</label>
+            <input [id]="'formula-medicamento-' + i" type="text" class="form-control" formControlName="medicamento" autocomplete="off" container="body"
+              [placeholder]="cargandoMedicamentos ? 'Cargando medicamentos...' : 'Escribe el código o el nombre'" [ngbTypeahead]="buscar" [editable]="false"
+              [inputFormatter]="formato" [resultFormatter]="formato" [class.is-invalid]="esInvalido(renglon.controls.medicamento)" />
+            <div class="invalid-feedback">Selecciona un medicamento de la lista.</div>
+            @if (disponible(i) !== undefined) {
+              <span class="badge mt-1" [class]="colorDisponible(i)">{{ disponible(i) === 'error' ? 'Disponibilidad no consultada' : 'Disponible: ' + disponible(i) }}</span>
+            }
+          </div>
+          <div class="col-6 col-lg-4">
+            <label [for]="'formula-dosis-' + i" class="form-label">Dosis</label>
+            <input [id]="'formula-dosis-' + i" type="number" class="form-control" formControlName="dosis" min="0.01" step="0.01" [class.is-invalid]="esInvalido(renglon.controls.dosis)" />
+            <div class="invalid-feedback">Mayor que 0, máximo 2 decimales.</div>
+          </div>
+          <div class="col-6 col-lg-4">
+            <label [for]="'formula-unidad-' + i" class="form-label">Unidad</label>
+            <input [id]="'formula-unidad-' + i" type="text" class="form-control" formControlName="unidadDosis" maxlength="30" placeholder="tableta, ml..." [class.is-invalid]="esInvalido(renglon.controls.unidadDosis)" />
+            <div class="invalid-feedback">Ingresa la unidad.</div>
+          </div>
+          <div class="col-6 col-lg-4">
+            <label [for]="'formula-frecuencia-' + i" class="form-label">Frecuencia</label>
+            <select [id]="'formula-frecuencia-' + i" class="form-select" formControlName="frecuenciaOpcion" [class.is-invalid]="esInvalido(renglon.controls.frecuenciaOpcion)">
+              <option value="" disabled>Selecciona</option>
+              @for (horas of frecuencias; track horas) {
+                <option [value]="horas">Cada {{ horas }} horas</option>
+              }
+              <option value="otra">Personalizada</option>
+            </select>
+            <div class="invalid-feedback">Selecciona la frecuencia.</div>
+          </div>
+          @if (renglon.controls.frecuenciaOpcion.value === 'otra') {
+          <div class="col-6 col-lg-4">
+            <label [for]="'formula-horas-' + i" class="form-label">Cada (horas)</label>
+            <input [id]="'formula-horas-' + i" type="number" class="form-control" formControlName="frecuenciaHoras" min="1" max="168" step="1" [class.is-invalid]="esInvalido(renglon.controls.frecuenciaHoras)" />
+            <div class="invalid-feedback">Entero entre 1 y 168.</div>
+          </div>
+          }
+          <div class="col-6 col-lg-4">
+            <label [for]="'formula-dias-' + i" class="form-label">Duración (días)</label>
+            <input [id]="'formula-dias-' + i" type="number" class="form-control" formControlName="duracionDias" min="1" max="730" step="1" [class.is-invalid]="esInvalido(renglon.controls.duracionDias)" />
+            <div class="invalid-feedback">Entero entre 1 y 730.</div>
+          </div>
+          <div class="col-6 col-lg-4">
+            <label [for]="'formula-via-' + i" class="form-label">Vía</label>
+            <select [id]="'formula-via-' + i" class="form-select" formControlName="viaAdministracion" [class.is-invalid]="esInvalido(renglon.controls.viaAdministracion)">
+              <option value="" disabled>Selecciona</option>
+              @for (via of vias; track via.valor) {
+                <option [value]="via.valor">{{ via.etiqueta }}</option>
+              }
+            </select>
+            <div class="invalid-feedback">Selecciona la vía.</div>
+          </div>
+          <div class="col-6 col-lg-4">
+            <label [for]="'formula-cantidad-' + i" class="form-label">Cantidad a dispensar</label>
+            <input [id]="'formula-cantidad-' + i" type="number" min="1" step="1" class="form-control" formControlName="cantidadPrescrita"
+              [class.is-invalid]="esInvalido(renglon.controls.cantidadPrescrita)" />
+            <div class="invalid-feedback">Entero de 1 en adelante.</div>
+            @if (sugerida(i) !== null && sugerida(i) !== renglon.controls.cantidadPrescrita.value) {
+              <button type="button" class="btn btn-link btn-sm p-0" (click)="usarSugerida(i)">Usar sugerida: {{ sugerida(i) }}</button>
+            }
+          </div>
+          <div class="col-12">
+            <label [for]="'formula-indicaciones-' + i" class="form-label">Indicaciones especiales (opcional)</label>
+            <input [id]="'formula-indicaciones-' + i" type="text" class="form-control" formControlName="indicaciones" maxlength="500" />
+          </div>
+        </div>
+        @if (noAlcanza(i)) {
+          <div class="alert alert-warning mt-2 mb-0" role="status">Se formulará, pero despacho podría entregarla parcialmente.</div>
+        }
+      </section>
+    }
+  </fieldset>
+  @if (detalles.hasError('repetidos')) {
+    <div class="text-danger mb-2" role="alert">No repitas un medicamento en la misma fórmula.</div>
+  }
+  <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="enviando" (click)="agregar()"><i class="fa fa-plus" aria-hidden="true"></i> Agregar medicamento</button>
+  <div class="mt-2">
+    <label for="formula-generales" class="form-label">Indicaciones generales (opcional)</label>
+    <textarea id="formula-generales" rows="2" class="form-control" formControlName="indicacionesGenerales" maxlength="2000"></textarea>
+  </div>
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="cerrar.emit()">Cancelar</button>
+    <button type="submit" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : 'Guardar fórmula' }}</button>
+  </div>
+</form>

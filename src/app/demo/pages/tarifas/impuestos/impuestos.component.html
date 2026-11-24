@@ -1,0 +1,90 @@
+<div class="row g-2 mb-3">
+  <div class="col-md-9">
+    <input class="form-control" type="search" placeholder="Buscar impuesto" aria-label="Buscar impuesto" [ngModel]="tabla.termino" (ngModelChange)="tabla.termino = $event" />
+  </div>
+  <div class="col-md-3 text-md-end">
+    <button type="button" class="btn btn-outline-primary mb-0" (click)="abrir(null, formulario)"><i class="fa fa-plus" aria-hidden="true"></i> Nuevo impuesto</button>
+  </div>
+</div>
+@if (errorListado) {
+  <div class="alert alert-danger" role="alert">{{ errorListado }} <button type="button" class="btn btn-link mb-0" (click)="listar()">Reintentar</button></div>
+} @else if (cargando) {
+  <p class="text-center" role="status"><span class="spinner-border spinner-border-sm"></span> Cargando...</p>
+} @else {
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          @for (columna of columnas; track columna.clave) {
+            <th scope="col" [attr.aria-sort]="tabla.ariaSort(columna.clave)">
+              <app-boton-orden [tabla]="tabla" [columna]="columna.clave">{{ columna.titulo }}</app-boton-orden>
+            </th>
+          }
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+          @for (impuesto of tabla.visibles; track impuesto.id) {
+            <tr [class.opacity-50]="!impuesto.activo">
+              <td>{{ impuesto.nombre }}</td>
+              <td>{{ impuesto.porcentaje }} %</td>
+              <td>{{ estaEnUso(impuesto) ? 'En uso' : 'Sin uso' }}</td>
+              <td><span class="badge" [class.bg-success]="impuesto.activo" [class.bg-secondary]="!impuesto.activo">{{ impuesto.activo ? 'Activo' : 'Inactivo' }}</span></td>
+              <td><button type="button" class="btn btn-sm btn-outline-info mb-0" (click)="abrir(impuesto, formulario)">Editar</button></td>
+            </tr>
+          }
+          @empty {
+            <tr><td colspan="5" class="text-center">{{ tabla.items.length ? 'No se encontraron resultados' : 'No hay impuestos registrados' }}</td></tr>
+          }
+      </tbody>
+    </table>
+  </div>
+  <app-paginacion [tabla]="tabla" />
+}
+<ng-template #formulario let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="impuestoTitulo">{{ seleccionado ? 'Editar impuesto' : 'Crear impuesto' }}</h2>
+    <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="enviando" (click)="modal.dismiss()"></button>
+  </div>
+  <form class="modal-body" id="formImpuesto" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    @if (respuestaError) {
+      <div class="alert alert-danger" role="alert">{{ respuestaError }}</div>
+    }
+    <fieldset [disabled]="enviando">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="impuesto-nombre" class="form-label">Nombre</label>
+        <input id="impuesto-nombre" type="text" class="form-control" formControlName="nombre" maxlength="50"
+          [class.is-invalid]="esInvalido(form.controls.nombre)" aria-describedby="impuesto-nombre-error" />
+        <div class="invalid-feedback" id="impuesto-nombre-error">{{ form.controls.nombre.errors?.['servidor'] ?? 'Ingresa el nombre (máximo 50 caracteres).' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label for="impuesto-porcentaje" class="form-label">Porcentaje</label>
+        <input id="impuesto-porcentaje" type="number" class="form-control" formControlName="porcentaje" min="0" max="100" step="0.01"
+          [class.is-invalid]="esInvalido(form.controls.porcentaje)" aria-describedby="impuesto-porcentaje-error" />
+        <div class="invalid-feedback" id="impuesto-porcentaje-error">{{ form.controls.porcentaje.errors?.['servidor'] ?? 'Ingresa un valor de 0 a 100, con máximo 2 decimales.' }}</div>
+      </div>
+      @if (porcentajeBloqueado) {
+        <div class="col-12 form-text" id="impuesto-ayuda">
+          El porcentaje no se edita porque el impuesto está en uso. Para cambiarlo, crea otro impuesto y asígnalo en cada tarifa: así el cambio queda en el historial.
+        </div>
+      }
+      @if (seleccionado) {
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" id="impuesto-activo" class="form-check-input" formControlName="activo" />
+            <label for="impuesto-activo" class="form-check-label">Activo</label>
+          </div>
+          @if (form.controls.activo.errors; as errores) {
+            <div class="text-danger small" role="alert">{{ errores['servidor'] }}</div>
+          }
+        </div>
+      }
+    </div>
+    </fieldset>
+  </form>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" [disabled]="enviando" (click)="modal.dismiss()">Cerrar</button>
+    <button type="submit" form="formImpuesto" class="btn btn-primary" [disabled]="enviando">{{ enviando ? 'Guardando...' : seleccionado ? 'Actualizar impuesto' : 'Guardar impuesto' }}</button>
+  </div>
+</ng-template>

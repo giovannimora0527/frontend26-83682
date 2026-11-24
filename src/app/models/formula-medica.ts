@@ -22,10 +22,10 @@ export interface FormulaDetalle extends FormulaDetalleRq {
   medicamentoCodigo: string;
   medicamentoNombre: string;
   cantidadDespachada: number;
-  cantidadSugerida?: number;
-  presentacion?: string | null;
-  cantidadDisponibleVigente?: number;
-  alcanza?: boolean;
+  cantidadSugerida: number;
+  presentacion: string | null;
+  cantidadDisponibleVigente: number;
+  alcanza: boolean;
 }
 
 export interface FormulaMedica {
@@ -35,6 +35,7 @@ export interface FormulaMedica {
   fecha: string;
   fechaConfirmacion: string | null;
   citaId: number;
+  atencionId: number | null;
   medicoId: number;
   medicoNombre: string;
   clienteId: number;
@@ -44,5 +45,6 @@ export interface FormulaMedica {
   indicacionesGenerales: string | null;
   estadoFormula: EstadoFormula;
   estadoDespacho: EstadoDespacho | null;
+  motivoAnulacion: string | null;
   detalles: FormulaDetalle[];
 }
