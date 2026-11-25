@@ -108,7 +108,10 @@
             }
           </fieldset>
         }
-        @if (d.formula.estado !== 'DESPACHADO' && d.formula.estado !== 'CANCELADO') {
+        @if (!puedeOperar) {
+          <p class="alert alert-secondary py-2 mt-2">Consulta de solo lectura: la preparación, entrega y reversión las realiza el perfil Despacho médico.</p>
+        }
+        @if (puedeOperar && d.formula.estado !== 'DESPACHADO' && d.formula.estado !== 'CANCELADO') {
           <button type="button" class="btn btn-primary" [disabled]="ocupado || !puedePreparar()" (click)="preparar(d)">Preparar entrega</button>
           <details class="my-2">
             <summary>Disponibilidad y cancelación</summary>
@@ -121,7 +124,7 @@
             </div>
           </details>
         }
-        @if (d.preparacion; as plan) {
+        @if (puedeOperar && d.preparacion; as plan) {
           <div class="alert alert-info mt-3">
             <h4 class="h6">Unidades a descontar al confirmar</h4>
             <ul>
@@ -145,7 +148,7 @@
             <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="descargar(e)">Descargar comprobante PDF</button>
             @if (e.revertida) {
               <p class="mb-0">Revertida por {{ e.reversor }} · {{ e.revertida.replace('T', ' ') }} · {{ e.motivo }}</p>
-            } @else {
+            } @else if (puedeOperar) {
               <details class="mt-2">
                 <summary>Registrar reversión</summary>
                 <label class="d-block my-2">Motivo de la reversión<input class="form-control" #reversion maxlength="255"></label>

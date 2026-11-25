@@ -1,4 +1,5 @@
 import { hoyBogota } from '../../../services/agenda.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -18,6 +19,8 @@ import {
 export class DespachoComponent implements OnInit {
   /** Ruta del recurso en la API del backend. */
   private readonly api = inject(DespachoService);
+  /** Permiso DESPACHO_OPERAR: preparar, confirmar, cancelar y revertir (los demás perfiles autorizados solo consultan). */
+  readonly puedeOperar = inject(AuthService).tienePermiso('DESPACHO_OPERAR');
   /** Estados. */
   readonly estados = estadosDespacho;
   /** Tab. */
