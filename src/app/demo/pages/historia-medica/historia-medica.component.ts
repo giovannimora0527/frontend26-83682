@@ -44,7 +44,7 @@ export class HistoriaMedicaComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   /** El perfil MEDICO registra información solo a su nombre (el backend también lo valida). */
-  readonly esMedico = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase() === 'MEDICO';
+  readonly esMedico = inject(AuthService).tienePermiso('HISTORIA_GESTIONAR');
   /** Solo fecha. */
   readonly soloFecha = soloFecha;
   /** Solo hora. */

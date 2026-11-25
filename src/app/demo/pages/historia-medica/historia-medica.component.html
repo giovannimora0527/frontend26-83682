@@ -3,9 +3,11 @@
     <div class="card">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h5 class="mb-0">Historias clínicas (consultas realizadas)</h5>
-        <button type="button" class="btn btn-primary" (click)="nueva()" [disabled]="guardando">
-          <i class="feather icon-plus"></i> Nueva historia clínica
-        </button>
+        @if (esMedico) {
+          <button type="button" class="btn btn-primary" (click)="nueva()" [disabled]="guardando">
+            <i class="feather icon-plus"></i> Nueva historia clínica
+          </button>
+        }
       </div>
 
       <div class="card-body">
@@ -140,7 +142,7 @@
                     <td class="text-center">{{ h.anotaciones }}</td>
                     <td class="text-nowrap">
                       <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="ver(h)"><i class="feather icon-eye"></i> Ver</button>
-                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="editar(h)"><i class="feather icon-edit-2"></i> Editar</button>
+                      @if (esMedico) { <button type="button" class="btn btn-sm btn-outline-secondary" (click)="editar(h)"><i class="feather icon-edit-2"></i> Editar</button> }
                     </td>
                   </tr>
                 } @empty {
@@ -188,7 +190,7 @@
           <div class="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-2 gap-2">
             <h6 class="mb-0">Histórico de anotaciones</h6>
             @if (d.activo) {
-              <button type="button" class="btn btn-sm btn-primary" (click)="nuevaAnotacion()"><i class="feather icon-plus"></i> Nueva anotación</button>
+              @if (esMedico) { <button type="button" class="btn btn-sm btn-primary" (click)="nuevaAnotacion()"><i class="feather icon-plus"></i> Nueva anotación</button> }
             }
           </div>
 
@@ -239,7 +241,7 @@
                     <td class="celda-corta" [title]="a.diagnostico">{{ a.diagnostico || '—' }}</td>
                     <td class="text-nowrap">
                       <button type="button" class="btn btn-sm btn-link p-0 me-2" (click)="anotacionSeleccionada = a">Detalle</button>
-                      @if (d.activo) { <button type="button" class="btn btn-sm btn-link p-0" (click)="editarAnotacion(a)">Editar</button> }
+                      @if (d.activo && esMedico) { <button type="button" class="btn btn-sm btn-link p-0" (click)="editarAnotacion(a)">Editar</button> }
                     </td>
                   </tr>
                 } @empty {

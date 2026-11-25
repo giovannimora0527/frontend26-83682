@@ -47,12 +47,12 @@ export class ClienteComponent implements OnInit {
   /** Constructor de formularios reactivos. */
   private readonly fb = inject(FormBuilder);
 
-  /** Perfil del usuario autenticado en mayúsculas. */
-  private readonly perfil = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase();
-  /** Administración y recepción registran y editan. */
-  readonly puedeModificar = this.perfil.startsWith('ADMIN') || this.perfil.startsWith('RECEP');
-  /** Solo el administrador archiva. */
-  readonly puedeArchivar = this.perfil.startsWith('ADMIN');
+  /** Servicio de sesión (permisos del usuario). */
+  private readonly auth = inject(AuthService);
+  /** Permiso CLIENTE_GESTIONAR: registrar, editar y reactivar. */
+  readonly puedeModificar = this.auth.tienePermiso('CLIENTE_GESTIONAR');
+  /** Permiso CLIENTE_ARCHIVAR. */
+  readonly puedeArchivar = this.auth.tienePermiso('CLIENTE_ARCHIVAR');
   /** Tipos de documento permitidos. */
   readonly tipos = [
     { id: 'CC', nombre: 'Cédula de ciudadanía' }, { id: 'TI', nombre: 'Tarjeta de identidad' },

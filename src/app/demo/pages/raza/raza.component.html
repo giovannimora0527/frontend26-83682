@@ -3,9 +3,11 @@
     <div class="card">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h5 class="mb-0">Gestión de razas</h5>
-        <button type="button" class="btn btn-primary" (click)="nueva()" [disabled]="guardando">
-          <i class="feather icon-plus"></i> Nueva raza
-        </button>
+        @if (puedeGestionar) {
+          <button type="button" class="btn btn-primary" (click)="nueva()" [disabled]="guardando">
+            <i class="feather icon-plus"></i> Nueva raza
+          </button>
+        }
       </div>
 
       <div class="card-body">
@@ -89,9 +91,11 @@
                     <td>{{ r.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</td>
                     <td>{{ r.fechaModificacion ? (r.fechaModificacion | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
                     <td class="text-nowrap">
+                      @if (puedeGestionar) {
                       <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="editar(r)">
                         <i class="feather icon-edit-2"></i> Editar
                       </button>
+                      }
                       @if (esAdmin) {
                         <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminar(r)" [disabled]="r.mascotas > 0"
                           [title]="r.mascotas > 0 ? 'Tiene mascotas registradas: no se puede eliminar' : 'Eliminar raza'">

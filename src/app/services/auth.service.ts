@@ -19,6 +19,8 @@ export interface LoginResponse {
   perfilId: number;
   /** Perfil (rol) del usuario. */
   perfil: string;
+  /** Permisos del rol (control de acceso por permisos; el backend los valida en cada endpoint). */
+  permisos?: string[];
 }
 
 // Respuesta del primer paso (usuario y contraseña) o de la recuperación de contraseña.
@@ -69,7 +71,42 @@ export class AuthService {
    * @returns observable con la respuesta del backend.
    */
   validarSesion() {
-    return this.backendService.get(environment.apiUrlAuth, 'auth', 'validar');
+    return this.backendService.get<LoginResponse>(environment.apiUrlAuth, 'auth', 'validar')
+      .pipe(tap(s => localStorage.setItem('permisos', JSON.stringify(s?.permisos ?? []))));
+  }
+
+  /**
+   * Permisos del usuario autenticado (se actualizan al validar la sesión).
+   *
+   * @returns códigos de permiso.
+   */
+  obtenerPermisos(): string[] {
+    try {
+      return JSON.parse(localStorage.getItem('permisos') ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Indica si el usuario tiene un permiso. Solo controla la interfaz: el backend lo valida en cada operación.
+   *
+   * @param permiso código del permiso.
+   * @returns true si lo tiene.
+   */
+  tienePermiso(permiso: string): boolean {
+    return this.obtenerPermisos().includes(permiso);
+  }
+
+  /**
+   * Indica si el usuario tiene alguno de los permisos.
+   *
+   * @param permisos códigos de permiso.
+   * @returns true si tiene al menos uno.
+   */
+  tieneAlguno(...permisos: string[]): boolean {
+    const propios = this.obtenerPermisos();
+    return permisos.some(p => propios.includes(p));
   }
 
   // ============================================
@@ -192,6 +229,7 @@ export class AuthService {
     localStorage.removeItem('username');
     localStorage.removeItem('perfilId');
     localStorage.removeItem('perfil');
+    localStorage.removeItem('permisos');
   }
 
   /**
@@ -209,5 +247,6 @@ export class AuthService {
     localStorage.setItem('username', respuesta.username);
     localStorage.setItem('perfilId', String(respuesta.perfilId));
     localStorage.setItem('perfil', respuesta.perfil);
+    localStorage.setItem('permisos', JSON.stringify(respuesta.permisos ?? []));
   }
 }

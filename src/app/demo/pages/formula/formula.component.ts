@@ -53,8 +53,7 @@ export class FormulaComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   /** Indica si es médico. */
-  readonly esMedico = (inject(AuthService).obtenerPerfil() ?? '').normalize('NFD')
-    .replace(/\p{M}/gu, '').trim().toUpperCase() === 'MEDICO';
+  readonly esMedico = inject(AuthService).tienePermiso('FORMULA_GESTIONAR');
   /** Solo fecha. */
   readonly soloFecha = soloFecha;
   /** Fecha de hoy (AAAA-MM-DD). */

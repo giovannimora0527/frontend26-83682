@@ -17,9 +17,15 @@ export class FacturacionComponent implements OnInit {
   /** Ruta del recurso en la API del backend. */
   private readonly api=inject(FacturacionService);
   /** Perfil (rol) del usuario. */
-  private readonly perfil=inject(AuthService).obtenerPerfil()?.trim().toUpperCase();
+  private readonly auth=inject(AuthService);
   /** Admin. */
-  readonly admin=this.perfil==='ADMIN' || this.perfil==='ADMINISTRADOR';
+  readonly admin=this.auth.tienePermiso('DESCUENTO_AUTORIZAR');
+  /** Permiso FACTURA_EMITIR. */
+  readonly puedeEmitir=this.auth.tienePermiso('FACTURA_EMITIR');
+  /** Permiso PAGO_REGISTRAR. */
+  readonly puedePagar=this.auth.tienePermiso('PAGO_REGISTRAR');
+  /** Permiso FACTURA_ANULAR. */
+  readonly puedeAnular=this.auth.tienePermiso('FACTURA_ANULAR');
   /** Lista de estados. */
   readonly estados=['PENDIENTE_PAGO','PAGO_PARCIAL','PAGADA','ANULADA'];
   /** Lista de métodos. */

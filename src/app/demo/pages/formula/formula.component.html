@@ -10,9 +10,11 @@
           <h5 class="mb-0">Fórmulas médicas</h5>
           <small class="text-muted">Asociadas a una consulta (cita), mascota, veterinario e historia clínica.</small>
         </div>
+        @if (esMedico) {
         <button type="button" class="btn btn-primary" (click)="nueva()" [disabled]="guardando">
           <i class="feather icon-plus"></i> Nueva fórmula
         </button>
+        }
       </div>
 
       <div class="card-body">
@@ -177,7 +179,7 @@
                     <td class="text-nowrap">
                       <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="ver(f)"><i class="feather icon-eye"></i> Ver</button>
                       @if (f.activo) {
-                        <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="editar(f)"><i class="feather icon-edit-2"></i> Editar</button>
+                        @if (esMedico) { <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="editar(f)"><i class="feather icon-edit-2"></i> Editar</button> }
                       }
                       <button type="button" class="btn btn-sm" [class.btn-outline-danger]="f.activo" [class.btn-outline-success]="!f.activo"
                         (click)="porCambiarEstado = f">{{ f.activo ? 'Inactivar' : 'Activar' }}</button>

@@ -156,7 +156,7 @@ export class CitaComponent implements OnInit {
   /** Dependencia inyectada (CitaService). */
   private readonly citasApi = inject(CitaService);
   /** Indica si es admin. */
-  readonly esAdmin = ['ADMIN', 'ADMINISTRADOR'].includes((inject(AuthService).obtenerPerfil() ?? '').trim().toUpperCase());
+  readonly esAdmin = inject(AuthService).tienePermiso('AGENDA_CONFIGURAR');
   /** Lista de estados. */
   readonly estados = ['pendiente', 'programada', 'confirmada', 'atendida', 'finalizada', 'cancelada'];
 

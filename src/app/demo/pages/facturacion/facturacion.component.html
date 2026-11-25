@@ -3,7 +3,7 @@
   <div class="card-body">
     <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Opciones de facturación">
       <button class="btn btn-outline-primary" [class.active]="vista==='listado'" [disabled]="ocupado" (click)="cambiar('listado')">Facturas emitidas</button>
-      <button class="btn btn-outline-primary" [class.active]="vista==='emision'" [disabled]="ocupado" (click)="cambiar('emision')">Nueva factura</button>
+      @if (puedeEmitir) { <button class="btn btn-outline-primary" [class.active]="vista==='emision'" [disabled]="ocupado" (click)="cambiar('emision')">Nueva factura</button> }
     </nav>
     @if (error) {<p class="alert alert-danger" role="alert">{{ error }}</p>}
     @if (aviso) {<p class="alert alert-success" role="status">{{ aviso }}</p>}
@@ -112,7 +112,7 @@
         </div>
         <p>Subtotal {{ d.factura.subtotal }} · Descuento {{ d.factura.descuento }} · IVA {{ d.factura.iva }} · Otros impuestos {{ d.factura.otros_impuestos }}</p>
         <p><strong>Total COP {{ d.factura.total }} · Pagado {{ d.factura.pagado }} · Saldo {{ d.factura.saldo }} · {{ etiqueta(d.factura.estado) }}</strong></p>
-        @if(d.factura.estado==='PENDIENTE_PAGO' || d.factura.estado==='PAGO_PARCIAL'){
+        @if(puedePagar && (d.factura.estado==='PENDIENTE_PAGO' || d.factura.estado==='PAGO_PARCIAL')){
           <form class="d-flex flex-wrap align-items-end gap-2 mb-3" (ngSubmit)="pagar()">
             <label>Importe COP<input class="form-control" name="importe" inputmode="decimal" maxlength="20" [(ngModel)]="abono.importe" required></label>
             <label>Método<select class="form-select" name="metodo" [(ngModel)]="abono.metodo">
@@ -123,7 +123,7 @@
             <button class="btn btn-primary" [disabled]="ocupado">Registrar pago</button>
           </form>
         }
-        @if(admin && !d.pagos.length && d.factura.estado!=='ANULADA'){
+        @if(puedeAnular && !d.pagos.length && d.factura.estado!=='ANULADA'){
           <details class="mb-3"><summary>Anular factura</summary>
             <form class="d-flex flex-wrap align-items-end gap-2 mt-2" (ngSubmit)="anular()">
               <label>Motivo de anulación<input class="form-control" name="anulacion" maxlength="255" [(ngModel)]="motivoAnulacion" required></label>

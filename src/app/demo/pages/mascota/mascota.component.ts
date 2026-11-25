@@ -45,10 +45,8 @@ export class MascotaComponent implements OnInit {
   /** Constructor de formularios reactivos. */
   private readonly fb = inject(FormBuilder);
 
-  /** Perfil del usuario autenticado en mayúsculas. */
-  private readonly perfil = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase();
-  /** Administración y recepción pueden registrar y modificar; el médico solo consulta. */
-  readonly puedeModificar = this.perfil.startsWith('ADMIN') || this.perfil.startsWith('RECEP');
+  /** Permiso MASCOTA_GESTIONAR (administración y secretaria); los demás perfiles solo consultan. */
+  readonly puedeModificar = inject(AuthService).tienePermiso('MASCOTA_GESTIONAR');
 
   /** Tabla con búsqueda, orden y paginación. */
   readonly tabla = new TablaDatos<FilaMascota>(

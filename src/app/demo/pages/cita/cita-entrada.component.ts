@@ -11,6 +11,5 @@ import { CitaComponent } from './cita.component';
 })
 export class CitaEntradaComponent {
   /** Indica si es médico. */
-  readonly esMedico = (inject(AuthService).obtenerPerfil() ?? '').normalize('NFD')
-    .replace(/\p{M}/gu, '').trim().toUpperCase() === 'MEDICO';
+  readonly esMedico = inject(AuthService).tienePermiso('AGENDA_PROPIA');
 }

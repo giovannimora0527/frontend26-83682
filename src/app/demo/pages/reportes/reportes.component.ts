@@ -6,6 +6,20 @@ import { descargarClinica, mensajeClinica } from '../../../services/clinica.serv
 import { CeldaReporte, ColumnaReporte, ReportesService, ResultadoReporte } from '../../../services/reportes.service';
 
 /** Catalogo. */
+/**
+ * Permisos que habilitan cada tipo de reporte (igual que en el backend, que es quien valida).
+ *
+ * @param tipo tipo de reporte.
+ * @returns permisos aceptados.
+ */
+function permisosReporte(tipo: string): string[] {
+  if (['FINANCIERO', 'FACTURAS', 'PAGOS', 'POR_MEDICO', 'POR_ESPECIALIDAD', 'CONCEPTOS'].includes(tipo)) return ['REPORTE_FINANCIERO'];
+  if (['EXISTENCIAS', 'LOTES', 'MOVIMIENTOS'].includes(tipo)) return ['REPORTE_INVENTARIO'];
+  if (tipo === 'DISPENSACIONES') return ['REPORTE_INVENTARIO', 'REPORTE_DESPACHO'];
+  if (['CITAS', 'CITAS_OPERATIVAS'].includes(tipo)) return ['REPORTE_CITAS'];
+  return ['REPORTE_MEDICO'];
+}
+
 const catalogo = [
   { id:'FINANCIERO', nombre:'Resumen financiero', grupo:'Financieros' },
   { id:'FACTURAS', nombre:'Facturas y saldos al cierre', grupo:'Financieros' },
@@ -34,10 +48,9 @@ export class ReportesComponent {
   /** Ruta del recurso en la API del backend. */
   private readonly api=inject(ReportesService);
   /** Rol del usuario. */
-  private readonly rol=inject(AuthService).obtenerPerfil()?.trim().toUpperCase();
+  private readonly auth=inject(AuthService);
   /** Catalogo. */
-  readonly catalogo=this.rol==='ADMINISTRADOR'||this.rol==='ADMIN'
-    ? catalogo : catalogo.filter(r=>r.id==='CITAS_OPERATIVAS');
+  readonly catalogo=catalogo.filter(r=>this.auth.tieneAlguno(...permisosReporte(r.id)));
   /** Lista de grupos. */
   readonly grupos=[...new Set(this.catalogo.map(r=>r.grupo))];
   /** Tipo de registro. */

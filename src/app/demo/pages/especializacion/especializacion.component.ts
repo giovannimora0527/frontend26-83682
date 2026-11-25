@@ -37,7 +37,7 @@ import {
 /** Pantalla «especialización» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 export class EspecializacionComponent implements OnInit {
   /** Indica si es admin. */
-  readonly esAdmin = ['ADMIN', 'ADMINISTRADOR'].includes((inject(AuthService).obtenerPerfil() ?? '').trim().toUpperCase());
+  readonly esAdmin = inject(AuthService).tienePermiso('TARIFA_GESTIONAR');
 
 
   // 3. VARIABLES PRINCIPALES

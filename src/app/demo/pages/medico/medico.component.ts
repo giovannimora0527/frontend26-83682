@@ -40,9 +40,11 @@ export class MedicoComponent implements OnInit {
   private readonly usuariosApi = inject(UsuarioService);
   /** Constructor de formularios reactivos. */
   private readonly fb = inject(FormBuilder);
+  /** Servicio de sesión (permisos del usuario). */
+  private readonly auth = inject(AuthService);
 
   /** Indica si el usuario es administrador (único que puede crear, editar y cambiar el estado). */
-  readonly esAdmin = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase().startsWith('ADMIN');
+  readonly esAdmin = inject(AuthService).tienePermiso('MEDICO_GESTIONAR');
   /** Tipos de documento permitidos. */
   readonly tipos = [
     { id: 'CC', nombre: 'Cédula de ciudadanía' }, { id: 'CE', nombre: 'Cédula de extranjería' },
@@ -123,7 +125,7 @@ export class MedicoComponent implements OnInit {
         this.cargando = false;
       }
     });
-    if (this.esAdmin) {
+    if (this.esAdmin && this.auth.tienePermiso('USUARIO_GESTIONAR')) {
       this.usuariosApi.listar().subscribe({
         next: u => (this.usuariosMedico = u.filter(x => (x.perfil ?? '').toUpperCase().startsWith('M')
           && (x.perfil ?? '').toUpperCase().includes('DICO'))),

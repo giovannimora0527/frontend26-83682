@@ -22,7 +22,7 @@ export class MedicamentoComponent implements OnInit {
   /** Dependencia inyectada (AuthService). */
   private readonly auth = inject(AuthService);
   /** Indica si puede modificar. */
-  readonly puedeModificar = ['ADMIN', 'ADMINISTRADOR'].includes((this.auth.obtenerPerfil() ?? '').trim().toUpperCase());
+  readonly puedeModificar = this.auth.tienePermiso('INVENTARIO_GESTIONAR');
   /** Identificador de usuario. */
   readonly usuarioId = this.auth.obtenerUsuarioId();
   /** Columnas del resultado. */

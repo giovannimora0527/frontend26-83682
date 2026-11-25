@@ -28,7 +28,9 @@ export class RazaComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   /** Indica si el usuario es administrador (único que puede eliminar). */
-  readonly esAdmin = (inject(AuthService).obtenerPerfil() ?? '').toUpperCase().startsWith('ADMIN');
+  readonly esAdmin = inject(AuthService).tienePermiso('RAZA_ELIMINAR');
+  /** Permiso RAZA_GESTIONAR: registrar y editar razas. */
+  readonly puedeGestionar = inject(AuthService).tienePermiso('RAZA_GESTIONAR');
 
   /** Tabla con búsqueda, orden y paginación. */
   readonly tabla = new TablaDatos<RazaRegistro>(['nombre', 'especie', 'razaId'], 'especie', 'asc');
