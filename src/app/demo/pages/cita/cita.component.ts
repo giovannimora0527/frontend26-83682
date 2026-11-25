@@ -793,10 +793,10 @@ export class CitaComponent implements OnInit {
    */
   get totalPaginas(): number {
 
-    return Math.ceil(
+    return Math.max(1, Math.ceil(
       this.citasFiltradas.length /
       this.registrosPorPagina
-    );
+    ));
 
   }
 

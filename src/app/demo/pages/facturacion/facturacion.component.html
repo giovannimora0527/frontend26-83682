@@ -49,10 +49,13 @@
         </table>
       </div>
     }
-    <nav class="d-flex gap-2 mb-3" aria-label="Paginación">
-      <button class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || pagina===0" (click)="buscar(pagina-1)">Anterior</button>
-      <button class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || (vista==='listado' ? facturas.length : atenciones.length)<50"
-        (click)="buscar(pagina+1)">Siguiente</button>
+    <nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3" aria-label="Paginación">
+      <small class="text-muted">{{ vista==='listado' ? facturas.length + ' factura(s)' : atenciones.length + ' atención(es)' }} · página {{ pagina + 1 }} (50 por página)</small>
+      <div>
+        <button class="btn btn-sm btn-outline-secondary me-1" [disabled]="ocupado || pagina===0" (click)="buscar(pagina-1)">Anterior</button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || (vista==='listado' ? facturas.length : atenciones.length)<50"
+          (click)="buscar(pagina+1)">Siguiente</button>
+      </div>
     </nav>
 
     @if(origen;as o){

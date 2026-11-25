@@ -36,7 +36,7 @@
   </table>
 </div>
 <div class="d-flex justify-content-between align-items-center">
-  <small class="text-muted">Página {{ pagina + 1 }}</small>
+  <small class="text-muted">{{ filas.length }} registro(s) · página {{ pagina + 1 }}{{ hayMas ? ' · hay más' : '' }}</small>
   <div>
     <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="pagina === 0 || cargando" (click)="buscar(pagina - 1)">Anterior</button>
     <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="!hayMas || cargando" (click)="buscar(pagina + 1)">Siguiente</button>
