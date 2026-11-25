@@ -53,3 +53,37 @@ export class PaginadorComponent {
     }
   }
 }
+
+/**
+ * Estado de paginación en el cliente para listas secundarias (lotes, movimientos, historiales…).
+ * Uso: `@for (x of pag.visibles(lista); ...)` y
+ * `<app-paginador [pagina]="pag.actual(lista)" [totalPaginas]="pag.total(lista)" (cambiar)="pag.pagina = $event">`.
+ */
+export class PaginaLocal {
+  /** Página pedida (desde 1); se ajusta si la lista se acorta. */
+  pagina = 1;
+
+  /** @param porPagina filas por página. */
+  constructor(readonly porPagina = 10) {}
+
+  /** Total de páginas de la lista (mínimo 1). */
+  total(lista: readonly unknown[] | null | undefined): number {
+    return Math.max(1, Math.ceil((lista?.length ?? 0) / this.porPagina));
+  }
+
+  /** Página vigente, sin pasarse del total. */
+  actual(lista: readonly unknown[] | null | undefined): number {
+    return Math.min(this.pagina, this.total(lista));
+  }
+
+  /** Filas de la página vigente. */
+  visibles<T>(lista: readonly T[] | null | undefined): T[] {
+    const inicio = (this.actual(lista) - 1) * this.porPagina;
+    return (lista ?? []).slice(inicio, inicio + this.porPagina);
+  }
+
+  /** Vuelve a la primera página (al cambiar de registro o de filtro). */
+  reiniciar(): void {
+    this.pagina = 1;
+  }
+}

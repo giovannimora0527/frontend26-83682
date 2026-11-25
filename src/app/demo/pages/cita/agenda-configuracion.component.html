@@ -39,13 +39,14 @@
     </form>
     @if (horario.ausencias.length) {
       <ul class="list-group mt-2 mb-0">
-        @for (a of horario.ausencias; track a.id) {
+        @for (a of pagAusencias.visibles(horario.ausencias); track a.id) {
           <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span>{{ a.inicio.replace('T',' ').slice(0,16) }} a {{ a.fin.replace('T',' ').slice(0,16) }} · {{ a.motivo }}</span>
             <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado" (click)="eliminarAusencia(a)">Eliminar</button>
           </li>
         }
       </ul>
+      <app-paginador [pagina]="pagAusencias.actual(horario.ausencias)" [totalPaginas]="pagAusencias.total(horario.ausencias)" (cambiar)="pagAusencias.pagina = $event">{{ horario.ausencias.length }} ausencia(s)</app-paginador>
     } @else {
       <p class="text-muted small mt-2 mb-0">No hay ausencias vigentes ni programadas.</p>
     }

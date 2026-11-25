@@ -23,7 +23,7 @@
       <table class="table align-middle">
         <thead><tr><th>Código</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody>
-          @for (e of especialidades; track e.id) {
+          @for (e of pagEspecialidades.visibles(especialidades); track e.id) {
             <tr><td>{{ e.codigo }}</td><td>{{ e.nombre }}</td><td>{{ e.activo ? 'Activa' : 'Inactiva' }}</td>
               <td>@if (!soloLectura) { <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="editar(e)">Editar</button> }
                 <button class="btn btn-sm btn-outline-primary" type="button" (click)="ver(e)">Servicios</button></td></tr>
@@ -31,6 +31,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [pagina]="pagEspecialidades.actual(especialidades)" [totalPaginas]="pagEspecialidades.total(especialidades)" (cambiar)="pagEspecialidades.pagina = $event">{{ especialidades.length }} especialidad(es)</app-paginador>
+    <div class="mb-3"></div>
     @if (especialidad; as e) {
       <section class="border rounded p-3">
         <h3 class="h6">Servicios de {{ e.nombre }}</h3>
@@ -63,11 +65,12 @@
           }
           <div class="table-responsive"><table class="table table-sm">
             <thead><tr><th>Valor</th><th>IVA</th><th>Otros impuestos</th><th>Desde</th><th>Hasta</th><th>Registrada por</th></tr></thead>
-            <tbody>@for (t of historial; track t.id) {
+            <tbody>@for (t of pagTarifas.visibles(historial); track t.id) {
               <tr><td>{{ t.valor | currency:'COP' }}</td><td>{{ t.iva }} %</td><td>{{ t.impuesto }} %</td>
                 <td>{{ t.desde }}</td><td>{{ t.hasta || 'Abierta' }}</td><td>{{ t.usuarioId }} · {{ t.fecha | date:'short' }}</td></tr>
             } @empty { <tr><td colspan="6">Sin tarifas registradas.</td></tr> }</tbody>
           </table></div>
+          <app-paginador [pagina]="pagTarifas.actual(historial)" [totalPaginas]="pagTarifas.total(historial)" (cambiar)="pagTarifas.pagina = $event">{{ historial.length }} tarifa(s)</app-paginador>
         }
       </section>
     }

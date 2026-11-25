@@ -5,13 +5,18 @@ import { finalize, Observable } from 'rxjs';
 import { hoyBogota } from '../../../services/agenda.service';
 import { ClinicaService, Especialidad, mensajeClinica, ServicioClinico, TarifaClinica } from '../../../services/clinica.service';
 
+import { PaginadorComponent, PaginaLocal } from '../../../utils/paginador.component';
 /** Pantalla «tarifario» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-tarifario',
-  imports: [CommonModule, FormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule],
   templateUrl: './tarifario.component.html'
 })
 export class TarifarioComponent implements OnInit {
+  /** Paginación de la lista «especialidades». */
+  readonly pagEspecialidades = new PaginaLocal();
+  /** Paginación de la lista «historial de tarifas». */
+  readonly pagTarifas = new PaginaLocal();
   /** Ruta del recurso en la API del backend. */
   private readonly api = inject(ClinicaService);
   /** Modo consulta (Recepción): oculta registro y edición; los precios se consultan pero no se modifican. */
@@ -70,6 +75,7 @@ export class TarifarioComponent implements OnInit {
    */
   ver(e: Especialidad) {
     this.especialidad = e;
+    this.pagTarifas.reiniciar();
     this.servicio = null;
     this.tarifa = null;
     this.historial = [];

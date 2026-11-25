@@ -3,13 +3,16 @@ import { FormsModule } from '@angular/forms';
 import { finalize, Observable } from 'rxjs';
 import { AgendaService, Ausencia, errorAgenda, HorarioMedico, hoyBogota } from '../../../services/agenda.service';
 
+import { PaginadorComponent, PaginaLocal } from '../../../utils/paginador.component';
 /** Pantalla «agenda configuración» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-agenda-configuracion',
-  imports: [FormsModule],
+  imports: [PaginadorComponent, FormsModule],
   templateUrl: './agenda-configuracion.component.html'
 })
 export class AgendaConfiguracionComponent implements OnChanges {
+  /** Paginación de la lista «ausencias». */
+  readonly pagAusencias = new PaginaLocal();
   /** Dependencia inyectada (AgendaService). */
   private readonly servicio = inject(AgendaService);
   /** Lista de días. */

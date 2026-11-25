@@ -9,7 +9,7 @@ import {
 import { AuthService } from '../../../services/auth.service';
 import { InventarioService } from '../../../services/inventario.service';
 
-import { PaginadorComponent } from '../../../utils/paginador.component';
+import { PaginadorComponent, PaginaLocal } from '../../../utils/paginador.component';
 /** Pantalla «medicamento» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-medicamento',
@@ -18,6 +18,14 @@ import { PaginadorComponent } from '../../../utils/paginador.component';
   styleUrl: './medicamento.component.scss'
 })
 export class MedicamentoComponent implements OnInit {
+  /** Paginación de la lista «filas de la carga masiva». */
+  readonly pagCarga = new PaginaLocal();
+  /** Paginación de la lista «historial de importaciones». */
+  readonly pagImportaciones = new PaginaLocal();
+  /** Paginación de la lista «lotes del producto». */
+  readonly pagLotes = new PaginaLocal();
+  /** Paginación de la lista «movimientos del producto». */
+  readonly pagMovimientos = new PaginaLocal();
   /** Ruta del recurso en la API del backend. */
   private readonly api = inject(InventarioService);
   /** Dependencia inyectada (AuthService). */
@@ -154,6 +162,8 @@ export class MedicamentoComponent implements OnInit {
    */
   abrirDetalle(ficha: FichaInventario) {
     this.seleccionado = ficha;
+    this.pagLotes.reiniciar();
+    this.pagMovimientos.reiniciar();
     this.lote = null;
     this.movimiento = null;
     this.lotes = [];
@@ -248,6 +258,7 @@ export class MedicamentoComponent implements OnInit {
   previsualizar() {
     if (!this.archivo) return;
     this.ejecutar(this.api.previsualizar(this.archivo), datos => {
+      this.pagCarga.reiniciar();
       this.importacion = datos;
       this.actualizarHistorial();
     });
@@ -261,6 +272,7 @@ export class MedicamentoComponent implements OnInit {
   confirmar(id: number) {
     if (!confirm('¿Importar los registros válidos?')) return;
     this.ejecutar(this.api.confirmar(id), resultado => {
+      this.pagCarga.reiniciar();
       this.importacion = resultado;
       this.aviso = 'Importación confirmada.';
       this.actualizarHistorial();

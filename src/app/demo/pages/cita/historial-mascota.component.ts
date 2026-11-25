@@ -1,10 +1,12 @@
 import { Component, Input, OnChanges, inject } from '@angular/core';
+import { PaginadorComponent } from '../../../utils/paginador.component';
 import { AgendaService, CitaAnterior, errorAgenda } from '../../../services/agenda.service';
 
 /** Pantalla «historial mascota» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-historial-mascota',
   standalone: true,
+  imports: [PaginadorComponent],
   template: `
     <section class="border rounded p-3 my-2">
       <h3 class="h6">Historial de citas de la mascota</h3>
@@ -20,7 +22,7 @@ import { AgendaService, CitaAnterior, errorAgenda } from '../../../services/agen
                 <tr>
                   <td>{{ cita.id }}</td>
                   <td>{{ cita.inicio.replace('T',' ') }} – {{ cita.fin.replace('T',' ') }}</td>
-                  <td>{{ cita.medico || 'Sin médico registrado' }}</td><td>{{ cita.estado }}</td>
+                  <td>{{ cita.medico || 'Sin médico registrado' }}</td><td><span class="badge estado-cita" [attr.data-estado]="cita.estado">{{ cita.estado }}</span></td>
                   <td>{{ cita.atencionId ?? '—' }}</td>
                 </tr>
               }
@@ -28,10 +30,8 @@ import { AgendaService, CitaAnterior, errorAgenda } from '../../../services/agen
           </table>
         </div>
       }
-      <button type="button" class="btn btn-sm btn-outline-secondary me-2" [disabled]="cargando || pagina===0"
-        (click)="cargar(pagina-1)">Anterior</button>
-      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="cargando || !hayMas"
-        (click)="cargar(pagina+1)">Siguiente</button>
+      <app-paginador [pagina]="pagina + 1" [totalPaginas]="pagina + (hayMas ? 2 : 1)" [abierto]="hayMas"
+        [deshabilitado]="cargando" (cambiar)="cargar($event - 1)">{{ citas.length }} cita(s) en esta página</app-paginador>
     </section>
   `
 })

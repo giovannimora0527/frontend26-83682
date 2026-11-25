@@ -68,13 +68,14 @@
             <table class="table table-sm">
               <thead><tr><th>Fila</th><th>Código</th><th>Producto</th><th>Validación</th></tr></thead>
               <tbody>
-                @for (fila of carga.filas; track fila.numero) {
+                @for (fila of pagCarga.visibles(carga.filas); track fila.numero) {
                   <tr><td>{{ fila.numero }}</td><td>{{ fila.producto?.codigo || '—' }}</td><td>{{ fila.producto?.nombre || '—' }}</td>
                     <td [class.text-danger]="fila.errores.length > 0">{{ fila.errores.join(' · ') || 'Válido' }}</td></tr>
                 }
               </tbody>
             </table>
           </div>
+          <app-paginador [pagina]="pagCarga.actual(carga.filas)" [totalPaginas]="pagCarga.total(carga.filas)" (cambiar)="pagCarga.pagina = $event">{{ carga.filas.length }} fila(s) del archivo</app-paginador>
           @if (carga.resumen.rechazados > 0) {
             <button class="btn btn-outline-secondary me-2" type="button" (click)="descargarErrores(carga)">Descargar errores</button>
           }
@@ -89,13 +90,14 @@
             <table class="table table-sm">
               <thead><tr><th>Fecha</th><th>Archivo</th><th>Usuario</th><th>Resultado</th></tr></thead>
               <tbody>
-                @for (registro of historial; track registro.id) {
+                @for (registro of pagImportaciones.visibles(historial); track registro.id) {
                   <tr><td>{{ registro.fecha | date:'short' }}</td><td><button class="btn btn-link p-0" type="button" (click)="detalleImportacion(registro.id)">{{ registro.archivo }}</button></td>
                     <td>{{ registro.usuarioId }}</td><td>{{ registro.fechaConfirmacion ? registro.importados + ' importados, ' + registro.rechazados + ' rechazados' : 'Pendiente de confirmar' }}</td></tr>
                 } @empty { <tr><td colspan="4">Aún no hay importaciones.</td></tr> }
               </tbody>
             </table>
           </div>
+          <app-paginador [pagina]="pagImportaciones.actual(historial)" [totalPaginas]="pagImportaciones.total(historial)" (cambiar)="pagImportaciones.pagina = $event">{{ historial.length }} importación(es)</app-paginador>
         </details>
       </section>
     }
@@ -167,7 +169,7 @@
           <table class="table table-sm">
             <thead><tr><th>Lote</th><th>Costo</th><th>Ingreso</th><th>Vence</th><th>Cantidad</th><th>Estado</th>@if (puedeModificar) {<th>Acción</th>}</tr></thead>
             <tbody>
-              @for (item of lotes; track item.id) {
+              @for (item of pagLotes.visibles(lotes); track item.id) {
                 <tr><td>{{ item.numero }}</td><td>{{ item.costo | currency:'COP':'symbol-narrow' }}</td><td>{{ item.fechaIngreso }}</td>
                   <td>{{ item.fechaVence || '—' }}</td><td>{{ item.cantidad }}</td>
                   <td>{{ item.vencido ? 'Vencido' : item.proximoVencer ? 'Próximo a vencer' : item.disponible ? 'Disponible' : 'Sin disponibilidad' }}</td>
@@ -177,6 +179,7 @@
             </tbody>
           </table>
         </div>
+        <app-paginador [pagina]="pagLotes.actual(lotes)" [totalPaginas]="pagLotes.total(lotes)" (cambiar)="pagLotes.pagina = $event">{{ lotes.length }} lote(s)</app-paginador>
         @if (movimiento; as mov) {
           <form #formMovimiento="ngForm" (ngSubmit)="formMovimiento.valid && guardarMovimiento(ficha, mov)">
             <div class="inventory-fields">
@@ -199,13 +202,14 @@
             <table class="table table-sm">
               <thead><tr><th>Fecha</th><th>Lote</th><th>Tipo</th><th>Cantidad</th><th>Saldo</th><th>Usuario</th><th>Motivo y referencia</th></tr></thead>
               <tbody>
-                @for (m of movimientos; track m.id) {
+                @for (m of pagMovimientos.visibles(movimientos); track m.id) {
                   <tr><td>{{ m.fecha | date:'short' }}</td><td>{{ m.lote }}</td><td>{{ m.tipo }}</td><td>{{ m.cantidad }}</td><td>{{ m.saldo }}</td>
                     <td>{{ m.usuario }}</td><td>{{ m.motivo }} {{ m.referencia }}</td></tr>
                 } @empty { <tr><td colspan="7">No hay movimientos registrados.</td></tr> }
               </tbody>
             </table>
           </div>
+          <app-paginador [pagina]="pagMovimientos.actual(movimientos)" [totalPaginas]="pagMovimientos.total(movimientos)" (cambiar)="pagMovimientos.pagina = $event">{{ movimientos.length }} movimiento(s)</app-paginador>
         }
       </section>
     }
