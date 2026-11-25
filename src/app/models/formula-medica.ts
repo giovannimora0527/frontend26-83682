@@ -44,6 +44,12 @@ export interface FormulaMedica {
   fechaCreacionRegistro: string;
   /** Fecha actualización registro. */
   fechaActualizacionRegistro: string | null;
+  /** Orden de dispensación enlazada (formula_clinica) o null si la cita aún no se atiende. */
+  ordenDespachoId?: number | null;
+  /** Estado del despacho de la orden (PENDIENTE_DESPACHO, DESPACHADO, …). */
+  estadoDespacho?: string | null;
+  /** Unidades a dispensar calculadas según dosis, frecuencia y duración. */
+  cantidadDespacho?: number | null;
 }
 
 /** Datos para crear o editar una fórmula. */

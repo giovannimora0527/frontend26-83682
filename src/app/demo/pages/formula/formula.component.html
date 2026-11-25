@@ -149,6 +149,7 @@
                   <th (click)="tabla.ordenarPor('veterinario')">Veterinario {{ tabla.icono('veterinario') }}</th>
                   <th (click)="tabla.ordenarPor('medicamento')">Medicamento {{ tabla.icono('medicamento') }}</th>
                   <th (click)="tabla.ordenarPor('estado')">Estado {{ tabla.icono('estado') }}</th>
+                  <th (click)="tabla.ordenarPor('estadoDespacho')">Despacho {{ tabla.icono('estadoDespacho') }}</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -163,6 +164,16 @@
                     <td>{{ f.veterinario }}</td>
                     <td>{{ f.medicamento }}</td>
                     <td><span class="badge" [class.text-bg-success]="f.activo" [class.text-bg-secondary]="!f.activo">{{ f.estado }}</span></td>
+                    <td>
+                      @if (f.estadoDespacho) {
+                        <span class="badge" [class.text-bg-success]="f.estadoDespacho === 'DESPACHADO'"
+                          [class.text-bg-warning]="f.estadoDespacho !== 'DESPACHADO' && f.estadoDespacho !== 'CANCELADO'"
+                          [class.text-bg-secondary]="f.estadoDespacho === 'CANCELADO'">{{ f.estadoDespacho.replace('_', ' ').toLowerCase() }}</span>
+                        <small class="d-block text-muted">Orden #{{ f.ordenDespachoId }} · {{ f.cantidadDespacho }} und.</small>
+                      } @else {
+                        <small class="text-muted">Se envía a despacho al atender la cita</small>
+                      }
+                    </td>
                     <td class="text-nowrap">
                       <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="ver(f)"><i class="feather icon-eye"></i> Ver</button>
                       @if (f.activo) {
@@ -173,7 +184,7 @@
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="9" class="text-center text-muted">No hay fórmulas que coincidan con los filtros.</td></tr>
+                  <tr><td colspan="10" class="text-center text-muted">No hay fórmulas que coincidan con los filtros.</td></tr>
                 }
               </tbody>
             </table>
@@ -209,6 +220,7 @@
             <div class="col-md-4"><span>Cita (consulta)</span>#{{ d.citaId }} · {{ soloFecha(d.fechaCita) }}</div>
             <div class="col-md-4"><span>Historia clínica</span>{{ d.historiaId ? '#' + d.historiaId : 'Sin historia' }}</div>
             <div class="col-md-4"><span>Estado</span>{{ d.estado }}</div>
+            <div class="col-md-4"><span>Despacho</span>{{ d.estadoDespacho ? (d.estadoDespacho + ' · orden #' + d.ordenDespachoId + ' · ' + d.cantidadDespacho + ' und.') : 'Se envía al atender la cita' }}</div>
             <div class="col-md-6"><span>Medicamento</span>{{ d.medicamento }}{{ d.presentacion ? ' · ' + d.presentacion : '' }}</div>
             <div class="col-md-3"><span>Dosis</span>{{ d.dosis }}</div>
             <div class="col-md-3"><span>Frecuencia</span>{{ d.frecuencia || '—' }}</div>
