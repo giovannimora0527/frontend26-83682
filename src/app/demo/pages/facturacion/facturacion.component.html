@@ -37,12 +37,14 @@
       <h3 class="h6">Atenciones por facturar</h3>
       <div class="table-responsive">
         <table class="table align-middle">
-          <thead><tr><th>Atención</th><th>Cita</th><th>Propietario</th><th>Mascota</th><th>Veterinario</th></tr></thead>
+          <thead><tr><th>Atención</th><th>Cita</th><th>Propietario</th><th>Mascota</th><th>Veterinario</th><th>Despacho</th></tr></thead>
           <tbody>
             @for(a of atenciones;track a.id) {
               <tr><td><button class="btn btn-sm btn-outline-primary" [disabled]="ocupado" (click)="seleccionar(a)">Revisar atención {{ a.id }}</button></td>
-                <td>{{ a.cita }}</td><td>{{ a.propietario }}</td><td>{{ a.mascota }}</td><td>{{ a.veterinario }}</td></tr>
-            } @empty {<tr><td colspan="5">Sin atenciones pendientes de facturar.</td></tr>}
+                <td>{{ a.cita }}</td><td>{{ a.propietario }}</td><td>{{ a.mascota }}</td><td>{{ a.veterinario }}</td>
+                <td>@if (a.formulasSinDespachar) { <span class="badge text-bg-warning">Esperando despacho ({{ a.formulasSinDespachar }})</span> }
+                  @else { <span class="badge text-bg-success">Lista para facturar</span> }</td></tr>
+            } @empty {<tr><td colspan="6">Sin atenciones pendientes de facturar.</td></tr>}
           </tbody>
         </table>
       </div>

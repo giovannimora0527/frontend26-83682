@@ -52,6 +52,29 @@
                   <p>Un punto de encuentro para la comunidad en general al cuidado de las mascotas.</p>
                 </div>
 
+                @if (pendientes().length) {
+                  <section class="clinic-home__pendientes" aria-labelledby="titulo-pendientes">
+                    <h2 id="titulo-pendientes" class="h5 mb-1">Mis pendientes</h2>
+                    <p class="text-muted small mb-3">Lo que el paso anterior del proceso te dejó para continuar.</p>
+                    <div class="clinic-home__tarjetas">
+                      @for (p of pendientes(); track p.clave) {
+                        @if (p.url) {
+                          <a class="pendiente" [class]="'pendiente pendiente--' + p.nivel" [routerLink]="p.url">
+                            <strong>{{ p.cantidad }}</strong><span>{{ p.titulo }}</span><small>{{ p.descripcion }}</small>
+                          </a>
+                        } @else {
+                          <div [class]="'pendiente pendiente--' + p.nivel">
+                            <strong>{{ p.cantidad }}</strong><span>{{ p.titulo }}</span><small>{{ p.descripcion }}</small>
+                          </div>
+                        }
+                      }
+                    </div>
+                    <p class="small text-muted mt-3 mb-0">
+                      Flujo: Recepción agenda → Médico atiende y formula → Despacho entrega → Recepción factura y cobra → Administración reporta.
+                    </p>
+                  </section>
+                }
+
                 <div class="clinic-home__highlights">
                   <article>
                     <i class="feather icon-calendar" aria-hidden="true"></i>

@@ -166,3 +166,55 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* Bandeja de pendientes por perfil. */
+.clinic-home__pendientes {
+  grid-column: 1 / -1;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(20, 80, 168, 0.08);
+}
+
+.clinic-home__tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+}
+
+.pendiente {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border-left: 4px solid #1450a8;
+  background: #f2f6fd;
+  color: #17324d;
+  text-decoration: none;
+}
+
+a.pendiente:hover {
+  background: #e4edfb;
+}
+
+.pendiente strong {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.pendiente span {
+  font-weight: 600;
+}
+
+.pendiente small {
+  color: #647789;
+}
+
+.pendiente--accion {
+  border-left-color: #1a8754;
+}
+
+.pendiente--aviso {
+  border-left-color: #d98a00;
+}

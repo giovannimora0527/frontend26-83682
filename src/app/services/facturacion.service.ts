@@ -21,6 +21,8 @@ export interface OrigenFactura {
   veterinario: string;
   /** Especialidad. */
   especialidad: string;
+  /** Fórmulas confirmadas que despacho aún no procesa (no se puede facturar hasta entregarlas). */
+  formulasSinDespachar?: number;
 }
 /** Modelo de datos «ImportesFactura» que se intercambia con el backend. */
 export interface ImportesFactura { subtotal: Dinero; descuento: Dinero; iva: Dinero; otros: Dinero; total: Dinero }

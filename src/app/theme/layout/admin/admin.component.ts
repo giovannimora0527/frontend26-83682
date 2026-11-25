@@ -14,6 +14,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of } from 'rxjs';
 import { MenuService } from 'src/app/services/menu.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { TableroService, Pendiente } from 'src/app/services/tablero.service';
 
 
 
@@ -66,6 +67,12 @@ export class AdminComponent {
 
   /** Dependencia inyectada (Router). */
   private readonly router = inject(Router);
+
+  /** Pendientes del usuario según su perfil (conecta el flujo recepción → médico → despacho → facturación). */
+  readonly pendientes = toSignal(
+    inject(TableroService).pendientes().pipe(catchError(() => of([] as Pendiente[]))),
+    { initialValue: [] as Pendiente[] }
+  );
 
   // public props
   /** Indica si navegación collapsed. */

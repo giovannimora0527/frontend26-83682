@@ -3,6 +3,28 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AgendaService, Ausencia, CambioCita, errorAgenda, EventoMedico, hoyBogota, RevisionCita } from '../../../services/agenda.service';
 import { AtencionClinicaComponent } from './atencion-clinica.component';
+import { CitaService, MascotaCliente } from '../../../services/cita.service';
+import { ClienteService } from '../../../services/cliente.service';
+import { Cliente } from '../../../models/cliente';
+import { mensajeError } from '../../../utils/tabla-datos';
+
+/** Formulario de nueva cita o edición en el calendario del médico. */
+interface FormularioCita {
+  /** Cita en edición (null = nueva). */
+  id: number | null;
+  /** Propietario. */
+  clienteId: number | null;
+  /** Mascota del propietario. */
+  mascotaId: number | null;
+  /** Inicio AAAA-MM-DDTHH:MM. */
+  inicio: string;
+  /** Fin AAAA-MM-DDTHH:MM. */
+  fin: string;
+  /** Estado reservado. */
+  estado: string;
+  /** Motivo de la consulta. */
+  motivo: string;
+}
 import { AgendaConfiguracionComponent } from './agenda-configuracion.component';
 
 /** Tipo «Vista»: valores permitidos para vista. */
@@ -22,6 +44,18 @@ export class CalendarioMedicoComponent implements OnInit {
   mascotaHistorial: number | null = null;
   /** Dependencia inyectada (AgendaService). */
   private readonly agenda = inject(AgendaService);
+  /** Servicio de citas (registro y edición). */
+  private readonly citasApi = inject(CitaService);
+  /** Servicio de clientes (propietarios). */
+  private readonly clientesApi = inject(ClienteService);
+  /** Formulario de nueva cita o edición (null = cerrado). */
+  formCita: FormularioCita | null = null;
+  /** Propietarios activos para el formulario. */
+  clientesCita: Cliente[] = [];
+  /** Mascotas del propietario elegido. */
+  mascotasCita: MascotaCliente[] = [];
+  /** Mensaje de error del formulario de cita. */
+  errorCita = '';
   /** Formulario reactivo: formato día. */
   private readonly formatoDia = new Intl.DateTimeFormat('es-CO', { weekday: 'short', timeZone: 'UTC' });
   /** Formulario reactivo: formato mes. */
@@ -252,6 +286,84 @@ export class CalendarioMedicoComponent implements OnInit {
   alternarHorario() {
     this.verHorario = !this.verHorario;
     if (!this.verHorario) this.cargar();
+  }
+
+  /** Abre el formulario para registrar una cita a nombre del médico autenticado. */
+  nuevaCita() {
+    const dia = this.fecha < this.hoy ? this.hoy : this.fecha;
+    this.formCita = { id: null, clienteId: null, mascotaId: null, inicio: dia + 'T08:00', fin: dia + 'T08:30',
+      estado: 'confirmada', motivo: '' };
+    this.mascotasCita = [];
+    this.errorCita = '';
+    this.evento = null;
+    this.cargarClientesCita();
+  }
+
+  /**
+   * Abre el formulario con los datos de una cita reservada para editarla.
+   *
+   * @param cita cita seleccionada.
+   */
+  editarCita(cita: EventoMedico) {
+    this.formCita = { id: cita.id, clienteId: cita.clienteId ?? null, mascotaId: cita.mascotaId ?? null,
+      inicio: cita.inicio.slice(0, 16), fin: cita.fin.slice(0, 16), estado: cita.estado, motivo: cita.motivo ?? '' };
+    this.errorCita = '';
+    this.cargarClientesCita();
+    this.alCambiarClienteCita(false);
+  }
+
+  /** Carga los propietarios activos una sola vez. */
+  private cargarClientesCita() {
+    if (this.clientesCita.length) return;
+    this.clientesApi.listarClientes().subscribe({
+      next: lista => (this.clientesCita = lista.filter(c => !!c.activo)),
+      error: e => (this.errorCita = mensajeError(e, 'No fue posible consultar los propietarios.'))
+    });
+  }
+
+  /**
+   * Consulta las mascotas del propietario elegido (combo dependiente).
+   *
+   * @param limpiar true para quitar la mascota seleccionada.
+   */
+  alCambiarClienteCita(limpiar = true) {
+    if (!this.formCita) return;
+    if (limpiar) this.formCita.mascotaId = null;
+    this.mascotasCita = [];
+    if (!this.formCita.clienteId) return;
+    this.citasApi.mascotasDeCliente(this.formCita.clienteId).subscribe({
+      next: m => (this.mascotasCita = m),
+      error: e => (this.errorCita = mensajeError(e, 'No fue posible consultar las mascotas.'))
+    });
+  }
+
+  /** Valida y guarda la cita; el backend aplica horario, ausencias, superposición y margen de 15 minutos. */
+  guardarCita() {
+    const f = this.formCita;
+    if (!f) return;
+    if (!f.clienteId || !f.mascotaId || !f.inicio || !f.fin || !f.motivo.trim()) {
+      this.errorCita = 'Propietario, mascota, inicio, fin y motivo son obligatorios.';
+      return;
+    }
+    if (f.fin <= f.inicio) {
+      this.errorCita = 'El fin debe ser posterior al inicio.';
+      return;
+    }
+    const datos = { clienteId: f.clienteId, mascotaId: f.mascotaId, medicoId: null, fechaHora: f.inicio, fechaFin: f.fin,
+      estado: f.estado, motivo: f.motivo.trim() };
+    this.guardando = true;
+    this.errorCita = '';
+    const peticion = f.id ? this.citasApi.actualizar(f.id, datos) : this.citasApi.crear(datos);
+    peticion.subscribe({
+      next: () => {
+        this.guardando = false;
+        this.aviso = f.id ? 'Cita actualizada.' : 'Cita registrada en tu agenda.';
+        this.formCita = null;
+        this.fecha = f.inicio.slice(0, 10);
+        this.cargar();
+      },
+      error: e => { this.guardando = false; this.errorCita = mensajeError(e, 'No fue posible guardar la cita.'); }
+    });
   }
 
   reservada(cita: EventoMedico) { return ['pendiente', 'programada', 'confirmada'].includes(cita.estado); }

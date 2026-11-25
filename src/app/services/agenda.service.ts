@@ -28,6 +28,10 @@ export interface EventoMedico extends Intervalo {
   propietario: string;
   /** Motivo registrado. */
   motivo: string | null;
+  /** Propietario de la mascota. */
+  clienteId?: number;
+  /** Médico de la cita. */
+  medicoId?: number;
 }
 /** Modelo de datos «CambioCita» que se intercambia con el backend. */
 export interface CambioCita { estado?: string; inicio?: string; fin?: string; }

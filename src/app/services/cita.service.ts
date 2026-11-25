@@ -31,6 +31,24 @@ export interface CitaDetalle {
   historiaId: number | null;
 }
 
+/** Datos para registrar o editar una cita. */
+export interface CitaRq {
+  /** Propietario. */
+  clienteId: number;
+  /** Mascota del propietario. */
+  mascotaId: number;
+  /** Médico (null = el médico autenticado). */
+  medicoId: number | null;
+  /** Inicio AAAA-MM-DDTHH:MM. */
+  fechaHora: string;
+  /** Fin AAAA-MM-DDTHH:MM. */
+  fechaFin: string;
+  /** Estado: pendiente, programada o confirmada. */
+  estado: string;
+  /** Motivo de la consulta. */
+  motivo: string | null;
+}
+
 /** Mascota de un cliente (combo dependiente cliente → mascota). */
 export interface MascotaCliente {
   /** Identificador de mascota. */
@@ -83,6 +101,27 @@ export class CitaService {
   /** Mascotas activas de un cliente (combo dependiente cliente → mascota). */
   mascotasDeCliente(clienteId: number): Observable<MascotaCliente[]> {
     return this.http.get<MascotaCliente[]>(`${this.base}/cliente/${clienteId}/mascotas`);
+  }
+
+  /**
+   * Registra una cita. Si quien agenda es un médico y no indica médico, queda a su nombre.
+   *
+   * @param datos cliente, mascota, médico (opcional para el médico), inicio, fin, estado y motivo.
+   * @returns observable con la cita creada.
+   */
+  crear(datos: CitaRq): Observable<CitaDetalle> {
+    return this.http.post<CitaDetalle>(`${this.base}/cita/crear`, datos);
+  }
+
+  /**
+   * Edita una cita existente (el médico solo las suyas).
+   *
+   * @param id identificador de la cita.
+   * @param datos nuevos datos.
+   * @returns observable con la cita actualizada.
+   */
+  actualizar(id: number, datos: CitaRq): Observable<CitaDetalle> {
+    return this.http.put<CitaDetalle>(`${this.base}/cita/actualizar/${id}`, datos);
   }
 
   /** Reactiva una cita cancelada en el horario indicado. */

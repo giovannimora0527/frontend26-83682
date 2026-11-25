@@ -1,12 +1,53 @@
 <section class="card">
   <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div><h2 class="mb-1">Calendario médico</h2><span class="text-muted">Hora de Bogotá</span></div>
-    <button type="button" class="btn btn-outline-primary" (click)="alternarHorario()">{{ verHorario ? 'Cerrar horarios' : 'Mis horarios y ausencias' }}</button>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-primary" (click)="nuevaCita()"><i class="feather icon-plus"></i> Nueva cita</button>
+      <button type="button" class="btn btn-outline-primary" (click)="alternarHorario()">{{ verHorario ? 'Cerrar horarios' : 'Mis horarios y ausencias' }}</button>
+    </div>
   </div>
   <div class="card-body">
     @if (verHorario) { <app-agenda-configuracion [medico]="null" /> }
     @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
     @if (aviso) { <div class="alert alert-success" role="status">{{ aviso }}</div> }
+    @if (formCita; as f) {
+      <form class="border rounded p-3 mb-3" (ngSubmit)="guardarCita()" novalidate aria-label="Formulario de cita">
+        <h3 class="h6 mb-3">{{ f.id ? 'Editar cita #' + f.id : 'Nueva cita en mi agenda' }}</h3>
+        @if (errorCita) { <p class="alert alert-danger py-2" role="alert">{{ errorCita }}</p> }
+        <div class="row g-3">
+          <label class="col-md-6">Propietario *
+            <select class="form-select" name="clienteCita" [(ngModel)]="f.clienteId" (ngModelChange)="alCambiarClienteCita()" [disabled]="!!f.id">
+              <option [ngValue]="null">Seleccionar propietario</option>
+              @for (c of clientesCita; track c.clienteId) { <option [ngValue]="c.clienteId">{{ c.nombres }} {{ c.apellidos }} · {{ c.numeroDocumento }}</option> }
+            </select>
+          </label>
+          <label class="col-md-6">Mascota *
+            <select class="form-select" name="mascotaCita" [(ngModel)]="f.mascotaId" [disabled]="!f.clienteId">
+              @if (!f.clienteId) { <option [ngValue]="null">Primero selecciona el propietario</option> }
+              @else { <option [ngValue]="null">Seleccionar mascota</option> }
+              @for (m of mascotasCita; track m.mascotaId) { <option [ngValue]="m.mascotaId">{{ m.nombreMascota }} · {{ m.especie }} {{ m.raza }}</option> }
+            </select>
+          </label>
+          <label class="col-md-4">Inicio *
+            <input type="datetime-local" class="form-control" name="inicioCita" [(ngModel)]="f.inicio">
+          </label>
+          <label class="col-md-4">Fin *
+            <input type="datetime-local" class="form-control" name="finCita" [(ngModel)]="f.fin">
+          </label>
+          <label class="col-md-4">Estado *
+            <select class="form-select" name="estadoCita" [(ngModel)]="f.estado">
+              <option value="pendiente">Pendiente</option><option value="programada">Programada</option><option value="confirmada">Confirmada</option>
+            </select>
+          </label>
+          <label class="col-12">Motivo de la consulta *
+            <textarea class="form-control" rows="2" name="motivoCita" maxlength="500" [(ngModel)]="f.motivo"></textarea>
+          </label>
+        </div>
+        <p class="small text-muted mt-2 mb-0">La cita queda a tu nombre. Se valida tu horario, tus ausencias, que no se cruce con otras citas (margen de 15 minutos) y que la mascota no tenga otra cita a la misma hora.</p>
+        <button class="btn btn-primary mt-3 me-2" [disabled]="guardando">{{ guardando ? 'Guardando…' : (f.id ? 'Guardar cambios' : 'Agendar cita') }}</button>
+        <button type="button" class="btn btn-outline-secondary mt-3" (click)="formCita = null" [disabled]="guardando">Cancelar</button>
+      </form>
+    }
     <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
       <div class="btn-group" role="group" aria-label="Vista del calendario">
         @for (opcion of vistas; track opcion.id) {
@@ -76,6 +117,7 @@
             <label>Nuevo inicio <input type="datetime-local" class="form-control" [(ngModel)]="inicio"></label>
             <label>Nuevo fin <input type="datetime-local" class="form-control" [(ngModel)]="fin"></label>
             <button type="button" class="btn btn-outline-primary" [disabled]="guardando || !inicio || !fin || fin <= inicio" (click)="cambiar(detalle, {inicio, fin})">Reprogramar</button>
+            <button type="button" class="btn btn-outline-secondary" [disabled]="guardando" (click)="editarCita(detalle)">Editar cita</button>
             <button type="button" class="btn btn-primary" [disabled]="guardando" (click)="cambiar(detalle, {estado:'atendida'})">Marcar atendida</button>
             <button type="button" class="btn btn-outline-danger" [disabled]="guardando" (click)="cambiar(detalle, {estado:'cancelada'})">Cancelar cita</button>
           </div>
