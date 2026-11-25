@@ -103,7 +103,7 @@
           <h3 class="h5">Cita de {{ detalle.mascota }}</h3>
           <button type="button" class="btn btn-sm btn-outline-secondary" (click)="evento = null">Cerrar detalle</button>
         </div>
-        <p>{{ detalle.inicio.replace('T',' ') }} a {{ detalle.fin.replace('T',' ') }} · {{ detalle.estado }}</p>
+        <p>{{ detalle.inicio.replace('T',' ') }} a {{ detalle.fin.replace('T',' ') }} · <span class="badge estado-cita" [attr.data-estado]="detalle.estado">{{ detalle.estado }}</span></p>
         <button type="button" class="btn btn-outline-primary mb-2" (click)="atencionId = detalle.id">Ver atención clínica</button>
         @if(detalle.mascotaId; as paciente) {
           <button type="button" class="btn btn-outline-secondary mb-2" (click)="mascotaHistorial=mascotaHistorial===paciente ? null : paciente">Historial de mascota</button>

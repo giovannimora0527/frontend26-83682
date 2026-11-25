@@ -122,3 +122,19 @@
 .modal.d-block {
 	overflow-y: auto;
 }
+
+/*
+ * Colores de los estados de una cita, iguales en la tabla de Gestión de Citas y en el calendario del médico:
+ * pendiente amarillo · programada azul · confirmada celeste · atendida morado (en curso) · finalizada verde · cancelada rojo.
+ */
+.estado-cita {
+	text-transform: capitalize;
+	background-color: #6c757d;
+	color: #fff;
+}
+.estado-cita[data-estado='pendiente'] { background-color: #ffc107; color: #212529; }
+.estado-cita[data-estado='programada'] { background-color: #0d6efd; color: #fff; }
+.estado-cita[data-estado='confirmada'] { background-color: #0dcaf0; color: #212529; }
+.estado-cita[data-estado='atendida'] { background-color: #6f42c1; color: #fff; }
+.estado-cita[data-estado='finalizada'] { background-color: #198754; color: #fff; }
+.estado-cita[data-estado='cancelada'] { background-color: #dc3545; color: #fff; }

@@ -39,11 +39,13 @@
 }
 
 .evento > span { font-size: .75rem; text-transform: capitalize; }
+/* Misma paleta que .estado-cita (styles.scss), en tono claro para el calendario. */
+.evento[data-estado="pendiente"] { background: #fff6d6; color: #5f4a00; border-color: #e0bf4f; }
 .evento[data-estado="programada"] { background: #e7f0fd; color: #133f7a; border-color: #8fb2e6; }
-.evento[data-estado="confirmada"] { background: #e4f5ec; color: #11543c; border-color: #82b69e; }
+.evento[data-estado="confirmada"] { background: #e2f8fc; color: #055160; border-color: #7fd3e3; }
+.evento[data-estado="atendida"] { background: #efe8fa; color: #432874; border-color: #b39ddb; }
+.evento[data-estado="finalizada"] { background: #e3f4ea; color: #0f5132; border-color: #75b798; }
 .evento[data-estado="cancelada"] { background: #fdecec; color: #792122; border-color: #d59e9e; }
-.evento[data-estado="atendida"] { background: #fff3da; color: #5f4818; border-color: #c3a76c; }
-.evento[data-estado="finalizada"] { background: #eeeafb; color: #403173; border-color: #ad9ed3; }
 
 /* Bloqueo por ausencia del médico (vacaciones, incapacidad…): no se agendan citas en ese periodo. */
 .ausencia {

@@ -288,23 +288,7 @@
 
               <td class="text-center">
 
-                  <span
-                    class="badge"
-                    [ngClass]="{
-                      'bg-warning text-dark':
-                        cita.estado === 'pendiente',
-                      'bg-primary':
-                        cita.estado === 'programada',
-                      'bg-info text-dark':
-                        cita.estado === 'confirmada',
-                      'bg-success':
-                        cita.estado === 'atendida',
-                      'bg-danger':
-                        cita.estado === 'cancelada'
-                    }"
-                  >
-                    {{ cita.estado | titlecase }}
-                  </span>
+                  <span class="badge estado-cita" [attr.data-estado]="cita.estado">{{ cita.estado }}</span>
 
               </td>
 
