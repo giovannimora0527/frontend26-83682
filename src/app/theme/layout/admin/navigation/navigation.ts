@@ -259,19 +259,6 @@ export const NavigationItems: NavigationItem[] = [
         url: '/inicio/anotaciones',
         icon: 'feather icon-edit',
         classes: 'nav-item'
-      },
-
-      // ====================================================
-      // 12. GESTIÓN DE SESIONES
-      // Tabla: sesion
-      // ====================================================
-      {
-        id: 'sesiones',
-        title: 'Gestión de Sesiones',
-        type: 'item',
-        url: '/inicio/sesiones',
-        icon: 'feather icon-clock',
-        classes: 'nav-item'
       }
 
     ]

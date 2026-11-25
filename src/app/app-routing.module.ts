@@ -51,7 +51,6 @@ import { HistoriaMedicaComponent } from './demo/pages/historia-medica/historia-m
 
 import { AnotacionHistoriaComponent } from './demo/pages/anotacion-historia/anotacion-historia.component';
 
-import { SesionComponent } from './demo/pages/sesion/sesion.component';
 
 import { FormulaComponent } from './demo/pages/formula/formula.component';
 
@@ -188,13 +187,6 @@ export const routes: Routes = [
         path: 'anotaciones',
         component: AnotacionHistoriaComponent,
         data: { title: 'Gestión de Anotaciones' }
-      },
-
-      // Tabla: sesion.
-      {
-        path: 'sesiones',
-        component: SesionComponent,
-        data: { title: 'Gestión de Sesiones' }
       }
 
     ]
