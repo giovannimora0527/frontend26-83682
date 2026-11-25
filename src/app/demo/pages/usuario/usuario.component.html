@@ -2,13 +2,23 @@
   <div class="col-12">
     <div class="card">
       <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <h5 class="mb-0">Usuarios del sistema</h5>
+        <h5 class="mb-0">Usuarios, roles y trazabilidad</h5>
         <div class="usuarios-resumen">
           <span><strong>{{ usuarios.length }}</strong> registrados</span>
           <span><strong>{{ activos }}</strong> activos</span>
           <span><strong>{{ usuarios.length - activos }}</strong> inactivos</span>
         </div>
       </div>
+      <nav class="px-3 pt-3" aria-label="Secciones de usuarios">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-primary" [class.active]="pestana === 'usuarios'" (click)="pestana = 'usuarios'">Usuarios</button>
+          @if (puedePermisos) { <button type="button" class="btn btn-outline-primary" [class.active]="pestana === 'permisos'" (click)="pestana = 'permisos'">Permisos por rol</button> }
+          @if (puedeAuditar) { <button type="button" class="btn btn-outline-primary" [class.active]="pestana === 'auditoria'" (click)="pestana = 'auditoria'">Trazabilidad</button> }
+        </div>
+      </nav>
+      @if (pestana === 'permisos') { <div class="card-body"><app-permisos-rol /></div> }
+      @if (pestana === 'auditoria') { <div class="card-body"><app-auditoria /></div> }
+      @if (pestana === 'usuarios') {
 
       <div class="card-body">
         <button type="button" class="btn btn-primary mb-3" [disabled]="guardando" (click)="nuevo()">
@@ -156,6 +166,7 @@
           </div>
         }
       </div>
+      }
     </div>
   </div>
 </div>

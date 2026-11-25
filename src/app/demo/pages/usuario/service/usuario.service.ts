@@ -92,4 +92,92 @@ export class UsuarioService {
   actualizar(datos: UsuarioRq): Observable<UsuarioSistema> {
     return this.http.post<UsuarioSistema>(this.api + '/actualizar', datos);
   }
+
+  /**
+   * Matriz de permisos: roles, catálogo y asignaciones.
+   *
+   * @returns observable con la matriz.
+   */
+  permisos(): Observable<MatrizPermisos> {
+    return this.http.get<MatrizPermisos>(this.api + '/permisos');
+  }
+
+  /**
+   * Reemplaza los permisos de un rol (aplican desde la siguiente operación de sus usuarios).
+   *
+   * @param perfilId rol.
+   * @param permisos códigos de permiso.
+   * @returns observable con la matriz actualizada.
+   */
+  asignarPermisos(perfilId: number, permisos: string[]): Observable<MatrizPermisos> {
+    return this.http.put<MatrizPermisos>(`${this.api}/permisos/${perfilId}`, { permisos });
+  }
+
+  /**
+   * Consulta el log de auditoría.
+   *
+   * @param filtros desde, hasta, accion, usuario y pagina.
+   * @returns observable con la página del log.
+   */
+  auditoria(filtros: Record<string, string | number>): Observable<PaginaAuditoria> {
+    const params: Record<string, string> = {};
+    Object.entries(filtros).forEach(([k, v]) => { if (v !== '' && v !== null && v !== undefined) params[k] = String(v); });
+    return this.http.get<PaginaAuditoria>(this.api + '/auditoria', { params });
+  }
+}
+
+/** Permiso del catálogo. */
+export interface PermisoCatalogo {
+  /** Código (p. ej. CITA_GESTIONAR). */
+  codigo: string;
+  /** Módulo al que pertenece. */
+  modulo: string;
+  /** Descripción. */
+  descripcion: string;
+}
+
+/** Matriz de permisos por rol. */
+export interface MatrizPermisos {
+  /** Roles. */
+  perfiles: Perfil[];
+  /** Catálogo de permisos. */
+  permisos: PermisoCatalogo[];
+  /** Códigos asignados por rol (clave: perfilId). */
+  asignaciones: Record<string, string[]>;
+  /** Permisos que el rol Administrador no puede perder. */
+  obligatoriosAdministrador: string[];
+}
+
+/** Registro del log de auditoría. */
+export interface RegistroAuditoria {
+  /** Identificador. */
+  id: number;
+  /** Usuario. */
+  username: string | null;
+  /** Rol. */
+  perfil: string | null;
+  /** Acción. */
+  accion: string;
+  /** Entidad afectada. */
+  entidad: string | null;
+  /** Identificador de la entidad. */
+  entidadId: number | null;
+  /** Detalle. */
+  detalle: string | null;
+  /** IP de origen. */
+  ip: string | null;
+  /** Fecha y hora. */
+  fecha: string;
+}
+
+/** Página del log de auditoría. */
+export interface PaginaAuditoria {
+  /** Registros. */
+  filas: RegistroAuditoria[];
+  /** Página actual. */
+  pagina: number;
+  /** Indica si hay más páginas. */
+  hayMas: boolean;
+  /** Acciones registradas (filtro). */
+  acciones: string[];
 }

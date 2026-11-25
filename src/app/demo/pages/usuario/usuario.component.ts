@@ -1,4 +1,6 @@
 import { CommonModule } from '@angular/common';
+import { PermisosRolComponent } from './permisos-rol.component';
+import { AuditoriaComponent } from './auditoria.component';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, finalize } from 'rxjs';
@@ -11,7 +13,7 @@ import { Perfil, UsuarioRq, UsuarioService, UsuarioSistema } from './service/usu
  */
 @Component({
   selector: 'app-usuario',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PermisosRolComponent, AuditoriaComponent],
   templateUrl: './usuario.component.html',
   styleUrl: './usuario.component.scss'
 })
@@ -20,6 +22,12 @@ export class UsuarioComponent implements OnInit {
   private readonly api = inject(UsuarioService);
   /** Usuario actual. */
   readonly usuarioActual = inject(AuthService).obtenerUsuarioId();
+  /** Pestaña visible: usuarios, permisos por rol o trazabilidad. */
+  pestana: 'usuarios' | 'permisos' | 'auditoria' = 'usuarios';
+  /** Permiso PERMISO_GESTIONAR. */
+  readonly puedePermisos = inject(AuthService).tienePermiso('PERMISO_GESTIONAR');
+  /** Permiso AUDITORIA_CONSULTAR. */
+  readonly puedeAuditar = inject(AuthService).tienePermiso('AUDITORIA_CONSULTAR');
   /** Por página. */
   readonly porPagina = 10;
 

@@ -1,0 +1,44 @@
+<form class="row g-2 mb-3" (ngSubmit)="buscar(0)">
+  <div class="col-md-2"><label class="form-label" for="audDesde">Desde</label><input id="audDesde" type="date" class="form-control" name="desde" [(ngModel)]="filtros.desde"></div>
+  <div class="col-md-2"><label class="form-label" for="audHasta">Hasta</label><input id="audHasta" type="date" class="form-control" name="hasta" [(ngModel)]="filtros.hasta"></div>
+  <div class="col-md-3"><label class="form-label" for="audAccion">Acción</label>
+    <select id="audAccion" class="form-select" name="accion" [(ngModel)]="filtros.accion">
+      <option value="">Todas</option>
+      @for (a of acciones; track a) { <option [value]="a">{{ a }}</option> }
+    </select>
+  </div>
+  <div class="col-md-2"><label class="form-label" for="audUsuario">Usuario</label><input id="audUsuario" class="form-control" name="usuario" [(ngModel)]="filtros.usuario"></div>
+  <div class="col-md-3 d-flex align-items-end gap-2">
+    <button class="btn btn-primary" [disabled]="cargando">Buscar</button>
+    <button type="button" class="btn btn-outline-secondary" (click)="limpiar()">Limpiar</button>
+    <button type="button" class="btn btn-outline-primary" [disabled]="!filas.length" (click)="exportar()">CSV</button>
+  </div>
+</form>
+@if (error) { <p class="alert alert-danger" role="alert">{{ error }}</p> }
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead class="table-light"><tr><th>Fecha</th><th>Usuario</th><th>Rol</th><th>Acción</th><th>Detalle</th><th>IP</th></tr></thead>
+    <tbody>
+      @for (f of filas; track f.id) {
+        <tr>
+          <td class="text-nowrap">{{ f.fecha.replace('T', ' ').slice(0, 19) }}</td>
+          <td>{{ f.username || '—' }}</td>
+          <td>{{ f.perfil || '—' }}</td>
+          <td><span class="badge" [class.text-bg-danger]="f.accion.includes('FALLIDO') || f.accion.includes('ANULADA') || f.accion.includes('REVERTIDO')"
+            [class.text-bg-light]="!(f.accion.includes('FALLIDO') || f.accion.includes('ANULADA') || f.accion.includes('REVERTIDO'))">{{ f.accion }}</span></td>
+          <td class="celda-corta" [title]="f.detalle || ''">{{ f.detalle || '—' }}</td>
+          <td><small>{{ f.ip || '—' }}</small></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="6" class="text-center text-muted">{{ cargando ? 'Consultando…' : 'Sin registros para los filtros.' }}</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+<div class="d-flex justify-content-between align-items-center">
+  <small class="text-muted">Página {{ pagina + 1 }}</small>
+  <div>
+    <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="pagina === 0 || cargando" (click)="buscar(pagina - 1)">Anterior</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="!hayMas || cargando" (click)="buscar(pagina + 1)">Siguiente</button>
+  </div>
+</div>
