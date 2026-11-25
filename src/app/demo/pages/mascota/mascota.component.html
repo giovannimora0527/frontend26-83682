@@ -142,13 +142,7 @@
               </tbody>
             </table>
           </div>
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <small class="text-muted">{{ tabla.filtradas.length }} mascota(s) · página {{ tabla.pagina }} de {{ tabla.totalPaginas }}</small>
-            <div>
-              <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="tabla.pagina === 1" (click)="tabla.irA(tabla.pagina - 1)">Anterior</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="tabla.pagina >= tabla.totalPaginas" (click)="tabla.irA(tabla.pagina + 1)">Siguiente</button>
-            </div>
-          </div>
+          <app-paginador [pagina]="tabla.pagina" [totalPaginas]="tabla.totalPaginas" (cambiar)="tabla.irA($event)">{{ tabla.filtradas.length }} mascota(s)</app-paginador>
         }
       </div>
     </div>

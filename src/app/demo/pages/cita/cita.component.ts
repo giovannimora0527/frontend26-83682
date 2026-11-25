@@ -26,6 +26,7 @@ import { AgendaConfiguracionComponent } from './agenda-configuracion.component';
 import { CitaService } from '../../../services/cita.service';
 import { mensajeError } from '../../../utils/tabla-datos';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 // ======================================================
 // MODELOS DE CITAS MÉDICAS
 // ======================================================
@@ -84,7 +85,7 @@ export interface CrearCitaDTO {
 @Component({
   selector: 'app-cita',
   standalone: true,
-  imports: [
+  imports: [PaginadorComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

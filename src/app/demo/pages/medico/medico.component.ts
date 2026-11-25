@@ -10,6 +10,7 @@ import { UsuarioService, UsuarioSistema } from '../usuario/service/usuario.servi
 import { AuthService } from 'src/app/services/auth.service';
 import { TablaDatos, mensajeError } from 'src/app/utils/tabla-datos';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Solo letras (con tildes), espacios, apóstrofos y guiones; mínimo 2 caracteres. */
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ '-]{1,99}$/;
 
@@ -27,7 +28,7 @@ type FilaMedico = MedicoRegistro & { nombreCompleto: string; estadoTexto: string
 @Component({
   selector: 'app-medico',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './medico.component.html',
   styleUrl: './medico.component.scss'
 })

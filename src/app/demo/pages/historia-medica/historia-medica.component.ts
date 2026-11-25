@@ -15,6 +15,7 @@ import { HistoriaMedicaService } from '../../../services/historia-medica.service
 import { MedicoService } from '../../../services/medico.service';
 import { mensajeError, soloFecha, soloHora, TablaDatos } from '../../../utils/tabla-datos';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /**
  * Gestión de historias clínicas (segundo parcial, punto 3).
  *
@@ -25,7 +26,7 @@ import { mensajeError, soloFecha, soloHora, TablaDatos } from '../../../utils/ta
 @Component({
   selector: 'app-historia-medica',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './historia-medica.component.html',
   styleUrls: ['./historia-medica.component.scss']
 })

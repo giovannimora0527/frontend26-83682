@@ -17,6 +17,7 @@ import { MedicoService } from '../../../services/medico.service';
 import { mensajeError, soloFecha, TablaDatos } from '../../../utils/tabla-datos';
 import { FormulasClinicasComponent } from './formulas-clinicas.component';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Valida que el texto contenga una cantidad mayor que cero (dosis y duración válidas). */
 const CANTIDAD_POSITIVA = /(^|\D)(0*[1-9]\d*([.,]\d+)?|0*[.,]\d*[1-9]\d*)/;
 
@@ -32,7 +33,7 @@ const CANTIDAD_POSITIVA = /(^|\D)(0*[1-9]\d*([.,]\d+)?|0*[.,]\d*[1-9]\d*)/;
 @Component({
   selector: 'app-formula',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, FormulasClinicasComponent],
+  imports: [PaginadorComponent, CommonModule, FormsModule, ReactiveFormsModule, FormulasClinicasComponent],
   templateUrl: './formula.component.html',
   styleUrls: ['./formula.component.scss']
 })

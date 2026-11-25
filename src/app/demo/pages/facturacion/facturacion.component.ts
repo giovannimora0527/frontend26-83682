@@ -6,11 +6,12 @@ import { AuthService } from '../../../services/auth.service';
 import { descargarClinica, mensajeClinica } from '../../../services/clinica.service';
 import { DetalleFactura, Factura, FacturacionService, OrigenFactura, PreviaFactura } from '../../../services/facturacion.service';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Pantalla «facturacion» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector:'app-facturacion',
   standalone:true,
-  imports:[FormsModule, SlicePipe],
+  imports:[PaginadorComponent, FormsModule, SlicePipe],
   templateUrl:'./facturacion.component.html'
 })
 export class FacturacionComponent implements OnInit {

@@ -7,13 +7,14 @@ import { forkJoin, finalize } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import { Perfil, UsuarioRq, UsuarioService, UsuarioSistema } from './service/usuario.service';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /**
  * Gestión de usuarios y perfiles (solo ADMINISTRADOR; el backend también lo valida).
  * Permite listar, buscar, registrar, editar (con cambio opcional de contraseña) y activar o inactivar usuarios.
  */
 @Component({
   selector: 'app-usuario',
-  imports: [CommonModule, FormsModule, PermisosRolComponent, AuditoriaComponent],
+  imports: [PaginadorComponent, CommonModule, FormsModule, PermisosRolComponent, AuditoriaComponent],
   templateUrl: './usuario.component.html',
   styleUrl: './usuario.component.scss'
 })

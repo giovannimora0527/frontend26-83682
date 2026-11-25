@@ -151,13 +151,7 @@
               </tbody>
             </table>
           </div>
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <small class="text-muted">{{ tabla.filtradas.length }} historia(s) · página {{ tabla.pagina }} de {{ tabla.totalPaginas }}</small>
-            <div>
-              <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="tabla.pagina === 1" (click)="tabla.irA(tabla.pagina - 1)">Anterior</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="tabla.pagina >= tabla.totalPaginas" (click)="tabla.irA(tabla.pagina + 1)">Siguiente</button>
-            </div>
-          </div>
+          <app-paginador [pagina]="tabla.pagina" [totalPaginas]="tabla.totalPaginas" (cambiar)="tabla.irA($event)">{{ tabla.filtradas.length }} historia(s)</app-paginador>
         }
       </div>
     </div>
@@ -250,13 +244,7 @@
               </tbody>
             </table>
           </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <small class="text-muted">{{ tablaAnotaciones.filtradas.length }} anotación(es) · página {{ tablaAnotaciones.pagina }} de {{ tablaAnotaciones.totalPaginas }}</small>
-            <div>
-              <button type="button" class="btn btn-sm btn-outline-secondary me-1" [disabled]="tablaAnotaciones.pagina === 1" (click)="tablaAnotaciones.irA(tablaAnotaciones.pagina - 1)">Anterior</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="tablaAnotaciones.pagina >= tablaAnotaciones.totalPaginas" (click)="tablaAnotaciones.irA(tablaAnotaciones.pagina + 1)">Siguiente</button>
-            </div>
-          </div>
+          <app-paginador [pagina]="tablaAnotaciones.pagina" [totalPaginas]="tablaAnotaciones.totalPaginas" (cambiar)="tablaAnotaciones.irA($event)">{{ tablaAnotaciones.filtradas.length }} anotación(es)</app-paginador>
 
           @if (anotacionSeleccionada; as a) {
             <div class="border rounded p-3 mt-3 detalle-anotacion">

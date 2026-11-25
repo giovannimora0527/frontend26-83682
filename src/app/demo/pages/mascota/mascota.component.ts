@@ -12,6 +12,7 @@ import { Cliente } from 'src/app/models/cliente';
 import { TablaDatos, mensajeError } from 'src/app/utils/tabla-datos';
 import { HistorialMascotaComponent } from '../cita/historial-mascota.component';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Solo letras (con tildes), espacios, apóstrofos y guiones. */
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ '-]{0,99}$/;
 
@@ -31,7 +32,7 @@ type FilaMascota = MascotaDetalle & {
 @Component({
   selector: 'app-mascota',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, HistorialMascotaComponent],
+  imports: [PaginadorComponent, CommonModule, FormsModule, ReactiveFormsModule, HistorialMascotaComponent],
   templateUrl: './mascota.component.html',
   styleUrl: './mascota.component.scss'
 })

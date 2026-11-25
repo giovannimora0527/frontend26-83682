@@ -82,11 +82,8 @@
             </tbody>
           </table>
         </div>
-        <nav class="d-flex flex-wrap gap-2 align-items-center" aria-label="Páginas del reporte">
-          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || r.pagina===0" (click)="cambiarPagina(r.pagina-1)">Anterior</button>
-          <span>Página {{ r.pagina+1 }} · {{ r.registros }} registros</span>
-          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado || (r.pagina+1)*50>=r.registros" (click)="cambiarPagina(r.pagina+1)">Siguiente</button>
-        </nav>
+        <app-paginador [pagina]="r.pagina + 1" [totalPaginas]="totalPaginasReporte(r.registros)" [deshabilitado]="ocupado"
+          (cambiar)="cambiarPagina($event - 1)">{{ r.registros }} registro(s)</app-paginador>
       }
     }
   </div>

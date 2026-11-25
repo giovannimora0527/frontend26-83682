@@ -5,11 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { UsuarioService, RegistroAuditoria } from './service/usuario.service';
 import { mensajeError } from 'src/app/utils/tabla-datos';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Trazabilidad: log central de operaciones sensibles con filtros, paginación y exportación CSV. */
 @Component({
   selector: 'app-auditoria',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule],
   templateUrl: './auditoria.component.html'
 })
 export class AuditoriaComponent implements OnInit {

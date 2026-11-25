@@ -7,6 +7,7 @@ import { RazaService, RazaRegistro } from 'src/app/services/raza.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { TablaDatos, mensajeError } from 'src/app/utils/tabla-datos';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Solo letras (con tildes), espacios, apóstrofos y guiones; mínimo 2 caracteres. */
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ '-]{1,99}$/;
 
@@ -17,7 +18,7 @@ const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑ�
 @Component({
   selector: 'app-raza',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './raza.component.html',
   styleUrl: './raza.component.scss'
 })

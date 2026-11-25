@@ -9,10 +9,11 @@ import {
 import { AuthService } from '../../../services/auth.service';
 import { InventarioService } from '../../../services/inventario.service';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Pantalla «medicamento» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-medicamento',
-  imports: [CommonModule, FormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule],
   templateUrl: './medicamento.component.html',
   styleUrl: './medicamento.component.scss'
 })

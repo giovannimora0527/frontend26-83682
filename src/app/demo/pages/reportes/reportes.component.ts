@@ -5,6 +5,7 @@ import { AuthService } from '../../../services/auth.service';
 import { descargarClinica, mensajeClinica } from '../../../services/clinica.service';
 import { CeldaReporte, ColumnaReporte, ReportesService, ResultadoReporte } from '../../../services/reportes.service';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Catalogo. */
 /**
  * Permisos que habilitan cada tipo de reporte (igual que en el backend, que es quien valida).
@@ -41,7 +42,7 @@ const catalogo = [
 @Component({
   selector:'app-reportes',
   standalone:true,
-  imports:[FormsModule],
+  imports:[PaginadorComponent, FormsModule],
   templateUrl:'./reportes.component.html'
 })
 export class ReportesComponent {
@@ -127,9 +128,17 @@ export class ReportesComponent {
   }
 
   /**
-   * Cambia página.
+   * Total de páginas del reporte (el servidor devuelve 50 registros por página).
    *
-   * @param pagina número de página.
+   * @param registros total de registros del reporte.
+   * @returns número de páginas (mínimo 1).
+   */
+  totalPaginasReporte(registros:number): number { return Math.max(1, Math.ceil(registros / 50)); }
+
+  /**
+   * Consulta otra página del reporte.
+   *
+   * @param pagina número de página (desde 0).
    */
   cambiarPagina(pagina:number) {
     const consulta=this.consulta;

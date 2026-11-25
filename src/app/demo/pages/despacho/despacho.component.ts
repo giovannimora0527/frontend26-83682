@@ -4,6 +4,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { descargarClinica, mensajeClinica } from '../../../services/clinica.service';
+import { PaginadorComponent } from '../../../utils/paginador.component';
 import {
   DespachoService, DetalleDespacho, EntregaDespacho, FormulaDespacho, MedicamentoDespacho,
   SeleccionLote, estadosDespacho
@@ -13,7 +14,7 @@ import {
 @Component({
   selector: 'app-despacho',
   standalone: true,
-  imports: [FormsModule],
+  imports: [PaginadorComponent, FormsModule],
   templateUrl: './despacho.component.html'
 })
 export class DespachoComponent implements OnInit {

@@ -7,6 +7,7 @@ import { AnotacionHistoria } from '../../../models/anotacion-historia';
 import { AnotacionHistoriaService } from '../../../services/anotacion-historia.service';
 import { mensajeError, soloFecha, soloHora, TablaDatos } from '../../../utils/tabla-datos';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /**
  * Consulta general de anotaciones de historias clínicas: DataTable con búsqueda, rango de fechas
  * (consultado en el backend), ordenamiento, paginación y detalle. Las anotaciones se crean y editan
@@ -15,7 +16,7 @@ import { mensajeError, soloFecha, soloHora, TablaDatos } from '../../../utils/ta
 @Component({
   selector: 'app-anotacion-historia',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule],
   templateUrl: './anotacion-historia.component.html',
   styleUrls: ['./anotacion-historia.component.scss']
 })

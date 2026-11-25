@@ -8,6 +8,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { Cliente } from 'src/app/models/cliente';
 import { TablaDatos, mensajeError } from 'src/app/utils/tabla-datos';
 
+import { PaginadorComponent } from '../../../utils/paginador.component';
 /** Solo letras (con tildes), espacios, apóstrofos y guiones; mínimo 2 caracteres. */
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ '-]{1,99}$/;
 
@@ -37,7 +38,7 @@ type FilaCliente = Cliente & { nombreCompleto: string; documento: string; estado
 @Component({
   selector: 'app-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [PaginadorComponent, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './cliente.component.html',
   styleUrl: './cliente.component.scss'
 })
