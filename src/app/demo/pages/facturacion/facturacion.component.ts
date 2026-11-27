@@ -7,6 +7,7 @@ import { descargarClinica, mensajeClinica } from '../../../services/clinica.serv
 import { DetalleFactura, Factura, FacturacionService, OrigenFactura, PreviaFactura } from '../../../services/facturacion.service';
 
 import { PaginadorComponent } from '../../../utils/paginador.component';
+import { avisarError, avisarExito, confirmar } from '../../../utils/dialogos';
 /** Pantalla «facturacion» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector:'app-facturacion',
@@ -119,13 +120,14 @@ export class FacturacionComponent implements OnInit {
   }
 
   /** Emite los datos de la pantalla. */
-  emitir() {
+  async emitir() {
     const previa=this.previa;
-    if(!previa || !confirm('¿Emitir la factura con los conceptos e importes de la vista previa?')) return;
+    if(!previa || !(await confirmar('¿Emitir la factura con los conceptos e importes de la vista previa?'))) return;
     void this.operar(async()=>{
       this.detalle=await firstValueFrom(this.api.emitir(previa.origen.id,this.claveEmision,previa.huella,
         this.descuento,this.motivoDescuento));
       this.aviso='Factura emitida.';
+      avisarExito('Factura emitida. Ya puedes registrar los pagos.');
       this.previa=null;
       this.origen=null;
       this.vista='listado';
@@ -170,9 +172,9 @@ export class FacturacionComponent implements OnInit {
   }
 
   /** Anula los datos de la pantalla. */
-  anular() {
+  async anular() {
     const f=this.detalle?.factura;
-    if(!f || !this.motivoAnulacion.trim() || !confirm('¿Anular esta factura?')) return;
+    if(!f || !this.motivoAnulacion.trim() || !(await confirmar('¿Anular esta factura?'))) return;
     void this.operar(async()=>{
       this.detalle=await firstValueFrom(this.api.anular(f.id,this.motivoAnulacion));
       this.aviso='Factura anulada.';
@@ -221,6 +223,7 @@ export class FacturacionComponent implements OnInit {
       const fallo=e as {error?:unknown;status?:number};
       this.error=await mensajeClinica(fallo);
       if(fallo.status===409) this.error+=' Actualiza la información y vuelve a revisar.';
+      avisarError(this.error);
     } finally { this.ocupado=false; }
   }
 }

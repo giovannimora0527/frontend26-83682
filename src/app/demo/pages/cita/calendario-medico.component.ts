@@ -27,6 +27,7 @@ interface FormularioCita {
 }
 import { AgendaConfiguracionComponent } from './agenda-configuracion.component';
 
+import { confirmar } from '../../../utils/dialogos';
 /** Tipo «Vista»: valores permitidos para vista. */
 type Vista = 'dia' | 'semana' | 'mes';
 /** Modelo de datos «DiaCalendario» que se intercambia con el backend. */
@@ -227,8 +228,8 @@ export class CalendarioMedicoComponent implements OnInit {
    * @param evento evento.
    * @param cambios cambios.
    */
-  cambiar(evento: EventoMedico, cambios: CambioCita) {
-    if (!confirm('¿Guardar el cambio de la cita?')) return;
+  async cambiar(evento: EventoMedico, cambios: CambioCita) {
+    if (!(await confirmar('¿Guardar el cambio de la cita?'))) return;
     this.guardando = true;
     this.error = '';
     this.agenda.cambiar(evento.id, cambios).subscribe({

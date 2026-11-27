@@ -4,6 +4,7 @@ import { finalize, Observable } from 'rxjs';
 import { AgendaService, Ausencia, errorAgenda, HorarioMedico, hoyBogota } from '../../../services/agenda.service';
 
 import { PaginadorComponent, PaginaLocal } from '../../../utils/paginador.component';
+import { confirmar } from '../../../utils/dialogos';
 /** Pantalla «agenda configuración» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-agenda-configuracion',
@@ -54,14 +55,14 @@ export class AgendaConfiguracionComponent implements OnChanges {
    *
    * @param a ausencia seleccionada.
    */
-  eliminarAusencia(a: Ausencia) {
-    if (!a.id || !confirm(`¿Eliminar la ausencia "${a.motivo}"? El médico volverá a quedar disponible en ese periodo.`)) return;
+  async eliminarAusencia(a: Ausencia) {
+    if (!a.id || !(await confirmar(`¿Eliminar la ausencia "${a.motivo}"? El médico volverá a quedar disponible en ese periodo.`))) return;
     this.ejecutar(this.servicio.eliminarAusencia(this.medico, a.id), 'Ausencia eliminada.');
   }
 
   /** Alterna actividad. */
-  alternarActividad() {
-    if (this.medico === null || !this.datos || !confirm('¿Cambiar el estado del médico?')) return;
+  async alternarActividad() {
+    if (this.medico === null || !this.datos || !(await confirmar('¿Cambiar el estado del médico?'))) return;
     this.ocupado = true;
     this.error = '';
     this.servicio.actividad(this.medico, !this.datos.activo).subscribe({

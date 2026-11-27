@@ -10,6 +10,7 @@ import { AuthService } from '../../../services/auth.service';
 import { InventarioService } from '../../../services/inventario.service';
 
 import { PaginadorComponent, PaginaLocal } from '../../../utils/paginador.component';
+import { confirmar } from '../../../utils/dialogos';
 /** Pantalla «medicamento» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-medicamento',
@@ -147,8 +148,8 @@ export class MedicamentoComponent implements OnInit {
    *
    * @param p p.
    */
-  guardarProducto(p: ProductoInventario) {
-    if (this.editando != null && !confirm('¿Guardar los cambios del producto?')) return;
+  async guardarProducto(p: ProductoInventario) {
+    if (this.editando != null && !(await confirmar('¿Guardar los cambios del producto?'))) return;
     this.ejecutar(this.api.guardar(this.editando, { ...p, fechaVence: p.fechaVence || null,
       fechaProximoPedido: p.fechaProximoPedido || null }), () => {
       this.producto = null;
@@ -204,8 +205,8 @@ export class MedicamentoComponent implements OnInit {
    * @param ficha ficha.
    * @param lote lote.
    */
-  guardarLote(ficha: FichaInventario, lote: NuevoLote) {
-    if (!confirm('¿Registrar el lote y su entrada inicial?')) return;
+  async guardarLote(ficha: FichaInventario, lote: NuevoLote) {
+    if (!(await confirmar('¿Registrar el lote y su entrada inicial?'))) return;
     this.ejecutar(this.api.registrarLote(ficha.id, { ...lote, fechaVence: lote.fechaVence || null }), () => {
       this.lote = null;
       this.aviso = 'Lote registrado.';
@@ -230,8 +231,8 @@ export class MedicamentoComponent implements OnInit {
    * @param ficha ficha.
    * @param movimiento movimiento.
    */
-  guardarMovimiento(ficha: FichaInventario, movimiento: NuevoMovimiento) {
-    if (!confirm('¿Confirmar el movimiento? Quedará registrado en el historial.')) return;
+  async guardarMovimiento(ficha: FichaInventario, movimiento: NuevoMovimiento) {
+    if (!(await confirmar('¿Confirmar el movimiento? Quedará registrado en el historial.'))) return;
     this.ejecutar(this.api.registrarMovimiento(ficha.id, this.loteMovimiento, movimiento), () => {
       this.movimiento = null;
       this.aviso = 'Movimiento registrado.';
@@ -271,8 +272,8 @@ export class MedicamentoComponent implements OnInit {
    *
    * @param id identificador del registro.
    */
-  confirmar(id: number) {
-    if (!confirm('¿Importar los registros válidos?')) return;
+  async confirmar(id: number) {
+    if (!(await confirmar('¿Importar los registros válidos?'))) return;
     this.ejecutar(this.api.confirmar(id), resultado => {
       this.pagCarga.reiniciar();
       this.importacion = resultado;

@@ -6,6 +6,7 @@ import { FichaInventario } from '../../../models/inventario';
 import { InventarioService } from '../../../services/inventario.service';
 import { AuthService } from '../../../services/auth.service';
 import { calcularCantidad } from '../../../utils/cantidad-formula';
+import { confirmar } from '../../../utils/dialogos';
 import {
   AtencionClinica, ClinicaService, DatosClinicos, descargarClinica,
   FormulaClinica, LineaFormula, mensajeClinica
@@ -82,8 +83,8 @@ export class AtencionClinicaComponent implements OnChanges {
   }
 
   /** Finaliza los datos de la pantalla. */
-  finalizar() {
-    if (!this.campos || !confirm('¿Guardar y finalizar la atención? Quedará disponible la prefactura.')) return;
+  async finalizar() {
+    if (!this.campos || !(await confirmar('¿Guardar y finalizar la atención? Quedará disponible la prefactura.'))) return;
     this.editarDatos(this.api.guardar(this.citaId, this.campos, this.seleccion).pipe(
       tap(datos => this.aplicar(datos)),
       switchMap(datos => this.api.finalizar(this.citaId, datos.atencion!.version))
@@ -149,8 +150,8 @@ export class AtencionClinicaComponent implements OnChanges {
    * @param f f.
    * @param accion acción.
    */
-  resolver(f: FormulaClinica, accion: 'confirmar' | 'anular') {
-    if (!confirm(accion === 'confirmar' ? '¿Confirmar la fórmula?' : '¿Anular este borrador?')) return;
+  async resolver(f: FormulaClinica, accion: 'confirmar' | 'anular') {
+    if (!(await confirmar(accion === 'confirmar' ? '¿Confirmar la fórmula?' : '¿Anular este borrador?'))) return;
     this.operar(this.api.resolverFormula(f, accion), resultado => {
       this.reemplazarFormula(resultado);
       if (this.editando?.id === f.id) this.formulario = null;

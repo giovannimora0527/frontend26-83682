@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { descargarClinica, mensajeClinica } from '../../../services/clinica.service';
 import { PaginadorComponent } from '../../../utils/paginador.component';
+import { avisarError, confirmar } from '../../../utils/dialogos';
 import {
   DespachoService, DetalleDespacho, EntregaDespacho, FormulaDespacho, MedicamentoDespacho,
   SeleccionLote, estadosDespacho
@@ -198,9 +199,9 @@ export class DespachoComponent implements OnInit {
    *
    * @param d d.
    */
-  confirmar(d: DetalleDespacho) {
+  async confirmar(d: DetalleDespacho) {
     const plan = d.preparacion;
-    if (!plan || !confirm('¿Confirmar la entrega efectiva y descontar las unidades del resumen?')) return;
+    if (!plan || !(await confirmar('¿Confirmar la entrega efectiva y descontar las unidades del resumen?'))) return;
     void this.operar(async () => {
       const entrega = await firstValueFrom(this.api.confirmar(plan.id));
       this.aviso = 'Entrega ' + entrega.id + ' confirmada.';
@@ -216,8 +217,8 @@ export class DespachoComponent implements OnInit {
    * @param accion acción.
    * @param motivo motivo indicado por el usuario.
    */
-  cambiar(d: DetalleDespacho, accion: 'cancelar' | 'disponibilidad', motivo: string) {
-    if (!motivo.trim() || (accion === 'cancelar' && !confirm('¿Cancelar este despacho?'))) return;
+  async cambiar(d: DetalleDespacho, accion: 'cancelar' | 'disponibilidad', motivo: string) {
+    if (!motivo.trim() || (accion === 'cancelar' && !(await confirmar('¿Cancelar este despacho?')))) return;
     void this.operar(async () => {
       this.detalle = await firstValueFrom(this.api.cambiar(d.formula.id, accion, motivo));
       this.cantidades = {};
@@ -231,8 +232,8 @@ export class DespachoComponent implements OnInit {
    * @param e evento del navegador.
    * @param motivo motivo indicado por el usuario.
    */
-  revertir(e: EntregaDespacho, motivo: string) {
-    if (!motivo.trim() || !confirm('¿Registrar la devolución de esta entrega a los lotes originales?')) return;
+  async revertir(e: EntregaDespacho, motivo: string) {
+    if (!motivo.trim() || !(await confirmar('¿Registrar la devolución de esta entrega a los lotes originales?'))) return;
     void this.operar(async () => {
       await firstValueFrom(this.api.revertir(e.id, motivo));
       this.aviso = 'Reversión registrada.';
@@ -306,6 +307,7 @@ export class DespachoComponent implements OnInit {
       const fallo = e as { error?: unknown; status?: number };
       this.error = await mensajeClinica(fallo);
       if (fallo.status === 409) this.error += ' Usa Actualizar detalle para consultar el estado actual.';
+      avisarError(this.error);
     } finally {
       this.ocupado = false;
     }

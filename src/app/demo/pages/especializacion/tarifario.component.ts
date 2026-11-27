@@ -6,6 +6,7 @@ import { hoyBogota } from '../../../services/agenda.service';
 import { ClinicaService, Especialidad, mensajeClinica, ServicioClinico, TarifaClinica } from '../../../services/clinica.service';
 
 import { PaginadorComponent, PaginaLocal } from '../../../utils/paginador.component';
+import { confirmar } from '../../../utils/dialogos';
 /** Pantalla «tarifario» del sistema de la clínica veterinaria: muestra los datos, valida los formularios y llama a los servicios del backend. */
 @Component({
   selector: 'app-tarifario',
@@ -116,8 +117,8 @@ export class TarifarioComponent implements OnInit {
    * @param s s.
    * @param datos datos a enviar.
    */
-  registrar(s: ServicioClinico, datos: TarifaClinica) {
-    if (!confirm('¿Registrar esta nueva vigencia de tarifa?')) return;
+  async registrar(s: ServicioClinico, datos: TarifaClinica) {
+    if (!(await confirmar('¿Registrar esta nueva vigencia de tarifa?'))) return;
     this.operar(this.api.nuevaTarifa(s.id, datos), () => {
       this.aviso = 'Vigencia registrada. Se conservó el historial.';
       this.verTarifas(s);

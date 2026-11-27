@@ -27,6 +27,7 @@ import { CitaService } from '../../../services/cita.service';
 import { mensajeError } from '../../../utils/tabla-datos';
 
 import { PaginadorComponent } from '../../../utils/paginador.component';
+import { confirmar } from '../../../utils/dialogos';
 // ======================================================
 // MODELOS DE CITAS MÉDICAS
 // ======================================================
@@ -320,8 +321,8 @@ export class CitaComponent implements OnInit {
    *
    * @param cita cita seleccionada.
    */
-  finalizar(cita: Cita) {
-    if (!confirm('¿Finalizar la cita atendida?')) return;
+  async finalizar(cita: Cita) {
+    if (!(await confirmar('¿Finalizar la cita atendida?'))) return;
     this.errorAgenda = '';
     this.agenda.cambiar(cita.id, { estado: 'finalizada' }).subscribe({
       next: () => this.cargarCitas(),
