@@ -88,10 +88,13 @@
                       }
                     </select>
                   </label>
-                  <label class="col-lg-2">Cantidad <input type="number" class="form-control" [name]="'cantidadRx'+i" min="1" step="1" [(ngModel)]="l.cantidad" required></label>
-                  <label class="col-lg-2">Dosis <input class="form-control" [name]="'dosis'+i" [(ngModel)]="l.dosis" maxlength="100" required></label>
-                  <label class="col-lg-3">Frecuencia <input class="form-control" [name]="'frecuencia'+i" [(ngModel)]="l.frecuencia" maxlength="100" required></label>
-                  <label class="col-lg-3">Duración <input class="form-control" [name]="'duracion'+i" [(ngModel)]="l.duracion" maxlength="100" required></label>
+                  <label class="col-lg-2">Dosis por toma <input class="form-control" [name]="'dosis'+i" [(ngModel)]="l.dosis" maxlength="100" placeholder="Ej.: 1 o 1/2" required></label>
+                  <label class="col-lg-3">Frecuencia <input class="form-control" [name]="'frecuencia'+i" [(ngModel)]="l.frecuencia" maxlength="100" placeholder="Ej.: cada 8 horas" required></label>
+                  <label class="col-lg-3">Duración <input class="form-control" [name]="'duracion'+i" [(ngModel)]="l.duracion" maxlength="100" placeholder="Ej.: 7 días" required></label>
+                  <div class="col-lg-2">Cantidad a dispensar
+                    <div class="form-control bg-light" aria-live="polite"><strong>{{ cantidadCalculada(l) }}</strong> und.</div>
+                    <small class="text-muted">Dosis × tomas al día × días</small>
+                  </div>
                   <label class="col-lg-3">Vía <input class="form-control" [name]="'via'+i" [(ngModel)]="l.via" maxlength="100" required></label>
                   <label class="col-lg-6">Indicaciones <input class="form-control" [name]="'indicaciones'+i" [(ngModel)]="l.indicaciones" maxlength="500"></label>
                   <div class="col-12 d-flex justify-content-between align-items-center">

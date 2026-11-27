@@ -5,6 +5,7 @@ import { finalize, Observable, switchMap, tap } from 'rxjs';
 import { FichaInventario } from '../../../models/inventario';
 import { InventarioService } from '../../../services/inventario.service';
 import { AuthService } from '../../../services/auth.service';
+import { calcularCantidad } from '../../../utils/cantidad-formula';
 import {
   AtencionClinica, ClinicaService, DatosClinicos, descargarClinica,
   FormulaClinica, LineaFormula, mensajeClinica
@@ -116,6 +117,17 @@ export class AtencionClinicaComponent implements OnChanges {
    */
   existencias(id: number | null) {
     return this.medicamentos.find(m => m.id === id)?.disponible ?? 0;
+  }
+
+  /**
+   * Cantidad a dispensar de una línea: dosis × tomas por día × días (la misma regla que aplica el backend).
+   *
+   * @param l línea de la fórmula.
+   * @returns unidades calculadas.
+   */
+  cantidadCalculada(l: LineaFormula): number {
+    l.cantidad = calcularCantidad(l.dosis, l.frecuencia, l.duracion);
+    return l.cantidad;
   }
 
   /**
