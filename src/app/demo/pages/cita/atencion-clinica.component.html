@@ -22,13 +22,17 @@
         } @empty { <li>Sin antecedentes registrados.</li> }</ul>
       </details>
       @if (!d.atencion && d.cita.estado !== 'cancelada' && d.cita.estado !== 'finalizada') {
-        <button type="button" class="btn btn-primary" [disabled]="ocupado" (click)="abrir()">Abrir atención</button>
+        @if (puedeAtender) {
+          <button type="button" class="btn btn-primary" [disabled]="ocupado" (click)="abrir()">Abrir atención</button>
+        } @else {
+          <p class="alert alert-info">La atención la abre el veterinario asignado ({{ d.cita.medico }}) desde su calendario.</p>
+        }
       }
       @if (d.atencion; as a) {
         @if (campos; as c) {
           <h4 class="h6">{{ a.especialidad }} · {{ a.finalizada ? 'Finalizada' : 'En atención' }}</h4>
           <form #clinico="ngForm" (ngSubmit)="guardar()" class="mb-3">
-            <fieldset [disabled]="!!a.finalizada || ocupado">
+            <fieldset [disabled]="!!a.finalizada || ocupado || !puedeAtender">
               <div class="row g-2">
                 <label class="col-md-6">Motivo <textarea class="form-control" name="motivoAtencion" [(ngModel)]="c.motivo" maxlength="5000"></textarea></label>
                 <label class="col-md-6">Síntomas <textarea class="form-control" name="sintomas" [(ngModel)]="c.sintomas" maxlength="5000"></textarea></label>
@@ -37,7 +41,7 @@
                 <label class="col-12">Recomendaciones <textarea class="form-control" name="recomendaciones" [(ngModel)]="c.recomendaciones" maxlength="5000"></textarea></label>
               </div>
               <h4 class="h6 mt-3">Servicios prestados</h4>
-              @if (!a.finalizada) {
+              @if (!a.finalizada && puedeAtender) {
                 <div class="d-flex flex-wrap gap-2 align-items-end">
                   <label>Servicio y tarifa en la fecha de cita
                     <select class="form-select" name="servicioId" [(ngModel)]="servicioId">
@@ -54,10 +58,10 @@
                 <div class="d-flex flex-wrap gap-2 align-items-end my-2">
                   <span>{{ s.nombre }}</span>
                   <label>Cantidad <input class="form-control" type="number" min="1" max="100" [name]="'cantidadServicio'+i" [(ngModel)]="s.cantidad" required></label>
-                  @if (!a.finalizada) { <button type="button" class="btn btn-sm btn-outline-secondary" (click)="seleccion.splice(i,1)">Retirar servicio</button> }
+                  @if (!a.finalizada && puedeAtender) { <button type="button" class="btn btn-sm btn-outline-secondary" (click)="seleccion.splice(i,1)">Retirar servicio</button> }
                 </div>
               } @empty { <p class="text-muted mt-2">Sin servicios registrados.</p> }
-              @if (!a.finalizada) {
+              @if (!a.finalizada && puedeAtender) {
                 <div class="d-flex gap-2 mt-3">
                   <button type="submit" class="btn btn-outline-primary" [disabled]="clinico.invalid">Guardar atención</button>
                   <button type="button" class="btn btn-primary"
@@ -67,9 +71,9 @@
               }
             </fieldset>
           </form>
-          @if (a.finalizada) { <button type="button" class="btn btn-primary mb-3" (click)="prefactura()">Descargar prefactura PDF</button> }
+          @if (a.finalizada && puedePrefactura) { <button type="button" class="btn btn-primary mb-3" (click)="prefactura()">Descargar prefactura PDF</button> }
           <h4 class="h6">Fórmulas de la cita</h4>
-          @if (!a.finalizada) {
+          @if (!a.finalizada && puedeFormular) {
             <button type="button" class="btn btn-outline-primary mb-2" [disabled]="ocupado" (click)="nuevaFormula()">Nueva fórmula</button>
           }
           @if (formulario; as lineas) {
@@ -111,7 +115,7 @@
                   @if (l.indicaciones) { · {{ l.indicaciones }} }</li>
               }</ul>
               @if (f.estado === 'CONFIRMADA') { <button type="button" class="btn btn-sm btn-outline-primary" (click)="pdf(f)">Descargar fórmula PDF</button> }
-              @if (f.estado === 'BORRADOR' && !a.finalizada) {
+              @if (f.estado === 'BORRADOR' && !a.finalizada && puedeFormular) {
                 <div class="d-flex gap-2 flex-wrap">
                   <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado" (click)="nuevaFormula(f)">Editar borrador</button>
                   <button type="button" class="btn btn-sm btn-primary" [disabled]="ocupado" (click)="resolver(f,'confirmar')">Confirmar fórmula</button>

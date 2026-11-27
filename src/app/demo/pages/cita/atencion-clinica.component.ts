@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize, Observable, switchMap, tap } from 'rxjs';
 import { FichaInventario } from '../../../models/inventario';
 import { InventarioService } from '../../../services/inventario.service';
+import { AuthService } from '../../../services/auth.service';
 import {
   AtencionClinica, ClinicaService, DatosClinicos, descargarClinica,
   FormulaClinica, LineaFormula, mensajeClinica
@@ -20,6 +21,14 @@ export class AtencionClinicaComponent implements OnChanges {
   private readonly api = inject(ClinicaService);
   /** Dependencia inyectada (InventarioService). */
   private readonly inventario = inject(InventarioService);
+  /** Dependencia inyectada (AuthService). */
+  private readonly auth = inject(AuthService);
+  /** Solo el veterinario (ATENCION_GESTIONAR) abre, edita y finaliza; los demás roles consultan. */
+  readonly puedeAtender = this.auth.tienePermiso('ATENCION_GESTIONAR');
+  /** Indica si puede crear, editar y confirmar fórmulas. */
+  readonly puedeFormular = this.auth.tienePermiso('FORMULA_GESTIONAR');
+  /** Indica si puede descargar la prefactura. */
+  readonly puedePrefactura = this.auth.tienePermiso('PREFACTURA_GENERAR');
   /** Datos. */
   /** Indica si actualizada. */
   /** Cierre. */
