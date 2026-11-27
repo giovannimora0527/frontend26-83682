@@ -291,8 +291,13 @@ export class CalendarioMedicoComponent implements OnInit {
   /** Abre el formulario para registrar una cita a nombre del médico autenticado. */
   nuevaCita() {
     const dia = this.fecha < this.hoy ? this.hoy : this.fecha;
-    this.formCita = { id: null, clienteId: null, mascotaId: null, inicio: dia + 'T08:00', fin: dia + 'T08:30',
-      estado: 'confirmada', motivo: '' };
+    // Hoy se propone el siguiente cuarto de hora (con 5 minutos de anticipación); otro día, las 08:00.
+    const minimo = new Date(Date.now() + 5 * 60_000);
+    minimo.setUTCMinutes(Math.ceil(minimo.getUTCMinutes() / 15) * 15, 0, 0);
+    const minimoBogota = new Date(minimo.getTime() - 5 * 3_600_000).toISOString().slice(0, 16);
+    const inicio = dia + 'T08:00' < minimoBogota ? minimoBogota : dia + 'T08:00';
+    const fin = new Date(new Date(inicio + 'Z').getTime() + 30 * 60_000).toISOString().slice(0, 16);
+    this.formCita = { id: null, clienteId: null, mascotaId: null, inicio, fin, estado: 'confirmada', motivo: '' };
     this.mascotasCita = [];
     this.errorCita = '';
     this.evento = null;

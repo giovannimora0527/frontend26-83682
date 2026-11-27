@@ -288,8 +288,13 @@ export class CitaComponent implements OnInit {
    * @param franja franja.
    */
   usarFranja(franja: Intervalo) {
-    const inicio = franja.inicio.slice(0, 16);
-    const sugerido = new Date(new Date(franja.inicio + 'Z').getTime() + 30 * 60_000).toISOString().slice(0, 16);
+    // Si la franja de hoy ya empezó (la consulta se hizo hace unos minutos), se sugiere el siguiente cuarto
+    // de hora con al menos 5 minutos de anticipación, para no enviar una hora que ya pasó.
+    const minimo = new Date(Date.now() + 5 * 60_000);
+    minimo.setUTCMinutes(Math.ceil(minimo.getUTCMinutes() / 15) * 15, 0, 0);
+    const minimoBogota = new Date(minimo.getTime() - 5 * 3_600_000).toISOString().slice(0, 16);
+    const inicio = franja.inicio.slice(0, 16) < minimoBogota ? minimoBogota : franja.inicio.slice(0, 16);
+    const sugerido = new Date(new Date(inicio + 'Z').getTime() + 30 * 60_000).toISOString().slice(0, 16);
     const fin = franja.fin.slice(0, 16);
     this.formulario.patchValue({ fechaHora: inicio, fechaFin: sugerido < fin ? sugerido : fin });
     this.disponibilidad = null;
