@@ -93,7 +93,7 @@ export class ReportesComponent {
     if(this.tipo==='EXISTENCIAS' && !this.existenciaHistorica) return ['agotado','minimo','vencido','proximo'];
     if(this.tipo==='MOVIMIENTOS') return ['ENTRADA','SALIDA','AJUSTE'];
     return ['CITAS','CITAS_OPERATIVAS','CONSULTAS','ATENCIONES'].includes(this.tipo)
-      ? ['pendiente','confirmada','cancelada','atendida','finalizada'] : [];
+      ? ['pendiente','programada','confirmada','cancelada','atendida','finalizada'] : [];
   }
 
   /** Limpia los datos de la pantalla. */
