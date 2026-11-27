@@ -32,6 +32,8 @@ export class MedicamentoComponent implements OnInit {
   private readonly auth = inject(AuthService);
   /** Indica si puede modificar. */
   readonly puedeModificar = this.auth.tienePermiso('INVENTARIO_GESTIONAR');
+  /** Indica si puede consultar el kardex (despacho y contador ven cómo las entregas descontaron existencias). */
+  readonly puedeVerMovimientos = this.auth.tienePermiso('INVENTARIO_MOVIMIENTOS');
   /** Identificador de usuario. */
   readonly usuarioId = this.auth.obtenerUsuarioId();
   /** Columnas del resultado. */
@@ -179,7 +181,7 @@ export class MedicamentoComponent implements OnInit {
   private cargarDetalle(id: number) {
     this.ejecutar(forkJoin({
       lotes: this.api.lotes(id),
-      movimientos: this.puedeModificar ? this.api.movimientos(id) : of([])
+      movimientos: this.puedeVerMovimientos ? this.api.movimientos(id) : of([])
     }), datos => {
       this.lotes = datos.lotes;
       this.movimientos = datos.movimientos;
