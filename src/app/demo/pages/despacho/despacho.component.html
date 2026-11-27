@@ -95,12 +95,13 @@
                           <span class="badge bg-warning text-dark d-inline-block ms-1">Próximo a vencer</span>
                         }
                       </td><td>{{ l.cantidad }}</td>
-                        <td><input class="form-control" type="number" min="0" [max]="l.cantidad" step="1"
+                        <td><input class="form-control" type="number" min="0" [max]="l.cantidad < m.prescripcion.pendiente ? l.cantidad : m.prescripcion.pendiente" step="1"
                           [attr.aria-label]="'Cantidad del lote ' + l.numero" [(ngModel)]="cantidades[l.id]"></td></tr>
                     }
                   </tbody>
                 </table>
               </div>
+              @if (errorAsignacion(m); as problema) { <p class="text-danger mb-0" role="alert">{{ problema }}</p> }
             }
           </fieldset>
         }
@@ -109,6 +110,7 @@
         }
         @if (puedeOperar && d.formula.estado !== 'DESPACHADO' && d.formula.estado !== 'CANCELADO') {
           <button type="button" class="btn btn-primary" [disabled]="ocupado || !puedePreparar()" (click)="preparar(d)">Preparar entrega</button>
+          @if (motivoSinPreparar(); as motivo) { <small class="text-muted ms-2">{{ motivo }}</small> }
           <details class="my-2">
             <summary>Disponibilidad y cancelación</summary>
             <label class="d-block my-2">Motivo<input #motivo class="form-control" maxlength="255"></label>

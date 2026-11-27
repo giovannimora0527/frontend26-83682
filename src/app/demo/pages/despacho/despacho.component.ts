@@ -122,6 +122,32 @@ export class DespachoComponent implements OnInit {
     return m.lotes.reduce((total, lote) => total + (this.cantidades[lote.id] ?? 0), 0);
   }
 
+  /**
+   * Explica por qué las unidades asignadas a un medicamento no son válidas (null si están bien).
+   *
+   * @param m medicamento de la fórmula.
+   * @returns mensaje para el usuario o null.
+   */
+  errorAsignacion(m: MedicamentoDespacho): string | null {
+    for (const l of m.lotes) {
+      const n = this.cantidades[l.id] ?? 0;
+      if (!Number.isInteger(n) || n < 0) return `Las unidades del lote ${l.numero} deben ser un número entero positivo.`;
+      if (n > l.cantidad) return `El lote ${l.numero} solo tiene ${l.cantidad} unidades disponibles.`;
+    }
+    const total = this.cantidadSeleccionada(m);
+    if (total > m.prescripcion.pendiente) {
+      return `Asignaste ${total} unidades, pero solo hay ${m.prescripcion.pendiente} pendientes por entregar de este medicamento.`;
+    }
+    return null;
+  }
+
+  /** Motivo por el que todavía no se puede preparar la entrega (null si se puede). */
+  motivoSinPreparar(): string | null {
+    if (!this.detalle || this.puedePreparar()) return null;
+    if (this.detalle.medicamentos.some(m => this.errorAsignacion(m))) return 'Corrige las unidades marcadas en rojo para poder preparar la entrega.';
+    return 'Asigna al menos una unidad de algún medicamento para preparar la entrega.';
+  }
+
   /** Indica si la fórmula se puede preparar para despacho. */
   puedePreparar() {
     if (!this.detalle || ['DESPACHADO', 'CANCELADO'].includes(this.detalle.formula.estado)) return false;
